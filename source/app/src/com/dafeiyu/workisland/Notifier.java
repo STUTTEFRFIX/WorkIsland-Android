@@ -82,7 +82,7 @@ public final class Notifier {
     }
 
     /** 收工后留在通知栏的安静版前台通知：不再请求上岛。 */
-    static Notification buildIdle(Context c) {
+    static Notification buildIdle(Context c, String title, String text) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         ensureChannel(nm);
         Intent open = new Intent(c, MainActivity.class);
@@ -91,8 +91,8 @@ public final class Notifier {
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         return new Notification.Builder(c, CHANNEL)
                 .setSmallIcon(R.drawable.ic_fish)
-                .setContentTitle("工作岛")
-                .setContentText("在后台等下一轮")
+                .setContentTitle(title == null || title.isEmpty() ? "工作岛" : title)
+                .setContentText(text == null || text.isEmpty() ? "在后台等下一轮" : text)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setShowWhen(false)

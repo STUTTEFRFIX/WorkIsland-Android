@@ -40,11 +40,11 @@ public class IslandService extends Service {
             return START_NOT_STICKY;
         }
         if (ACTION_IDLE.equals(action)) {
-            goIdle();
+            goIdle(intent.getStringExtra("title"), intent.getStringExtra("text"));
             return START_STICKY;
         }
         if (Notifier.ACTION_DONE.equals(action)) {
-            finishRun("");
+            finishRun(intent.getStringExtra("title"), intent.getStringExtra("text"));
             return START_STICKY;
         }
 
@@ -86,23 +86,25 @@ public class IslandService extends Service {
         Log.d("WorkIsland", "work update " + key);
     }
 
-    private synchronized void finishRun(String reason) {
+    private synchronized void finishRun(String title, String text) {
         if (!working) return;
         working = false;
         long ms = Math.max(0, System.currentTimeMillis() - startedAt);
         long sec = Math.round(ms / 1000.0);
         String human = sec < 60 ? sec + " 秒" : (sec / 60) + " 分 " + (sec % 60) + " 秒";
-        String text = "用时 " + human + (reason == null || reason.isEmpty() ? "" : " · " + reason);
+        String fallback = "用时 " + human;
+        String t = title == null || title.isEmpty() ? "任务完成" : title;
+        String x = text == null || text.isEmpty() ? fallback : text;
         getSystemService(NotificationManager.class).cancel(IDLE_ID);
-        Notification n = Notifier.build(this, "任务完成", text, System.currentTimeMillis(), true);
+        Notification n = Notifier.build(this, t, x, System.currentTimeMillis(), true);
         startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
-        Log.d("WorkIsland", "work done " + text);
+        Log.d("WorkIsland", "work done " + t + " / " + x);
     }
 
-    /** driver 在完成 8 秒后发来 IDLE：换成不上岛的安静通知，岛就收起来了。 */
-    private synchronized void goIdle() {
+    /** 网关在完成 8 秒后发来 IDLE：换成不上岛的安静通知，岛就收起来了。 */
+    private synchronized void goIdle(String title, String text) {
         if (working) return;
-        Notification n = Notifier.buildIdle(this);
+        Notification n = Notifier.buildIdle(this, title, text);
         startForeground(IDLE_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         getSystemService(NotificationManager.class).cancel(ID);
         lastKey = "";
