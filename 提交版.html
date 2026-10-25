@@ -150,7 +150,7 @@
 <p>这些信息足够判断是“没推广”“被冻结”还是“收工判定”的问题。</p></article><article class="doc page-break"><div class="doc-title">项目说明</div><h1 id="workisland">工作岛 · WorkIsland</h1>
 <blockquote>
 <p><strong>测试状态：Pre-release / Alpha</strong>
-目前<strong>只在 OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）· cccodroid 0.4.2</strong> 上测试成功。
+目前<strong>只在 OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）· cccodroid 0.4.2–0.4.6</strong> 上测试成功。
 其他 ColorOS 版本、其他品牌机型均未验证；接口与文件布局可能继续变动，不建议用于生产或关键任务。
 详细边界见 <a href="STATUS.md"><code>STATUS.md</code></a>。</p>
 </blockquote>
@@ -178,7 +178,7 @@
 </tbody>
 </table>
 <p>更多截图见 <code>screenshots/</code>，完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
-<p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.0.0">v1.0.0 发布页</a> · APK 与 PDF 在 Release 附件里。</p>
+<p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.1.0">v1.1.0 发布页</a> · APK 与 PDF 在 Release 附件里。</p>
 <hr>
 <h2 id="_1">交付物</h2>
 <table>
@@ -191,7 +191,7 @@
 <tbody>
 <tr>
 <td><code>apk/WorkIsland.apk</code></td>
-<td>可直接安装的 APK（<code>com.dafeiyu.workisland</code>，versionName 1.0）</td>
+<td>可直接安装的 APK（<code>com.dafeiyu.workisland</code>，versionName 1.1）</td>
 </tr>
 <tr>
 <td><code>source/app/</code></td>
@@ -199,15 +199,19 @@
 </tr>
 <tr>
 <td><code>source/driver/driver.mjs</code></td>
-<td>状态驱动：订阅网关事件流，发开始/更新/完成/收起</td>
+<td>独立状态驱动：0.4.2–0.4.6 的部署方式</td>
 </tr>
 <tr>
 <td><code>source/gateway/work-island.mjs</code></td>
-<td>网关启动时拉起 driver 的模块</td>
+<td>0.4.2–0.4.6 的网关模块（spawn 独立 driver）</td>
 </tr>
 <tr>
 <td><code>source/gateway/server.mjs</code></td>
-<td>已接入的网关入口（原文件见 <code>server.mjs.original</code>）</td>
+<td>0.4.2–0.4.6 已接入的网关入口（原文件见 <code>server.mjs.original</code>）</td>
+</tr>
+<tr>
+<td><code>source/upstream-pr-review.patch</code></td>
+<td>0.4.7 上游 PR #20 的完整 diff（网关内订阅 + 设置 + 单测）</td>
 </tr>
 <tr>
 <td><code>screenshots/</code></td>
@@ -220,7 +224,7 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  79697f3779e590412dc5eca43b948018f40d6f61f6ee1cddb725e8f85da2140e
+<pre><code>SHA-256  728c4f3a8ff020ea9c9ad3cdac7ffa4c235c7c41030868aa77e1628cc9d681e6
 大小     41,929 字节
 </code></pre>
 <hr>
@@ -231,7 +235,9 @@
    - 通知：开
    - 实时更新：允许
    - 电池：不优化</li>
-<li>cccodroid 重启后，网关会自动拉起 driver（首次接入见 <code>docs/02-开发与部署.md</code>）。</li>
+<li>接入网关：
+   - <strong>ccc odroid 0.4.7+</strong>：设置 → 工作岛（ColorOS 灵动岛）→ 打开，重启一次网关。
+   - <strong>0.4.2–0.4.6</strong>：按 <code>docs/02-开发与部署.md</code> 第 4 节接入独立 driver。</li>
 <li>在 cccodroid 里让 Claude 干一次活，看岛。</li>
 </ol>
 <hr>
@@ -262,7 +268,7 @@
 </tr>
 <tr>
 <td>应用</td>
-<td>com.dafeiyu.workisland 1.0</td>
+<td>com.dafeiyu.workisland 1.1</td>
 </tr>
 <tr>
 <td>构建</td>
@@ -277,12 +283,19 @@
 <hr>
 <h2 id="_4">一句话设计</h2>
 <blockquote>
-<p><strong>网关负责“知道”，driver 负责“判断”，工作岛负责“画”。</strong>
-定时器和事件流不放在会被 ColorOS 冻结的应用里，放在活得比每一轮任务更久的网关进程里。</p>
+<p><strong>网关负责“知道”，模块负责“判断”，工作岛负责“画”。</strong>
+定时器和事件流不放在会被 ColorOS 冻结的应用里，放在网关进程里。</p>
 </blockquote>
-<p>详细设计见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p></article><article class="doc page-break"><div class="doc-title">一、方案与设计</div><h1 id="_1">工作岛 · 方案与设计</h1>
+<p>0.4.7 起上游改为进程内订阅（<code>onPublish</code> + <code>runList</code>），不再单独起 driver；本仓库的 <code>source/driver/</code> 是 0.4.2–0.4.6 的部署方式。两种方式发送给同一个应用。</p>
+<p>详细设计见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
+<hr>
+<h2 id="_5">许可与第三方说明</h2>
+<p>本项目使用 <strong>Apache-2.0</strong>，见 <a href="LICENSE"><code>LICENSE</code></a>。</p>
 <blockquote>
-<p>版本 1.0 · 2026-10-25
+<p>工作岛是<strong>第三方应用的可选集成</strong>：cccodroid 只负责把状态送出来，不包含也不负责本应用的功能。</p>
+</blockquote></article><article class="doc page-break"><div class="doc-title">一、方案与设计</div><h1 id="_1">工作岛 · 方案与设计</h1>
+<blockquote>
+<p>版本 1.1 · 2026-10-25
 设备：OnePlus PJA110 · ColorOS 16.0.3（Android 16 / SDK 36）
 宿主：cccodroid 0.4.2（包名 <code>cc.codroid</code>）</p>
 </blockquote>
@@ -381,7 +394,8 @@
 </code></pre>
 <p>一句话：</p>
 <blockquote>
-<p><strong>网关负责“知道”，driver 负责“判断”，工作岛负责“画”。</strong></p>
+<p><strong>网关负责“知道”，模块负责“判断”，工作岛负责“画”。</strong></p>
+<p>0.4.7 起上游采用进程内订阅（<code>onPublish</code> + <code>runList</code>），本仓库的独立 driver 是 0.4.2–0.4.6 的部署方式；两者发送给同一个应用。</p>
 </blockquote>
 <hr>
 <h2 id="4">4. 运行流程</h2>
@@ -900,7 +914,7 @@ apksigner sign --ks island.keystore \
 <ul>
 <li>交付包<strong>不包含私钥</strong>（<code>island.keystore</code> 留在本机工作区）。重新生成密钥会改变签名，已安装的旧版必须先卸载再装。</li>
 <li><code>resources.arsc</code> 由 aapt2 输出时已是未压缩且 4 字节对齐，实测可直接安装；如果换工具链后安装报 <code>resources.arsc ... not aligned</code>，再补 zipalign。</li>
-<li>APK 版本：<code>versionCode=1</code>、<code>versionName=1.0</code>。</li>
+<li>APK 版本：<code>versionCode=2</code>、<code>versionName=1.1</code>。</li>
 </ul>
 <h3 id="34">3.4 安装</h3>
 <p>共享目录 <code>/sdcard</code> 里的 APK 不能直接 <code>pm install</code>（SELinux 文件上下文问题），先经 shell 拷到 <code>/data/local/tmp</code>：</p>
@@ -971,6 +985,17 @@ curl -s -N -H &quot;X-CC-Token: $TOKEN&quot; \
 <li>网关模块启动时读这个文件，检查对应进程的 cmdline 是否包含 <code>driver.mjs</code>；是就复用，不重复拉起。</li>
 <li>模块每 30 秒检查一次，driver 挂了会自动重启。</li>
 </ul>
+<h3 id="46-cccodroid-047">4.6 cccodroid 0.4.7+：上游网关内集成</h3>
+<p>0.4.7 起上游把工作岛改成了网关进程内订阅（<a href="https://github.com/greyoak111/cccodroid/pull/20">PR #20</a>），不再需要本仓库的独立 driver、PID 文件、令牌和看门狗：</p>
+<ul>
+<li>网关模块：<code>gateway/gw/work-island.mjs</code> + <code>gateway/gw/work-island-core.mjs</code>；</li>
+<li><code>gateway/gw/bus.mjs</code> 提供 <code>onPublish(fn)</code>；收工判定直接读 <code>runList()</code>；</li>
+<li>设置 → <strong>工作岛（ColorOS 灵动岛）</strong> → 打开；默认关闭；</li>
+<li>打开后才异步检测应用、开始送状态；关掉发一次 IDLE；</li>
+<li>更新限频 1.5 秒；<code>error</code> 只显示「出错了」；文案跟随 <code>LAST_LANG</code>（中/英）；</li>
+<li>清单 <code>&lt;queries&gt;</code> 已加 <code>com.dafeiyu.workisland</code>；如果设备上仍检测不到，可用 <code>CCAPP_WORK_ISLAND=1</code> 强制开启。</li>
+</ul>
+<p>对本仓库的部署来说，0.4.7+ <strong>不需要</strong>第 4.1–4.5 节的独立 driver；保留它们是给 0.4.2–0.4.6 的。</p>
 <hr>
 <h2 id="5-driver">5. driver 行为说明</h2>
 <p><code>driver.mjs</code> 的关键逻辑：</p>
@@ -1110,7 +1135,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <blockquote>
 <p>测试日期：2026-10-25
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：com.dafeiyu.workisland 1.0（APK SHA-256 <code>79697f37…2140e</code>）</p>
+应用：com.dafeiyu.workisland 1.1（APK SHA-256 <code>728c4f3a…81e6</code>）</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 测试环境</h2>
@@ -1394,7 +1419,7 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.0，41,929 字节，SHA-256 <code>79697f37…2140e</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.1，41,929 字节，SHA-256 <code>728c4f3a…81e6</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
@@ -1499,6 +1524,11 @@ gateway: 9842 / 32734
 <td>2026-10-25</td>
 <td>1.0</td>
 <td>修复：完成后不收起（driver 移入网关）、ColorOS 冻结（定时器外移）、提前完成（runs + 二次确认 + 宽限）</td>
+</tr>
+<tr>
+<td>2026-10-25</td>
+<td>1.1</td>
+<td>完成/收起文案可由网关下发（中英）；上游 0.4.7 改为进程内订阅（PR #20），本仓库保留 0.4.2–0.4.6 的独立 driver 部署方式；补 Apache-2.0 LICENSE 与第三方说明</td>
 </tr>
 </tbody>
 </table>
