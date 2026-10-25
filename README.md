@@ -13,6 +13,12 @@
 
 不是另开一个任务清单，也不是模拟动画——数据直接来自 cccodroid 网关的真实事件流。
 
+| 正在干活 | 任务完成 | 8 秒后收起 |
+|---|---|---|
+| <img src="screenshots/01-working.png" width="230"> | <img src="screenshots/02-done.png" width="230"> | <img src="screenshots/03-idle.png" width="230"> |
+
+更多截图见 `screenshots/`，完整边界见 [`STATUS.md`](STATUS.md)，方案见 [`docs/01-方案与设计.md`](docs/01-方案与设计.md)。
+
 ---
 
 ## 交付物
