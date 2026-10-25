@@ -37,11 +37,11 @@ def main() -> None:
   <div class="meta">
     <div><span>宿主</span>cccodroid 0.4.2</div>
     <div><span>设备</span>OnePlus PJA110 · ColorOS 16.0.3</div>
-    <div><span>应用</span>com.dafeiyu.workisland 1.0</div>
+    <div><span>应用</span>com.dafeiyu.workisland 1.2</div>
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
-    <div><span>日期</span>2026-10-25</div>
+    <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>79697f3779e590412dc5eca43b948018f40d6f61f6ee1cddb725e8f85da2140e</div>
+  <div class="hash">APK SHA-256<br>21e38c0057a43f8958abacde53c60411574bb685e71258c91ec00b596c5fc6b0</div>
 </section>
 """
 

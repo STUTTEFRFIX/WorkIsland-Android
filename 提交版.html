@@ -78,11 +78,11 @@
   <div class="meta">
     <div><span>宿主</span>cccodroid 0.4.2</div>
     <div><span>设备</span>OnePlus PJA110 · ColorOS 16.0.3</div>
-    <div><span>应用</span>com.dafeiyu.workisland 1.0</div>
+    <div><span>应用</span>com.dafeiyu.workisland 1.2</div>
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
-    <div><span>日期</span>2026-10-25</div>
+    <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>79697f3779e590412dc5eca43b948018f40d6f61f6ee1cddb725e8f85da2140e</div>
+  <div class="hash">APK SHA-256<br>21e38c0057a43f8958abacde53c60411574bb685e71258c91ec00b596c5fc6b0</div>
 </section>
 
 <section class="toc">
@@ -234,7 +234,7 @@
 </table>
 <p>APK 校验：</p>
 <pre><code>SHA-256  21e38c0057a43f8958abacde53c60411574bb685e71258c91ec00b596c5fc6b0
-大小     41,929 字节
+大小     140,714 字节
 </code></pre>
 <hr>
 <h2 id="_2">快速开始</h2>
@@ -306,7 +306,7 @@
 <p>工作岛是<strong>第三方应用的可选集成</strong>：cccodroid 只负责把状态送出来，不包含也不负责本应用的功能。</p>
 </blockquote></article><article class="doc page-break"><div class="doc-title">一、方案与设计</div><h1 id="_1">工作岛 · 方案与设计</h1>
 <blockquote>
-<p>版本 1.1 · 2026-10-25
+<p>版本 1.2 · 2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3（Android 16 / SDK 36）
 宿主：cccodroid 0.4.2（包名 <code>cc.codroid</code>）</p>
 </blockquote>
@@ -927,7 +927,7 @@ apksigner sign --ks island.keystore \
 <ul>
 <li>交付包<strong>不包含私钥</strong>（<code>island.keystore</code> 留在本机工作区）。重新生成密钥会改变签名，已安装的旧版必须先卸载再装。</li>
 <li><code>resources.arsc</code> 由 aapt2 输出时已是未压缩且 4 字节对齐，实测可直接安装；如果换工具链后安装报 <code>resources.arsc ... not aligned</code>，再补 zipalign。</li>
-<li>APK 版本：<code>versionCode=2</code>、<code>versionName=1.1</code>。</li>
+<li>APK 版本：<code>versionCode=3</code>、<code>versionName=1.2</code>。</li>
 </ul>
 <h3 id="34">3.4 安装</h3>
 <p>共享目录 <code>/sdcard</code> 里的 APK 不能直接 <code>pm install</code>（SELinux 文件上下文问题），先经 shell 拷到 <code>/data/local/tmp</code>：</p>
@@ -999,7 +999,7 @@ curl -s -N -H &quot;X-CC-Token: $TOKEN&quot; \
 <li>模块每 30 秒检查一次，driver 挂了会自动重启。</li>
 </ul>
 <h3 id="46-cccodroid-047">4.6 cccodroid 0.4.7+：上游网关内集成</h3>
-<p>0.4.7 起上游把工作岛改成了网关进程内订阅（<a href="https://github.com/greyoak111/cccodroid/pull/20">PR #20</a>），不再需要本仓库的独立 driver、PID 文件、令牌和看门狗：</p>
+<p>0.4.7 起上游把工作岛改成了网关进程内订阅（<a href="https://github.com/greyoak111/cccodroid/pull/21">PR #21</a>），不再需要本仓库的独立 driver、PID 文件、令牌和看门狗：</p>
 <ul>
 <li>网关模块：<code>gateway/gw/work-island.mjs</code> + <code>gateway/gw/work-island-core.mjs</code>；</li>
 <li><code>gateway/gw/bus.mjs</code> 提供 <code>onPublish(fn)</code>；收工判定直接读 <code>runList()</code>；</li>
@@ -1146,9 +1146,9 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <li>打开三个保活开关（第 6 节）。</li>
 </ol></article><article class="doc page-break"><div class="doc-title">三、测试报告</div><h1 id="_1">工作岛 · 测试报告</h1>
 <blockquote>
-<p>测试日期：2026-10-25
+<p>测试日期：2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：com.dafeiyu.workisland 1.1（APK SHA-256 <code>728c4f3a…81e6</code>）</p>
+应用：com.dafeiyu.workisland 1.2（APK SHA-256 <code>21e38c00…c6b0</code>）</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 测试环境</h2>
@@ -1444,7 +1444,7 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.1，41,929 字节，SHA-256 <code>728c4f3a…81e6</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.2，140,714 字节，SHA-256 <code>21e38c00…c6b0</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
@@ -1553,7 +1553,12 @@ gateway: 9842 / 32734
 <tr>
 <td>2026-10-25</td>
 <td>1.1</td>
-<td>完成/收起文案可由网关下发（中英）；上游 0.4.7 改为进程内订阅（PR #20），本仓库保留 0.4.2–0.4.6 的独立 driver 部署方式；补 Apache-2.0 LICENSE 与第三方说明</td>
+<td>完成/收起文案可由网关下发（中英）；上游 0.4.7 改为进程内订阅（PR #21），本仓库保留 0.4.2–0.4.6 的独立 driver 部署方式；补 Apache-2.0 LICENSE 与第三方说明</td>
+</tr>
+<tr>
+<td>2026-10-26</td>
+<td>1.2</td>
+<td>Agent HUD 图标、按模型换图标（DeepSeek/Claude/OpenClaw/小鱼）、状态色与角标、标题跟动作、TodoWrite 清单 x/y；网关/驱动加 <code>state</code> extra</td>
 </tr>
 </tbody>
 </table>
@@ -1565,9 +1570,9 @@ gateway: 9842 / 32734
 <li>通知样式参考 Android 16 Live Updates 官方规范。</li>
 </ul></article><article class="doc page-break"><div class="doc-title">五、开发过程与真机测试</div><h1 id="_1">开发过程与真机测试</h1>
 <blockquote>
-<p>记录时间：2026-10-25
+<p>记录时间：2026-10-25–26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：工作岛 1.1（versionCode 2，APK SHA-256 <code>728c4f3a…81e6</code>）
+应用：工作岛 1.2（versionCode 3，APK SHA-256 <code>21e38c00…c6b0</code>）
 宿主：cccodroid 0.4.2（实机）+ 0.4.6（测试网关，PR 分支）</p>
 </blockquote>
 <p>这篇文档把「怎么一步步做出来、踩了哪些坑、在真机上测了什么」全部摊开。代码、截图、测试记录都在仓库里，过程不藏在对话里。</p>
@@ -1841,13 +1846,13 @@ gateway: 9842 / 32734
 <li>上游 review 与回复：#20（已关闭）→ #21</li>
 <li>整机复测评论：https://github.com/greyoak111/cccodroid/pull/21#issuecomment-6398984906</li>
 <li>工作岛仓库：https://github.com/STUTTEFRFIX/WorkIsland-Android</li>
-<li>工作岛 1.1 Release：https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.1.0</li>
+<li>工作岛 1.2 Release：https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.2.0</li>
 </ul>
 <p>代码、截图、测试命令与日志都在这个仓库里；这篇文档会随着后续复测继续补。</p></article><article class="doc page-break"><div class="doc-title">六、状态与保活</div><h1 id="_1">状态展示与后台保活</h1>
 <blockquote>
 <p>2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16
-应用：工作岛 1.1 · cccodroid 0.4.2（实机）</p>
+应用：工作岛 1.2 · cccodroid 0.4.2（实机）</p>
 </blockquote>
 <p>这篇文档分两部分：<strong>岛上现在能显示哪些状态</strong>，以及 <strong>应用被系统杀掉后怎么恢复</strong>。</p>
 <hr>
