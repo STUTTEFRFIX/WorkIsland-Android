@@ -298,10 +298,10 @@ index fbc8e6d..e751d15 100644
    }
 diff --git a/gateway/gw/work-island-core.mjs b/gateway/gw/work-island-core.mjs
 new file mode 100644
-index 0000000..3763856
+index 0000000..7132e7e
 --- /dev/null
 +++ b/gateway/gw/work-island-core.mjs
-@@ -0,0 +1,292 @@
+@@ -0,0 +1,302 @@
 +// ── 工作岛核心：事件 → 状态文案 → 完成判定 ────────────────────────────────
 +// 纯逻辑，不碰进程、不读设置、不订阅总线；方便单元测试。
 +// 外面的 work-island.mjs 负责把它接到真实总线、runs 和 am 上。
@@ -410,8 +410,17 @@ index 0000000..3763856
 +  if (!todos) return null;
 +  const total = todos.length;
 +  const done = todos.filter((t) => t && t.status === "completed").length;
-+  return { title: l.todoTitle, text: l.todo(done, total) };
++  return { title: l.todoTitle, text: l.todo(done, total), state: "planning" };
 +}
++
++const TOOL_STATE = {
++  Bash: "running", KillShell: "running",
++  Read: "reading", Glob: "reading", Grep: "reading",
++  Write: "writing", Edit: "writing", NotebookEdit: "writing",
++  WebSearch: "searching", WebFetch: "searching",
++  Task: "subtask", Agent: "subtask", Skill: "working",
++};
++const toolState = (name) => TOOL_STATE[name] || "working";
 +
 +/**
 + * @param {object} opts
@@ -443,11 +452,11 @@ index 0000000..3763856
 +  let pending = null;       // 节流时保留的最后一条
 +  let pendingTimer = null;
 +
-+  const emit = (action, title, text, since) => {
-+    try { send(action, title, text, since); } catch {}
++  const emit = (action, title, text, since, state) => {
++    try { send(action, title, text, since, state); } catch {}
 +  };
-+  const emitSync = (action, title, text, since) => {
-+    try { sendSync(action, title, text, since); } catch {}
++  const emitSync = (action, title, text, since, state) => {
++    try { sendSync(action, title, text, since, state); } catch {}
 +  };
 +
 +  function clearPending() {
@@ -455,14 +464,14 @@ index 0000000..3763856
 +    pending = null;
 +  }
 +
-+  function sendUpdate(title, text, since) {
++  function sendUpdate(title, text, since, state) {
 +    const t = clock();
 +    if (t - lastSent >= throttleMs) {
 +      lastSent = t;
-+      emit("UPDATE", title, text, since);
++      emit("UPDATE", title, text, since, state);
 +      return;
 +    }
-+    pending = { title, text, since };
++    pending = { title, text, since, state };
 +    if (pendingTimer) return;
 +    pendingTimer = setTimeout(() => {
 +      pendingTimer = null;
@@ -470,18 +479,19 @@ index 0000000..3763856
 +      const p = pending;
 +      pending = null;
 +      lastSent = clock();
-+      emit("UPDATE", p.title, p.text, p.since);
++      emit("UPDATE", p.title, p.text, p.since, p.state);
 +    }, Math.max(0, throttleMs - (t - lastSent)));
 +  }
 +
-+  function update(text, title) {
++  function update(text, title, state) {
 +    if (!active) return;
 +    const t = title || L().working;
 +    const x = text || "";
-+    const key = t + "|" + x;
++    const st = state || "working";
++    const key = t + "|" + x + "|" + st;
 +    if (key === active.last) return;
 +    active.last = key;
-+    sendUpdate(t, x, active.startedAt);
++    sendUpdate(t, x, active.startedAt, st);
 +  }
 +
 +  function start(run, text) {
@@ -497,7 +507,7 @@ index 0000000..3763856
 +      startedAt: Number(run && run.startedAt) || clock(),
 +      last: "",
 +    };
-+    update(text || L().start, L().working);
++    update(text || L().start, L().working, "working");
 +  }
 +
 +  function finish(reason) {
@@ -514,11 +524,11 @@ index 0000000..3763856
 +      const sec = Math.round(ms / 1000);
 +      const human = humanDuration(sec, L() === ZH);
 +      const text = L().took(human) + (reason ? ` · ${reason}` : "");
-+      emit("DONE", L().done, text, 0);
++      emit("DONE", L().done, text, 0, "done");
 +      if (idleTimer) clearTimeout(idleTimer);
 +      idleTimer = setTimeout(() => {
 +        idleTimer = null;
-+        if (!active) emit("IDLE", L().idleTitle, L().idleText, 0);
++        if (!active) emit("IDLE", L().idleTitle, L().idleText, 0, "idle");
 +      }, idleMs);
 +    }, graceMs);
 +  }
@@ -534,38 +544,38 @@ index 0000000..3763856
 +        else if (active && !liveRuns().length) finish("");
 +        break;
 +      case "run_busy":
-+        update(L().resume, L().working);
++        update(L().resume, L().working, "working");
 +        break;
 +      case "phase":
-+        if (ev.phase === "wait") update(L().wait, L().titleWait);
-+        else if (ev.phase === "think") update(L().think, L().titleThink);
-+        else if (ev.phase === "text") update(L().text, L().titleText);
-+        else if (ev.phase === "tool") update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name));
-+        else if (ev.phase === "retry") update(L().wait, L().titleRetry);
++        if (ev.phase === "wait") update(L().wait, L().titleWait, "thinking");
++        else if (ev.phase === "think") update(L().think, L().titleThink, "thinking");
++        else if (ev.phase === "text") update(L().text, L().titleText, "writing");
++        else if (ev.phase === "tool") update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name), toolState(ev.name));
++        else if (ev.phase === "retry") update(L().wait, L().titleRetry, "thinking");
 +        break;
 +      case "tool_use": {
 +        const todo = todoProgress(ev, L());
-+        if (todo) update(todo.text, todo.title);
-+        else update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name));
++        if (todo) update(todo.text, todo.title, todo.state);
++        else update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name), toolState(ev.name));
 +        break;
 +      }
 +      case "perm_request":
-+        update(L().perm(L().toolName(ev.tool || ev.name)), L().waiting);
++        update(L().perm(L().toolName(ev.tool || ev.name)), L().waiting, "waiting");
 +        break;
 +      case "perm_resolved":
-+        update(L().resume, L().working);
++        update(L().resume, L().working, "working");
 +        break;
 +      case "compacting":
-+        update(L().compact, L().titleCompact);
++        update(L().compact, L().titleCompact, "thinking");
 +        break;
 +      case "sub_progress":
-+        update(L().sub(ev.desc || L().start), L().titleSub);
++        update(L().sub(ev.desc || L().start), L().titleSub, "subtask");
 +        break;
 +      case "run_idle":
-+        if (ev.bg > 0) update(L().bg, L().titleBg);
++        if (ev.bg > 0) update(L().bg, L().titleBg, "working");
 +        break;
 +      case "error":
-+        update("", L().titleError);   // 不转发 message：可能带路径/命令输出
++        update("", L().titleError, "error");   // 不转发 message：可能带路径/命令输出
 +        break;
 +      case "run_end":
 +        if (!active) break;
@@ -583,7 +593,7 @@ index 0000000..3763856
 +    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
 +    if (had) {
 +      const fn = sync ? emitSync : emit;
-+      fn("IDLE", L().idleTitle, L().idleText, 0);
++      fn("IDLE", L().idleTitle, L().idleText, 0, "idle");
 +    }
 +  }
 +
@@ -596,10 +606,10 @@ index 0000000..3763856
 +}
 diff --git a/gateway/gw/work-island.mjs b/gateway/gw/work-island.mjs
 new file mode 100644
-index 0000000..340179e
+index 0000000..0a7c9fb
 --- /dev/null
 +++ b/gateway/gw/work-island.mjs
-@@ -0,0 +1,111 @@
+@@ -0,0 +1,112 @@
 +// ── 工作岛（可选集成）──────────────────────────────────────────────────────
 +// 在网关进程里直接订阅事件总线，把 Claude 的工作状态经 am 送给「工作岛」应用。
 +//
@@ -620,25 +630,26 @@ index 0000000..340179e
 +const PKG = process.env.WORK_ISLAND_PKG || "com.dafeiyu.workisland";
 +const SVC = PKG + "/.IslandService";
 +
-+function amArgs(action, title, text, since) {
++function amArgs(action, title, text, since, state) {
 +  const a = ["start-foreground-service", "--user", "0", "-n", SVC, "-a", PKG + "." + action];
 +  if (title) a.push("--es", "title", title);
 +  if (text) a.push("--es", "text", text);
++  if (state) a.push("--es", "state", state);
 +  if (since) a.push("--el", "since", String(since));
 +  return a;
 +}
 +
 +let warned = false;
-+function amSend(action, title, text, since) {
-+  execFile("am", amArgs(action, title, text, since), { timeout: 8000 }, (e, out, err) => {
++function amSend(action, title, text, since, state) {
++  execFile("am", amArgs(action, title, text, since, state), { timeout: 8000 }, (e, out, err) => {
 +    if (!e || warned) return;
 +    warned = true;
 +    log(`[work-island] am 失败（应用没装或服务未就绪？后面不再重复）：${e.message} ${String(err || "").slice(0, 120)}`);
 +  });
 +}
-+function amSendSync(action, title, text, since) {
++function amSendSync(action, title, text, since, state) {
 +  try {
-+    execFileSync("am", amArgs(action, title, text, since), { timeout: 3000, stdio: "ignore" });
++    execFileSync("am", amArgs(action, title, text, since, state), { timeout: 3000, stdio: "ignore" });
 +  } catch {}
 +}
 +
@@ -741,10 +752,10 @@ index d5bfe69..b4eccd0 100644
 +process.on("SIGINT", () => { try { stopWorkIslandSync(); } catch {} try { bridgeProc?.kill(); } catch {} process.exit(0); });
 diff --git a/gateway/tests/work-island.test.mjs b/gateway/tests/work-island.test.mjs
 new file mode 100644
-index 0000000..ca9e8c8
+index 0000000..6a486d4
 --- /dev/null
 +++ b/gateway/tests/work-island.test.mjs
-@@ -0,0 +1,147 @@
+@@ -0,0 +1,152 @@
 +// 工作岛核心：状态映射、换轮不误报、中止、确认、节流、中英文
 +import { test } from "node:test";
 +import assert from "node:assert/strict";
@@ -756,7 +767,7 @@ index 0000000..ca9e8c8
 +  const sent = [];
 +  let runs = [];
 +  const core = createWorkIsland({
-+    send: (action, title, text, since) => sent.push({ action, title, text, since }),
++    send: (action, title, text, since, state) => sent.push({ action, title, text, since, state }),
 +    runs: () => runs,
 +    lang: () => "zh",
 +    graceMs: 20,
@@ -776,6 +787,7 @@ index 0000000..ca9e8c8
 +  core.handleEvent({ type: "tool_use", name: "Read" });
 +  assert.equal(sent.at(-1).title, "读文件");
 +  assert.equal(sent.at(-1).text, "用 读文件…");
++  assert.equal(sent.at(-1).state, "reading");
 +});
 +
 +test("清单：TodoWrite 显示已完成/总数", () => {
@@ -796,6 +808,7 @@ index 0000000..ca9e8c8
 +  });
 +  assert.equal(sent.at(-1).title, "整理清单");
 +  assert.equal(sent.at(-1).text, "清单 2/5");
++  assert.equal(sent.at(-1).state, "planning");
 +});
 +
 +test("完成：任务完成 + 用时，8 秒后收起", async () => {
@@ -807,6 +820,7 @@ index 0000000..ca9e8c8
 +  const done = sent.find((x) => x.action === "DONE");
 +  assert.ok(done, "应发 DONE");
 +  assert.equal(done.title, "任务完成");
++  assert.equal(done.state, "done");
 +  assert.match(done.text, /^用时 /);
 +  await sleep(50);
 +  assert.ok(sent.some((x) => x.action === "IDLE"), "应发 IDLE");
@@ -855,6 +869,7 @@ index 0000000..ca9e8c8
 +  core.handleEvent({ type: "error", message: "/secret/path token=abc" });
 +  assert.equal(sent.at(-1).title, "出错了");
 +  assert.equal(sent.at(-1).text, "");
++  assert.equal(sent.at(-1).state, "error");
 +  assert.ok(!JSON.stringify(sent.at(-1)).includes("secret"));
 +});
 +
@@ -865,6 +880,7 @@ index 0000000..ca9e8c8
 +  core.handleEvent({ type: "tool_use", name: "Bash" });
 +  assert.equal(sent.at(-1).title, "Running");
 +  assert.equal(sent.at(-1).text, "Using a command…");
++  assert.equal(sent.at(-1).state, "running");
 +});
 +
 +test("节流：一秒半内只发一条，补发最后那条", async () => {

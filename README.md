@@ -11,6 +11,8 @@
 - `TodoWrite` 任务清单会显示「清单 x/y」
 - 收工：写「任务完成」+ 用时
 - 8 秒后：岛上收起，通知栏只留一条安静的「工作岛 · 在后台等下一轮」
+- **图标可换**：Agent HUD / DeepSeek / Claude / OpenClaw / 小鱼；颜色和角标跟着状态变
+  （读文件紫、执行命令蓝、等你确认黄、完成绿、出错红）
 
 不是另开一个任务清单，也不是模拟动画——数据直接来自 cccodroid 网关的真实事件流。
 
@@ -18,9 +20,9 @@
 |---|---|---|
 | <img src="screenshots/01-working.png" width="230"> | <img src="screenshots/02-done.png" width="230"> | <img src="screenshots/03-idle.png" width="230"> |
 
-更多截图见 `screenshots/`，完整边界见 [`STATUS.md`](STATUS.md)，方案见 [`docs/01-方案与设计.md`](docs/01-方案与设计.md)。
+更多截图见 `screenshots/`（含 `07-icon-state.png` 状态图标、`08-icon-picker.png` 图标选择器），完整边界见 [`STATUS.md`](STATUS.md)，方案见 [`docs/01-方案与设计.md`](docs/01-方案与设计.md)。
 
-**下载**：[v1.1.0 发布页](https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.1.0) · APK 与 PDF 在 Release 附件里。
+**下载**：[v1.2.0 发布页](https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.2.0) · APK 与 PDF 在 Release 附件里。
 
 ---
 
@@ -28,7 +30,7 @@
 
 | 路径 | 内容 |
 |---|---|
-| `apk/WorkIsland.apk` | 可直接安装的 APK（`com.dafeiyu.workisland`，versionName 1.1） |
+| `apk/WorkIsland.apk` | 可直接安装的 APK（`com.dafeiyu.workisland`，versionName 1.2） |
 | `source/app/` | Android 16 Live Update 应用源码（Java + 资源 + 构建脚本） |
 | `source/driver/driver.mjs` | 独立状态驱动：0.4.2–0.4.6 的部署方式 |
 | `source/gateway/work-island.mjs` | 0.4.2–0.4.6 的网关模块（spawn 独立 driver） |
@@ -41,7 +43,7 @@
 APK 校验：
 
 ```
-SHA-256  728c4f3a8ff020ea9c9ad3cdac7ffa4c235c7c41030868aa77e1628cc9d681e6
+SHA-256  21e38c0057a43f8958abacde53c60411574bb685e71258c91ec00b596c5fc6b0
 大小     41,929 字节
 ```
 
@@ -69,7 +71,7 @@ SHA-256  728c4f3a8ff020ea9c9ad3cdac7ffa4c235c7c41030868aa77e1628cc9d681e6
 | 系统 | ColorOS 16.0.3（Android 16 / SDK 36） |
 | cccodroid | 0.4.2 |
 | 网关 | 127.0.0.1:8791 |
-| 应用 | com.dafeiyu.workisland 1.1 |
+| 应用 | com.dafeiyu.workisland 1.2 |
 | 构建 | aapt2 2.20-android-16 / d8 9.2.4 / apksigner 0.9 / javac 21 |
 | 编译 SDK | Android 16 platform-36（android.jar） |
 
@@ -89,5 +91,8 @@ SHA-256  728c4f3a8ff020ea9c9ad3cdac7ffa4c235c7c41030868aa77e1628cc9d681e6
 ## 许可与第三方说明
 
 本项目使用 **Apache-2.0**，见 [`LICENSE`](LICENSE)。
+
+第三方图标与许可：Agent HUD 图标（Apache-2.0）、LobeHub 模型图标（MIT），
+详见 [`THIRD_PARTY.md`](THIRD_PARTY.md) 与 [`LICENSES/`](LICENSES/)。
 
 > 工作岛是**第三方应用的可选集成**：cccodroid 只负责把状态送出来，不包含也不负责本应用的功能。

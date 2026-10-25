@@ -162,6 +162,8 @@
 <li><code>TodoWrite</code> 任务清单会显示「清单 x/y」</li>
 <li>收工：写「任务完成」+ 用时</li>
 <li>8 秒后：岛上收起，通知栏只留一条安静的「工作岛 · 在后台等下一轮」</li>
+<li><strong>图标可换</strong>：Agent HUD / DeepSeek / Claude / OpenClaw / 小鱼；颜色和角标跟着状态变
+  （读文件紫、执行命令蓝、等你确认黄、完成绿、出错红）</li>
 </ul>
 <p>不是另开一个任务清单，也不是模拟动画——数据直接来自 cccodroid 网关的真实事件流。</p>
 <table>
@@ -180,8 +182,8 @@
 </tr>
 </tbody>
 </table>
-<p>更多截图见 <code>screenshots/</code>，完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
-<p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.1.0">v1.1.0 发布页</a> · APK 与 PDF 在 Release 附件里。</p>
+<p>更多截图见 <code>screenshots/</code>（含 <code>07-icon-state.png</code> 状态图标、<code>08-icon-picker.png</code> 图标选择器），完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
+<p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.2.0">v1.2.0 发布页</a> · APK 与 PDF 在 Release 附件里。</p>
 <hr>
 <h2 id="_1">交付物</h2>
 <table>
@@ -194,7 +196,7 @@
 <tbody>
 <tr>
 <td><code>apk/WorkIsland.apk</code></td>
-<td>可直接安装的 APK（<code>com.dafeiyu.workisland</code>，versionName 1.1）</td>
+<td>可直接安装的 APK（<code>com.dafeiyu.workisland</code>，versionName 1.2）</td>
 </tr>
 <tr>
 <td><code>source/app/</code></td>
@@ -231,7 +233,7 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  728c4f3a8ff020ea9c9ad3cdac7ffa4c235c7c41030868aa77e1628cc9d681e6
+<pre><code>SHA-256  21e38c0057a43f8958abacde53c60411574bb685e71258c91ec00b596c5fc6b0
 大小     41,929 字节
 </code></pre>
 <hr>
@@ -275,7 +277,7 @@
 </tr>
 <tr>
 <td>应用</td>
-<td>com.dafeiyu.workisland 1.1</td>
+<td>com.dafeiyu.workisland 1.2</td>
 </tr>
 <tr>
 <td>构建</td>
@@ -298,6 +300,8 @@
 <hr>
 <h2 id="_5">许可与第三方说明</h2>
 <p>本项目使用 <strong>Apache-2.0</strong>，见 <a href="LICENSE"><code>LICENSE</code></a>。</p>
+<p>第三方图标与许可：Agent HUD 图标（Apache-2.0）、LobeHub 模型图标（MIT），
+详见 <a href="THIRD_PARTY.md"><code>THIRD_PARTY.md</code></a> 与 <a href="LICENSES/"><code>LICENSES/</code></a>。</p>
 <blockquote>
 <p>工作岛是<strong>第三方应用的可选集成</strong>：cccodroid 只负责把状态送出来，不包含也不负责本应用的功能。</p>
 </blockquote></article><article class="doc page-break"><div class="doc-title">一、方案与设计</div><h1 id="_1">工作岛 · 方案与设计</h1>
@@ -1260,6 +1264,12 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <td>标题显示读文件 / 执行命令 / 思考中 / 等你确认；TodoWrite 显示清单 x/y</td>
 <td><strong>单测通过</strong>；真机待确认</td>
 </tr>
+<tr>
+<td>T12</td>
+<td>图标按模型切换 / 状态色</td>
+<td>选 DeepSeek 后小图标变鲸鱼；执行命令蓝色、完成绿色</td>
+<td><strong>真机目视通过</strong>（蓝色胶囊 +「执行命令」）；选择器 UI 已出现</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1791,7 +1801,7 @@ gateway: 9842 / 32734
 错误脱敏、英文、1.5 秒节流、清单进度、关开关发 IDLE。</p>
 <h3 id="38">3.8 构建与安装</h3>
 <ul>
-<li><code>versionCode=2</code>、<code>versionName=1.1</code>，41,929 字节。</li>
+<li><code>versionCode=3</code>、<code>versionName=1.2</code>，约 138 KB。</li>
 <li><code>pm install -r</code> 成功；通知权限授予。</li>
 <li>应用内状态：通知开 / 实时更新允许 / 电池不优化。</li>
 <li>截图：<code>screenshots/05-app.png</code>。</li>
@@ -1803,6 +1813,15 @@ gateway: 9842 / 32734
 <li><code>TodoWrite</code> 工具会显示「清单 x/y」。</li>
 <li>单测新增清单进度用例，<code>node scripts/test.mjs work-island</code> → <strong>12/12</strong>。</li>
 <li>驱动已重启；真机标题由主人目视确认。</li>
+</ul>
+<h3 id="310-2026-10-26">3.10 图标与状态色（2026-10-26）</h3>
+<ul>
+<li>启动图标换成 Agent HUD 的胶囊 + 辉光。</li>
+<li>岛上图标可选 Agent HUD / DeepSeek / Claude / OpenClaw / 小鱼；选择器在应用里。</li>
+<li>小图标 = 模型形状 + 状态色 + 右下角角标；大图标 = 彩色模型图标。</li>
+<li>驱动/核心发送 <code>state</code>，应用映射颜色/角标；执行命令实测为蓝色胶囊。</li>
+<li>截图：<code>screenshots/07-icon-state.png</code>、<code>screenshots/08-icon-picker.png</code>。</li>
+<li>单测仍为 12/12；图标/选择器为真机目视验证。</li>
 </ul>
 <hr>
 <h2 id="4">4. 尚未验证 / 已知限制</h2>
@@ -1960,6 +1979,68 @@ gateway: 9842 / 32734
 </tbody>
 </table>
 <p>单测：<code>node scripts/test.mjs work-island</code> → <strong>12/12</strong>（新增清单进度用例）。</p>
+<h3 id="15">1.5 图标：模型形状 + 状态色 + 角标</h3>
+<ul>
+<li><strong>启动图标</strong>：Agent HUD 的黑色胶囊 + 绿/黄/红辉光（来自 agent-hud-open，Apache-2.0）。</li>
+<li><strong>岛上图标</strong>：应用内「岛上图标（按模型自选）」可选
+  Agent HUD / DeepSeek / Claude / OpenClaw / 小鱼。</li>
+<li><strong>小图标</strong>：选中的模型形状，画成当前状态的颜色，右下角加状态角标。</li>
+<li><strong>大图标</strong>：彩色的模型图标，展开通知可见。</li>
+<li>状态色：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>颜色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>working</td>
+<td><code>#D97757</code> 陶土</td>
+</tr>
+<tr>
+<td>thinking</td>
+<td><code>#5B8DEF</code> 蓝</td>
+</tr>
+<tr>
+<td>reading</td>
+<td><code>#7C6CF0</code> 紫</td>
+</tr>
+<tr>
+<td>writing</td>
+<td><code>#D97757</code> 陶土</td>
+</tr>
+<tr>
+<td>running</td>
+<td><code>#4C9AFF</code> 亮蓝</td>
+</tr>
+<tr>
+<td>searching</td>
+<td><code>#00A6A6</code> 青</td>
+</tr>
+<tr>
+<td>waiting</td>
+<td><code>#E6A23C</code> 黄</td>
+</tr>
+<tr>
+<td>done</td>
+<td><code>#4CAF50</code> 绿</td>
+</tr>
+<tr>
+<td>error</td>
+<td><code>#E5484D</code> 红</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>驱动/核心在 <code>UPDATE</code> 里带 <code>state</code>；应用据此选颜色、画角标。</li>
+<li>截图：<code>screenshots/07-icon-state.png</code>（执行命令 → 蓝色胶囊）、
+  <code>screenshots/08-icon-picker.png</code>（图标选择器）。</li>
+<li>许可：Agent HUD 图标 Apache-2.0；模型图标来自 LobeHub（MIT），商标归各自所有者，
+  非官方关联；未使用 Anthropic 的 Clawd sprites。见 <a href="../THIRD_PARTY.md"><code>THIRD_PARTY.md</code></a>。</li>
+</ul>
 <hr>
 <h2 id="_3">二、后台保活与自动恢复</h2>
 <h3 id="21">2.1 发生了什么</h3>

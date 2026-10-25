@@ -18,25 +18,26 @@ import { createWorkIsland } from "./work-island-core.mjs";
 const PKG = process.env.WORK_ISLAND_PKG || "com.dafeiyu.workisland";
 const SVC = PKG + "/.IslandService";
 
-function amArgs(action, title, text, since) {
+function amArgs(action, title, text, since, state) {
   const a = ["start-foreground-service", "--user", "0", "-n", SVC, "-a", PKG + "." + action];
   if (title) a.push("--es", "title", title);
   if (text) a.push("--es", "text", text);
+  if (state) a.push("--es", "state", state);
   if (since) a.push("--el", "since", String(since));
   return a;
 }
 
 let warned = false;
-function amSend(action, title, text, since) {
-  execFile("am", amArgs(action, title, text, since), { timeout: 8000 }, (e, out, err) => {
+function amSend(action, title, text, since, state) {
+  execFile("am", amArgs(action, title, text, since, state), { timeout: 8000 }, (e, out, err) => {
     if (!e || warned) return;
     warned = true;
     log(`[work-island] am 失败（应用没装或服务未就绪？后面不再重复）：${e.message} ${String(err || "").slice(0, 120)}`);
   });
 }
-function amSendSync(action, title, text, since) {
+function amSendSync(action, title, text, since, state) {
   try {
-    execFileSync("am", amArgs(action, title, text, since), { timeout: 3000, stdio: "ignore" });
+    execFileSync("am", amArgs(action, title, text, since, state), { timeout: 3000, stdio: "ignore" });
   } catch {}
 }
 

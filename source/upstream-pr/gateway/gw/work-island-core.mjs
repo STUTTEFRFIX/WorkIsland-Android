@@ -106,8 +106,17 @@ function todoProgress(ev, l) {
   if (!todos) return null;
   const total = todos.length;
   const done = todos.filter((t) => t && t.status === "completed").length;
-  return { title: l.todoTitle, text: l.todo(done, total) };
+  return { title: l.todoTitle, text: l.todo(done, total), state: "planning" };
 }
+
+const TOOL_STATE = {
+  Bash: "running", KillShell: "running",
+  Read: "reading", Glob: "reading", Grep: "reading",
+  Write: "writing", Edit: "writing", NotebookEdit: "writing",
+  WebSearch: "searching", WebFetch: "searching",
+  Task: "subtask", Agent: "subtask", Skill: "working",
+};
+const toolState = (name) => TOOL_STATE[name] || "working";
 
 /**
  * @param {object} opts
@@ -139,11 +148,11 @@ export function createWorkIsland(opts = {}) {
   let pending = null;       // 节流时保留的最后一条
   let pendingTimer = null;
 
-  const emit = (action, title, text, since) => {
-    try { send(action, title, text, since); } catch {}
+  const emit = (action, title, text, since, state) => {
+    try { send(action, title, text, since, state); } catch {}
   };
-  const emitSync = (action, title, text, since) => {
-    try { sendSync(action, title, text, since); } catch {}
+  const emitSync = (action, title, text, since, state) => {
+    try { sendSync(action, title, text, since, state); } catch {}
   };
 
   function clearPending() {
@@ -151,14 +160,14 @@ export function createWorkIsland(opts = {}) {
     pending = null;
   }
 
-  function sendUpdate(title, text, since) {
+  function sendUpdate(title, text, since, state) {
     const t = clock();
     if (t - lastSent >= throttleMs) {
       lastSent = t;
-      emit("UPDATE", title, text, since);
+      emit("UPDATE", title, text, since, state);
       return;
     }
-    pending = { title, text, since };
+    pending = { title, text, since, state };
     if (pendingTimer) return;
     pendingTimer = setTimeout(() => {
       pendingTimer = null;
@@ -166,18 +175,19 @@ export function createWorkIsland(opts = {}) {
       const p = pending;
       pending = null;
       lastSent = clock();
-      emit("UPDATE", p.title, p.text, p.since);
+      emit("UPDATE", p.title, p.text, p.since, p.state);
     }, Math.max(0, throttleMs - (t - lastSent)));
   }
 
-  function update(text, title) {
+  function update(text, title, state) {
     if (!active) return;
     const t = title || L().working;
     const x = text || "";
-    const key = t + "|" + x;
+    const st = state || "working";
+    const key = t + "|" + x + "|" + st;
     if (key === active.last) return;
     active.last = key;
-    sendUpdate(t, x, active.startedAt);
+    sendUpdate(t, x, active.startedAt, st);
   }
 
   function start(run, text) {
@@ -193,7 +203,7 @@ export function createWorkIsland(opts = {}) {
       startedAt: Number(run && run.startedAt) || clock(),
       last: "",
     };
-    update(text || L().start, L().working);
+    update(text || L().start, L().working, "working");
   }
 
   function finish(reason) {
@@ -210,11 +220,11 @@ export function createWorkIsland(opts = {}) {
       const sec = Math.round(ms / 1000);
       const human = humanDuration(sec, L() === ZH);
       const text = L().took(human) + (reason ? ` · ${reason}` : "");
-      emit("DONE", L().done, text, 0);
+      emit("DONE", L().done, text, 0, "done");
       if (idleTimer) clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
         idleTimer = null;
-        if (!active) emit("IDLE", L().idleTitle, L().idleText, 0);
+        if (!active) emit("IDLE", L().idleTitle, L().idleText, 0, "idle");
       }, idleMs);
     }, graceMs);
   }
@@ -230,38 +240,38 @@ export function createWorkIsland(opts = {}) {
         else if (active && !liveRuns().length) finish("");
         break;
       case "run_busy":
-        update(L().resume, L().working);
+        update(L().resume, L().working, "working");
         break;
       case "phase":
-        if (ev.phase === "wait") update(L().wait, L().titleWait);
-        else if (ev.phase === "think") update(L().think, L().titleThink);
-        else if (ev.phase === "text") update(L().text, L().titleText);
-        else if (ev.phase === "tool") update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name));
-        else if (ev.phase === "retry") update(L().wait, L().titleRetry);
+        if (ev.phase === "wait") update(L().wait, L().titleWait, "thinking");
+        else if (ev.phase === "think") update(L().think, L().titleThink, "thinking");
+        else if (ev.phase === "text") update(L().text, L().titleText, "writing");
+        else if (ev.phase === "tool") update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name), toolState(ev.name));
+        else if (ev.phase === "retry") update(L().wait, L().titleRetry, "thinking");
         break;
       case "tool_use": {
         const todo = todoProgress(ev, L());
-        if (todo) update(todo.text, todo.title);
-        else update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name));
+        if (todo) update(todo.text, todo.title, todo.state);
+        else update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name), toolState(ev.name));
         break;
       }
       case "perm_request":
-        update(L().perm(L().toolName(ev.tool || ev.name)), L().waiting);
+        update(L().perm(L().toolName(ev.tool || ev.name)), L().waiting, "waiting");
         break;
       case "perm_resolved":
-        update(L().resume, L().working);
+        update(L().resume, L().working, "working");
         break;
       case "compacting":
-        update(L().compact, L().titleCompact);
+        update(L().compact, L().titleCompact, "thinking");
         break;
       case "sub_progress":
-        update(L().sub(ev.desc || L().start), L().titleSub);
+        update(L().sub(ev.desc || L().start), L().titleSub, "subtask");
         break;
       case "run_idle":
-        if (ev.bg > 0) update(L().bg, L().titleBg);
+        if (ev.bg > 0) update(L().bg, L().titleBg, "working");
         break;
       case "error":
-        update("", L().titleError);   // 不转发 message：可能带路径/命令输出
+        update("", L().titleError, "error");   // 不转发 message：可能带路径/命令输出
         break;
       case "run_end":
         if (!active) break;
@@ -279,7 +289,7 @@ export function createWorkIsland(opts = {}) {
     if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
     if (had) {
       const fn = sync ? emitSync : emit;
-      fn("IDLE", L().idleTitle, L().idleText, 0);
+      fn("IDLE", L().idleTitle, L().idleText, 0, "idle");
     }
   }
 

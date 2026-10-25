@@ -11,8 +11,11 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
@@ -63,6 +66,49 @@ public class MainActivity extends Activity {
         root.addView(button("完成", CARD, FG, v -> demo(Notifier.ACTION_DONE)));
         root.addView(button("清除通知", CARD, MUTED, v -> demo(Notifier.ACTION_CANCEL)));
         root.addView(button("后台保活设置", CARD, FG, v -> keepAlive()));
+
+        TextView iconLabel = new TextView(this);
+        iconLabel.setText("岛上图标（按模型自选）");
+        iconLabel.setTextColor(MUTED);
+        iconLabel.setTextSize(13);
+        iconLabel.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(-2, -2);
+        ilp.setMargins(0, dp(18), 0, dp(6));
+        root.addView(iconLabel, ilp);
+
+        final String[] iconNames = {"Agent HUD", "DeepSeek", "Claude", "OpenClaw", "小鱼"};
+        final String[] iconKeys = {"hud", "deepseek", "claude", "openclaw", "fish"};
+        Spinner iconSpinner = new Spinner(this);
+        ArrayAdapter<String> iconAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, iconNames);
+        iconSpinner.setAdapter(iconAdapter);
+        int selected = 0;
+        String current = Prefs.icon(this);
+        for (int i = 0; i < iconKeys.length; i++) if (iconKeys[i].equals(current)) selected = i;
+        iconSpinner.setSelection(selected);
+        iconSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Prefs.setIcon(MainActivity.this, iconKeys[position]);
+                try {
+                    startForegroundService(new Intent(MainActivity.this, IslandService.class)
+                            .setAction(IslandService.ACTION_IDLE));
+                } catch (Throwable ignored) {}
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-1, -2);
+        slp.setMargins(dp(12), 0, dp(12), dp(10));
+        root.addView(iconSpinner, slp);
+
+        TextView iconNote = new TextView(this);
+        iconNote.setText("模型图标来自 LobeHub（MIT）；商标归各自所有者，非官方关联。");
+        iconNote.setTextColor(0xFF6F6B64);
+        iconNote.setTextSize(11);
+        iconNote.setGravity(Gravity.CENTER);
+        root.addView(iconNote, lp(0, 0, 0, 8));
 
         TextView hint = new TextView(this);
         hint.setText("如果岛上没出现：系统设置 → 通知 → 工作岛 → 允许实时更新");
@@ -122,6 +168,7 @@ public class MainActivity extends Activity {
         boolean done = Notifier.ACTION_DONE.equals(action);
         i.putExtra("title", done ? "任务完成" : "Claude 正在干活");
         i.putExtra("text", done ? "测试完成" : "正在用 Bash…");
+        i.putExtra("state", done ? "done" : "running");
         i.putExtra("since", System.currentTimeMillis());
         sendBroadcast(i);
     }

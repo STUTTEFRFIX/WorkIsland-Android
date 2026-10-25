@@ -28,7 +28,16 @@ const TOOL_CN = {
   Agent: '子任务', Skill: '调用技能', KillShell: '收尾命令',
 };
 
+const TOOL_STATE = {
+  Bash: 'running', KillShell: 'running',
+  Read: 'reading', Glob: 'reading', Grep: 'reading',
+  Write: 'writing', Edit: 'writing', NotebookEdit: 'writing',
+  WebSearch: 'searching', WebFetch: 'searching',
+  Task: 'subtask', Agent: 'subtask', Skill: 'working',
+};
+
 const toolLabel = (name) => TOOL_CN[name] || name || '工具';
+const toolState = (name) => TOOL_STATE[name] || 'working';
 
 /** TodoWrite 的清单进度：{ title, text }；不是清单工具返回 null */
 function todoProgress(ev) {
@@ -36,7 +45,7 @@ function todoProgress(ev) {
   if (!todos) return null;
   const total = todos.length;
   const done = todos.filter((t) => t && t.status === 'completed').length;
-  return { title: '整理清单', text: `清单 ${done}/${total}` };
+  return { title: '整理清单', text: `清单 ${done}/${total}`, state: 'planning' };
 }
 
 let active = null;          // { id, startedAt, last }
@@ -46,10 +55,11 @@ let verifying = false;
 
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 
-function send(action, title, text, since) {
+function send(action, title, text, since, state) {
   const args = ['start-foreground-service', '--user', '0', '-n', SVC, '-a', action];
   if (title) args.push('--es', 'title', title);
   if (text) args.push('--es', 'text', text);
+  if (state) args.push('--es', 'state', state);
   if (since) args.push('--el', 'since', String(since));
   const attempt = (n) => execFile('am', args, { timeout: 8000 }, (e, out, err) => {
     if (!e) return;
@@ -69,16 +79,17 @@ function start(run, text) {
   verifying = false;
   active = { id: (run && run.id) || '', startedAt: Number(run && run.startedAt) || Date.now(), last: '' };
   log('start', active.id || '?', active.startedAt);
-  update(text || '正在处理…', '正在干活');
+  update(text || '正在处理…', '正在干活', 'working');
 }
 
-function update(text, title) {
+function update(text, title, state) {
   if (!active) return;
   const t = title || '正在干活';
-  const key = t + '|' + text;
+  const st = state || 'working';
+  const key = t + '|' + text + '|' + st;
   if (key === active.last) return;
   active.last = key;
-  send(A.update, t, text, active.startedAt);
+  send(A.update, t, text, active.startedAt, st);
 }
 
 function finish(reason) {
@@ -94,9 +105,9 @@ function finish(reason) {
     doneTimer = null;
     if (active) return;
     log('done', human, reason || '');
-    send(A.done, '', '', 0);
+    send(A.done, '', '', 0, 'done');
     if (idleTimer) clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => { idleTimer = null; if (!active) { log('idle'); send(A.idle, '', '', 0); } }, 8000);
+    idleTimer = setTimeout(() => { idleTimer = null; if (!active) { log('idle'); send(A.idle, '', '', 0, 'idle'); } }, 8000);
   }, 3000);
 }
 
@@ -134,39 +145,39 @@ function handleEvent(ev) {
       start(ev, '正在处理…');
       break;
     case 'run_busy':
-      update('继续处理…', '正在干活');
+      update('继续处理…', '正在干活', 'working');
       break;
     case 'phase':
-      if (ev.phase === 'wait') update('等模型回复…', '等模型');
-      else if (ev.phase === 'think') update('正在想…', '思考中');
-      else if (ev.phase === 'text') update('正在写回复…', '写回复');
-      else if (ev.phase === 'tool') update('用 ' + toolLabel(ev.name) + '…', toolLabel(ev.name));
-      else if (ev.phase === 'retry') update('重试中…', '重试中');
+      if (ev.phase === 'wait') update('等模型回复…', '等模型', 'thinking');
+      else if (ev.phase === 'think') update('正在想…', '思考中', 'thinking');
+      else if (ev.phase === 'text') update('正在写回复…', '写回复', 'writing');
+      else if (ev.phase === 'tool') update('用 ' + toolLabel(ev.name) + '…', toolLabel(ev.name), toolState(ev.name));
+      else if (ev.phase === 'retry') update('重试中…', '重试中', 'thinking');
       break;
     case 'tool_use': {
       const todo = todoProgress(ev);
-      if (todo) update(todo.text, todo.title);
-      else update('用 ' + toolLabel(ev.name) + '…', toolLabel(ev.name));
+      if (todo) update(todo.text, todo.title, todo.state);
+      else update('用 ' + toolLabel(ev.name) + '…', toolLabel(ev.name), toolState(ev.name));
       break;
     }
     case 'perm_request':
-      update('需要你确认：' + toolLabel(ev.tool || ev.name), '等你确认');
+      update('需要你确认：' + toolLabel(ev.tool || ev.name), '等你确认', 'waiting');
       break;
     case 'perm_resolved':
-      update('继续…', '正在干活');
+      update('继续…', '正在干活', 'working');
       break;
     case 'compacting':
-      update('整理上下文…', '整理上下文');
+      update('整理上下文…', '整理上下文', 'thinking');
       break;
     case 'sub_progress':
-      update('子任务：' + (ev.desc || '进行中') + '…', '子任务');
+      update('子任务：' + (ev.desc || '进行中') + '…', '子任务', 'subtask');
       break;
     case 'run_idle':
-      if (ev.bg > 0) update('后台任务还在跑…', '后台任务');
+      if (ev.bg > 0) update('后台任务还在跑…', '后台任务', 'working');
       break;
     case 'error':
       // 不转发 message：可能带路径/命令输出
-      update('', '出错了');
+      update('', '出错了', 'error');
       break;
     case 'run_end':
       // 不按 runId 直接排除：换轮时 active.id 可能还是上一轮的。
