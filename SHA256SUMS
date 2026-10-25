@@ -10,7 +10,7 @@ a9e6127146099ab7ebb892893b9665c8c30250eeb806cbbb05ec3bbc9fce0ce7  ./docs/02-开�
 aaeaf8a8ad079d844bb48e738058f20d887ec5fbcb57b28c80f6a6ef2fafce35  ./docs/04-提交说明.md
 d0bd36b4d0e91c525ae6872c49bd3fb2ca87942dc356e0dcff2f66d13c0305fd  ./docs/05-开发过程与真机测试.md
 c794ec0765259a4c3506f1e9b5236a55011032f0ca7c0d88d0cc2b497f6c8cbb  ./docs/06-状态与保活.md
-f3df18084ded2955c0be5d7fe41c6967aa07893e2a0311a08c9c6a1fd1d32aaf  ./pdf/工作岛-方案与设计.pdf
+01d970cdf7e6c68e8dd936dee3e989a58e765c63fcfff62760994b44446e64b5  ./pdf/工作岛-方案与设计.pdf
 fb4031eb35d061099102d89290ee4d7f6ec23bc09ea9bfe30e4941bd1c295a54  ./screenshots/01-working.png
 fec20072c2e1d67d3a65f753e230fe74932b898531460a621a04b6077d78628b  ./screenshots/02-done.png
 60386c6d94e8c227ffa8e5591da41dd87792a3a2ad1b1df6ca4edabb9edd9b08  ./screenshots/03-idle.png
@@ -46,7 +46,7 @@ d5261f44d4cf5a721c5da239cfd0dd8d416aa7e3d9ddb2f698c47d1f5d6fe20d  ./source/drive
 aeda82a6bf66fedcabbd7b75b1382af2b583a5454c7b1e86e21c980e56d94a8b  ./source/gateway/server.mjs
 f3dc40a2f5366337a35e51ca941f6b53c6c7ddfd3b761e6775b9220c04bf9d3a  ./source/gateway/server.mjs.original
 0f9b0cff3a0ac8a75f4bacba6b0492f3fc51bac5d1c0f6d71359224e0ddc9c40  ./source/gateway/work-island.mjs
-7c0645b71329e63a809a5a4cdda6e228a152d8314e0feafdaa1b84fc0ef9325b  ./source/tools/make_docs.py
+822663ca5ff57b290e837d53949ab8236d44ad9dd4beb94c90b4d2e1789cd754  ./source/tools/make_docs.py
 84a8c45d2ee7f61ab3e0d6403eee11449cd0341426cfc9a6e146d966cc08b23b  ./source/upstream-pr-review.patch
 184e0106a283663d2bed4e5d0b2c5c42d83e035196dc7ec6a0fb7b47044aae62  ./source/upstream-pr/README.md
 ef1f1a4e75ad77f508b5ebe1bd8bf9eead3fa6da6a33e453f2a268a1395e37dd  ./source/upstream-pr/android/AndroidManifest.xml
@@ -61,4 +61,4 @@ c73ea796ce1ea9d552636cc14e118fd731671d4c4ed7bf8aeccc8d9fde7825ec  ./source/upstr
 79763d6024960615d713845a63e65947ae28b85ead618dea3edda46371927b40  ./source/upstream-pr/gateway/web/app/12-model-caps.js
 250bdda1eadf559562dca8424d76934e427f1001b525ba00220c9a1e463a8535  ./source/upstream-pr/gateway/web/index.html
 894694a2298b1ce94e31056ed518402fc938c0f71df3df53ef65d9e0643771cd  ./交付清单.md
-c8c3e44a422c4335d002dd83db3d5f4116ebf490a67a5920f89ddad19dc70827  ./提交版.html
+5108e7faea308ace56e28e728c1dfd2a1da0f9e4ff618823699a07a09d934f05  ./提交版.html
