@@ -97,6 +97,7 @@
     <tr><td>三、测试报告</td><td>10 个用例、关键日志、截图索引、6 个问题与修复</td></tr>
     <tr><td>四、提交说明</td><td>验收步骤、设计要点、已知限制、变更记录</td></tr>
     <tr><td>五、开发过程与真机测试</td><td>时间线、踩坑与修法、全部真机测试记录、过程链接</td></tr>
+    <tr><td>六、状态与保活</td><td>标题跟随动作、清单进度、后台保活与自动恢复方案</td></tr>
   </table>
   <div class="toc-note">
     <b>三个非显然结论</b>
@@ -225,7 +226,7 @@
 </tr>
 <tr>
 <td><code>docs/</code></td>
-<td>方案与设计、开发部署、测试报告、提交说明、开发过程与真机测试</td>
+<td>方案与设计、开发部署、测试报告、提交说明、开发过程与真机测试、状态与保活</td>
 </tr>
 </tbody>
 </table>
@@ -1823,7 +1824,265 @@ gateway: 9842 / 32734
 <li>工作岛仓库：https://github.com/STUTTEFRFIX/WorkIsland-Android</li>
 <li>工作岛 1.1 Release：https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.1.0</li>
 </ul>
-<p>代码、截图、测试命令与日志都在这个仓库里；这篇文档会随着后续复测继续补。</p></article>
+<p>代码、截图、测试命令与日志都在这个仓库里；这篇文档会随着后续复测继续补。</p></article><article class="doc page-break"><div class="doc-title">六、状态与保活</div><h1 id="_1">状态展示与后台保活</h1>
+<blockquote>
+<p>2026-10-26
+设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16
+应用：工作岛 1.1 · cccodroid 0.4.2（实机）</p>
+</blockquote>
+<p>这篇文档分两部分：<strong>岛上现在能显示哪些状态</strong>，以及 <strong>应用被系统杀掉后怎么恢复</strong>。</p>
+<hr>
+<h2 id="_2">一、状态标题与清单进度</h2>
+<h3 id="11">1.1 标题跟着动作走</h3>
+<p>以前胶囊标题固定为「正在干活」，具体动作藏在展开里。现在标题直接是当前动作，一眼能看出我在干嘛：</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>胶囊标题</th>
+<th>展开文本</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>刚开始</td>
+<td>正在干活</td>
+<td>正在处理…</td>
+</tr>
+<tr>
+<td>等模型</td>
+<td>等模型</td>
+<td>等模型回复…</td>
+</tr>
+<tr>
+<td>思考</td>
+<td>思考中</td>
+<td>正在想…</td>
+</tr>
+<tr>
+<td>写回复</td>
+<td>写回复</td>
+<td>正在写回复…</td>
+</tr>
+<tr>
+<td>读文件</td>
+<td>读文件</td>
+<td>用 读文件…</td>
+</tr>
+<tr>
+<td>改文件</td>
+<td>改文件</td>
+<td>用 改文件…</td>
+</tr>
+<tr>
+<td>执行命令</td>
+<td>执行命令</td>
+<td>用 执行命令…</td>
+</tr>
+<tr>
+<td>搜代码</td>
+<td>搜代码</td>
+<td>用 搜代码…</td>
+</tr>
+<tr>
+<td>查资料</td>
+<td>查资料</td>
+<td>用 查资料…</td>
+</tr>
+<tr>
+<td>子任务</td>
+<td>子任务</td>
+<td>子任务：&lt;描述&gt;…</td>
+</tr>
+<tr>
+<td>等你确认</td>
+<td>等你确认</td>
+<td>需要你确认：&lt;工具&gt;</td>
+</tr>
+<tr>
+<td>整理上下文</td>
+<td>整理上下文</td>
+<td>整理上下文…</td>
+</tr>
+<tr>
+<td>后台任务</td>
+<td>后台任务</td>
+<td>后台任务还在跑…</td>
+</tr>
+<tr>
+<td>出错</td>
+<td>出错了</td>
+<td>（空，不显示内容）</td>
+</tr>
+<tr>
+<td>完成</td>
+<td>任务完成</td>
+<td>用时 X</td>
+</tr>
+<tr>
+<td>收起</td>
+<td>工作岛</td>
+<td>在后台等下一轮</td>
+</tr>
+</tbody>
+</table>
+<p>标题控制在 3–5 个汉字，避免胶囊截断；更长的描述放展开文本。</p>
+<h3 id="12">1.2 清单进度</h3>
+<p><code>TodoWrite</code> 工具调用会解析 <code>input.todos</code>，统计 <code>completed</code> 数量：</p>
+<ul>
+<li>标题：<strong>整理清单</strong></li>
+<li>文本：<strong>清单 2/5</strong></li>
+</ul>
+<p>这样多步骤任务不用展开也能看到进度。</p>
+<h3 id="13">1.3 错误脱敏</h3>
+<p><code>error</code> 事件的 <code>message</code> 可能包含路径、命令输出等内容，不再转发：</p>
+<ul>
+<li>标题：<strong>出错了</strong></li>
+<li>文本：空</li>
+</ul>
+<h3 id="14">1.4 实现位置</h3>
+<table>
+<thead>
+<tr>
+<th>部署方式</th>
+<th>文件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.4.2–0.4.6 独立 driver</td>
+<td><code>source/driver/driver.mjs</code></td>
+</tr>
+<tr>
+<td>0.4.7 上游进程内集成</td>
+<td><code>source/upstream-pr/gateway/gw/work-island-core.mjs</code></td>
+</tr>
+</tbody>
+</table>
+<p>单测：<code>node scripts/test.mjs work-island</code> → <strong>12/12</strong>（新增清单进度用例）。</p>
+<hr>
+<h2 id="_3">二、后台保活与自动恢复</h2>
+<h3 id="21">2.1 发生了什么</h3>
+<p>2026-10-25 夜里到 10-26 早上，工作岛应用被系统杀掉了：</p>
+<ul>
+<li>应用进程、前台服务、通知全部消失；</li>
+<li>cccodroid 的网关和 driver 还活着；</li>
+<li>早上岛上没有任何状态，直到手动打开一次「工作岛」才恢复。</li>
+</ul>
+<p>这不是驱动的问题，是 Android / ColorOS 把应用停掉了。</p>
+<h3 id="22">2.2 为什么会这样</h3>
+<ol>
+<li><strong>ColorOS 的电池管理会杀后台</strong>。前台服务（FGS）不是免死金牌；深度睡眠/应用速冻/省电策略都可能把进程停掉。</li>
+<li><strong>Android 10+ 禁止后台启动 Activity</strong>。ccc odroid 的 driver 用 <code>am start</code> 起不来一个被系统停掉的应用；设备工具同样被挡。</li>
+<li><strong>Shizuku 当时没在跑</strong>，所以 <code>priv</code>（shell 身份）也帮不上忙。</li>
+<li><strong>强行停止（force-stop）是设计上不可自救的</strong>：应用被标记为 stopped 后，广播、闹钟、JobScheduler 都不会再唤起它，直到用户手动打开。</li>
+</ol>
+<h3 id="23">2.3 恢复能力矩阵</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>能否自动恢复</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>划掉最近任务</td>
+<td>能</td>
+<td><code>stopWithTask=false</code>，服务继续跑</td>
+</tr>
+<tr>
+<td>系统内存回收（普通 kill）</td>
+<td>通常能</td>
+<td><code>START_STICKY</code> + 闹钟看门狗</td>
+</tr>
+<tr>
+<td>ColorOS 深度睡眠/速冻</td>
+<td>看情况</td>
+<td>进程被杀后，闹钟/看门狗可尝试拉起；被 force-stop 则不行</td>
+</tr>
+<tr>
+<td>强行停止（force-stop）</td>
+<td><strong>不能</strong></td>
+<td>必须手动打开应用，或重启手机（BOOT_COMPLETED）</td>
+</tr>
+<tr>
+<td>重启手机</td>
+<td>能</td>
+<td><code>BOOT_COMPLETED</code> 接收器会拉起服务</td>
+</tr>
+<tr>
+<td>Shizuku 在跑</td>
+<td>能补一刀</td>
+<td>shell 身份可以 <code>am start-foreground-service</code> 拉起被停的应用</td>
+</tr>
+</tbody>
+</table>
+<h3 id="24-coloros">2.4 ColorOS 推荐设置（手动）</h3>
+<p>这几步 adb 管不到，需要在系统设置里点：</p>
+<ol>
+<li><strong>设置 → 应用 → 应用管理 → 工作岛 → 耗电管理</strong>
+   - 选「允许后台活动」/「不优化」。</li>
+<li><strong>设置 → 应用 → 自启动</strong>
+   - 把「工作岛」打开。</li>
+<li><strong>最近任务 → 长按工作岛卡片 → 锁定</strong>
+   - 防止划掉/清理时被带走。</li>
+<li><strong>设置 → 电池 → 更多 → 睡眠待机优化</strong>
+   - 把「工作岛」设为「不优化」。</li>
+<li>如果开了「应用速冻」/「深度睡眠」，把工作岛加入白名单。</li>
+</ol>
+<p>工作岛应用内已经有「后台保活设置」按钮，会跳到电池优化页；状态行显示「电池：不优化」才算生效。</p>
+<h3 id="25-app">2.5 App 侧看门狗（待实现）</h3>
+<p>计划在应用里加一个 <code>AlarmManager</code> 定时器：</p>
+<ul>
+<li>每 15 分钟发一次 <code>PendingIntent</code> 给 <code>WatchdogReceiver</code>；</li>
+<li>接收器检查服务是否在跑，不在就 <code>startForegroundService</code>；</li>
+<li>如果通知已经过期/丢失，重新发一条待机通知。</li>
+</ul>
+<p>限制：force-stop 后闹钟会被取消，仍然需要手动打开；Doze 下闹钟可能被延后，不能保证分钟级准时。</p>
+<h3 id="26-driver">2.6 Driver 侧兜底（可选）</h3>
+<p>driver 的 <code>am start-foreground-service</code> 失败时，可以再试一次 <code>priv -- am start-foreground-service ...</code>：</p>
+<ul>
+<li>前提：Shizuku 在运行；</li>
+<li>优点：shell 身份可以拉起被系统停掉的应用；</li>
+<li>缺点：多一个 Shizuku 依赖；<code>priv</code> 命令会进审计日志。</li>
+</ul>
+<p>当前只在个人部署里考虑，没有加进上游 PR 的默认路径。</p>
+<h3 id="27">2.7 验证方法</h3>
+<ol>
+<li>打开「工作岛」，确认状态行：通知开 / 实时更新允许 / 电池不优化。</li>
+<li>正常划掉最近任务，等 8 秒：服务应还在（岛还挂着或待机通知还在）。</li>
+<li>用 Shizuku 执行 <code>am force-stop com.dafeiyu.workisland</code>：
+   - 预期：应用停掉，岛消失；<code>am start</code>/设备工具都起不来；
+   - 手动打开应用后恢复。</li>
+<li>用 <code>am kill com.dafeiyu.workisland</code>（普通 kill）：
+   - 预期：<code>START_STICKY</code> 或闹钟看门狗把它拉回来。</li>
+<li>重启手机：开机后应自动出现待机通知。</li>
+</ol>
+<h3 id="28">2.8 限制</h3>
+<ul>
+<li><strong>force-stop 不可自救</strong>，这是 Android 的设计，不是应用 bug。</li>
+<li>不同 ColorOS 版本的设置项名称略有差异；找不到时按「电池 / 自启动 / 后台活动」三个关键词找。</li>
+<li>闹钟看门狗在 Doze 下可能延迟；不能替代 ColorOS 白名单。</li>
+<li>不建议为了保活去要 root；风险大于收益。</li>
+</ul>
+<hr>
+<h2 id="_4">三、建议</h2>
+<ol>
+<li>先把 2.4 的五个开关都打开——这是最有效的一步。</li>
+<li>加上 2.5 的闹钟看门狗，覆盖普通 kill / 系统回收。</li>
+<li>Shizuku 如果常开，可以在 driver 里加 <code>priv</code> 兜底；不常开就不加。</li>
+<li>接受 force-stop 需要手动打开这一条，不要为它引入 root。</li>
+</ol>
+<hr>
+<h2 id="_5">相关</h2>
+<ul>
+<li>状态标题的代码：<code>source/driver/driver.mjs</code>、<code>source/upstream-pr/gateway/gw/work-island-core.mjs</code></li>
+<li>单测：<code>source/upstream-pr/gateway/tests/work-island.test.mjs</code></li>
+<li>上游 PR：#21</li>
+<li>应用仓库：https://github.com/STUTTEFRFIX/WorkIsland-Android</li>
+</ul></article>
 <section class="gallery page-break"><h2>界面截图</h2><div class="grid"><figure><img src="screenshots/01-working.png" alt="工作态：鱼图标 +「正在干活」"><figcaption>工作态：鱼图标 +「正在干活」</figcaption></figure><figure><img src="screenshots/02-done.png" alt="完成态：「任务完成」+ 用时"><figcaption>完成态：「任务完成」+ 用时</figcaption></figure><figure><img src="screenshots/03-idle.png" alt="8 秒后：岛上收起"><figcaption>8 秒后：岛上收起</figcaption></figure><figure><img src="screenshots/04-background.png" alt="后台：两个应用都退到桌面，岛仍在"><figcaption>后台：两个应用都退到桌面，岛仍在</figcaption></figure><figure><img src="screenshots/05-app.png" alt="应用界面：通知开 / 实时更新允许 / 电池不优化"><figcaption>应用界面：通知开 / 实时更新允许 / 电池不优化</figcaption></figure><figure><img src="screenshots/06-final.png" alt="聊天界面 + 胶囊"><figcaption>聊天界面 + 胶囊</figcaption></figure></div></section>
 </body>
 </html>

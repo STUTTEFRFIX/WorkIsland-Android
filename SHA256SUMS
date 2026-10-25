@@ -1,5 +1,5 @@
 cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30  ./LICENSE
-c02323e6ad661164b89136c6d91f757b7bc46e37a00086f1db3d8db4f9efadb1  ./README.md
+43ebb01a195741f949671df357b94e1055ba46698071129a2c64d87f1990ab00  ./README.md
 c154631ca1c67368c48450d1cdafea2954b45c5a6493904ddd7ec39a75bf0bed  ./STATUS.md
 728c4f3a8ff020ea9c9ad3cdac7ffa4c235c7c41030868aa77e1628cc9d681e6  ./apk/WorkIsland.apk
 fc726ee321848010258d8bb1528c3d870b193563db585cce2fff8adc5d268335  ./docs/01-方案与设计.md
@@ -7,7 +7,8 @@ b23a1846e7ce852fd1a61eb37a9960183342537a20d77aa2cba6f5a7a1bc2b0d  ./docs/02-开�
 5df440239f4678764d07468c4cfe827b5b14386c7091f8a9a6e4ab4087293b5a  ./docs/03-测试报告.md
 938b47b84282f3e3b62d0edf3ded3faab3c9f1ea25d4f4f914d69a05feac3922  ./docs/04-提交说明.md
 e795ba5654f2aff77468089820e067f7d804160b5ac28805f7a4d942a88bfe34  ./docs/05-开发过程与真机测试.md
-3df250a9a5865e57fead4b59103bd0b99c69bfa67ba34f12d8a104b07a5d7cd0  ./pdf/工作岛-方案与设计.pdf
+64051ed3db87c3549895e9f6b6dc98f76d2f944b73f6ee9d01d9e1b30ac2cfe0  ./docs/06-状态与保活.md
+5b14853a6df0f502e92ada6d8c4492001383e1103ffcf3b2f952144445e36eb6  ./pdf/工作岛-方案与设计.pdf
 fb4031eb35d061099102d89290ee4d7f6ec23bc09ea9bfe30e4941bd1c295a54  ./screenshots/01-working.png
 fec20072c2e1d67d3a65f753e230fe74932b898531460a621a04b6077d78628b  ./screenshots/02-done.png
 60386c6d94e8c227ffa8e5591da41dd87792a3a2ad1b1df6ca4edabb9edd9b08  ./screenshots/03-idle.png
@@ -35,7 +36,7 @@ d78e460d9826bf52e79b98a903f3f7217a539f91458d23ff984997eec1711dd8  ./source/app/r
 aeda82a6bf66fedcabbd7b75b1382af2b583a5454c7b1e86e21c980e56d94a8b  ./source/gateway/server.mjs
 f3dc40a2f5366337a35e51ca941f6b53c6c7ddfd3b761e6775b9220c04bf9d3a  ./source/gateway/server.mjs.original
 0f9b0cff3a0ac8a75f4bacba6b0492f3fc51bac5d1c0f6d71359224e0ddc9c40  ./source/gateway/work-island.mjs
-06a6d2d1efcc6acd0ba5d7d7dbcb2eb48898ad23d4423aed1b5d6438c1aaade2  ./source/tools/make_docs.py
+d155e70b56845bbd1ac1353de27bfc30a6620b4f38e239f21112c4f70873aca5  ./source/tools/make_docs.py
 c47e01233ed4ef26113d80a9d46336cb5cdce88216a5a10d02a273836c9e6cea  ./source/upstream-pr-review.patch
 184e0106a283663d2bed4e5d0b2c5c42d83e035196dc7ec6a0fb7b47044aae62  ./source/upstream-pr/README.md
 ef1f1a4e75ad77f508b5ebe1bd8bf9eead3fa6da6a33e453f2a268a1395e37dd  ./source/upstream-pr/android/AndroidManifest.xml
@@ -49,5 +50,5 @@ da950a50e3de2a3b4032e0ba93b7e2534ca6f73e8fe2763a0ad814016ca9ab47  ./source/upstr
 acf54932d8d608cca0ecd088dd1c55ded1fd3d2a3ac52ff527a1daa33d50fb4b  ./source/upstream-pr/gateway/tests/work-island.test.mjs
 79763d6024960615d713845a63e65947ae28b85ead618dea3edda46371927b40  ./source/upstream-pr/gateway/web/app/12-model-caps.js
 250bdda1eadf559562dca8424d76934e427f1001b525ba00220c9a1e463a8535  ./source/upstream-pr/gateway/web/index.html
-3607922a9d9570ae95cbfd6fa16f6b41ea48f021da5056e4c8aa830f1a73b272  ./交付清单.md
-caa13c4f9a1060163d1e140b5fc6fd4fe45ce095b18b9c236aaf694ae0bf391d  ./提交版.html
+1bc480e5d5876eb0ec88f3483274b0b304c9e8e5e7fc97c62346a88f30bfdb20  ./交付清单.md
+294615e3ced5f1e0d78f119e4321d7deccda7bb732b5de804ebe290e1463370e  ./提交版.html
