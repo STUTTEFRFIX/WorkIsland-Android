@@ -8,6 +8,27 @@
 //  · error 只显示「出错了」，不转发 message（可能含路径/命令输出）。
 //  · 文案跟随 LAST_LANG：zh 开头用中文，否则英文。
 
+const ZH_TOOLS = {
+  Bash: "执行命令", Read: "读文件", Write: "写文件", Edit: "改文件",
+  Glob: "找文件", Grep: "搜代码", WebSearch: "查资料", WebFetch: "读网页",
+  Task: "子任务", Agent: "子任务", TodoWrite: "整理清单", NotebookEdit: "改笔记",
+  Skill: "调用技能", KillShell: "收尾命令",
+};
+
+const EN_TOOL_NAMES = {
+  Bash: "a command", Read: "a file", Write: "a file", Edit: "a file",
+  Glob: "files", Grep: "code", WebSearch: "the web", WebFetch: "a page",
+  Task: "a subtask", Agent: "a subtask", TodoWrite: "the list",
+  NotebookEdit: "a notebook", Skill: "a skill", KillShell: "a command",
+};
+
+const EN_TOOL_TITLES = {
+  Bash: "Running", Read: "Reading", Write: "Writing", Edit: "Editing",
+  Glob: "Finding", Grep: "Searching", WebSearch: "Searching", WebFetch: "Reading",
+  Task: "Subtask", Agent: "Subtask", TodoWrite: "Updating list",
+  NotebookEdit: "Editing", Skill: "Skill", KillShell: "Stopping",
+};
+
 const ZH = {
   working: "正在干活",
   done: "任务完成",
@@ -27,12 +48,18 @@ const ZH = {
   idleTitle: "工作岛",
   idleText: "在后台等下一轮",
   took: (s) => `用时 ${s}`,
-  toolName: (n) => ({
-    Bash: "执行命令", Read: "读文件", Write: "写文件", Edit: "改文件",
-    Glob: "找文件", Grep: "搜代码", WebSearch: "查资料", WebFetch: "读网页",
-    Task: "子任务", Agent: "子任务", TodoWrite: "整理清单", NotebookEdit: "改笔记",
-    Skill: "调用技能", KillShell: "收尾命令",
-  })[n] || n || "工具",
+  titleWait: "等模型",
+  titleThink: "思考中",
+  titleText: "写回复",
+  titleRetry: "重试中",
+  titleCompact: "整理上下文",
+  titleSub: "子任务",
+  titleBg: "后台任务",
+  titleError: "出错了",
+  todoTitle: "整理清单",
+  todo: (d, t) => `清单 ${d}/${t}`,
+  toolName: (n) => ZH_TOOLS[n] || n || "工具",
+  toolTitle: (n) => ZH_TOOLS[n] || n || "工具",
 };
 
 const EN = {
@@ -54,17 +81,32 @@ const EN = {
   idleTitle: "Work Island",
   idleText: "Waiting for the next run",
   took: (s) => `Took ${s}`,
-  toolName: (n) => ({
-    Bash: "a command", Read: "a file", Write: "a file", Edit: "a file",
-    Glob: "files", Grep: "code", WebSearch: "the web", WebFetch: "a page",
-    Task: "a subtask", Agent: "a subtask", TodoWrite: "the list",
-    NotebookEdit: "a notebook", Skill: "a skill", KillShell: "a command",
-  })[n] || n || "a tool",
+  titleWait: "Waiting",
+  titleThink: "Thinking",
+  titleText: "Writing",
+  titleRetry: "Retrying",
+  titleCompact: "Compacting",
+  titleSub: "Subtask",
+  titleBg: "Background",
+  titleError: "Error",
+  todoTitle: "Updating list",
+  todo: (d, t) => `List ${d}/${t}`,
+  toolName: (n) => EN_TOOL_NAMES[n] || n || "a tool",
+  toolTitle: (n) => EN_TOOL_TITLES[n] || n || "Tool",
 };
 
 function humanDuration(sec, zh) {
   if (zh) return sec < 60 ? `${sec} 秒` : `${Math.floor(sec / 60)} 分 ${sec % 60} 秒`;
   return sec < 60 ? `${sec}s` : `${Math.floor(sec / 60)}m ${sec % 60}s`;
+}
+
+/** TodoWrite 的清单进度：{ title, text }；不是清单工具返回 null */
+function todoProgress(ev, l) {
+  const todos = ev && ev.input && Array.isArray(ev.input.todos) ? ev.input.todos : null;
+  if (!todos) return null;
+  const total = todos.length;
+  const done = todos.filter((t) => t && t.status === "completed").length;
+  return { title: l.todoTitle, text: l.todo(done, total) };
 }
 
 /**
@@ -191,15 +233,18 @@ export function createWorkIsland(opts = {}) {
         update(L().resume, L().working);
         break;
       case "phase":
-        if (ev.phase === "wait") update(L().wait);
-        else if (ev.phase === "think") update(L().think);
-        else if (ev.phase === "text") update(L().text);
-        else if (ev.phase === "tool") update(L().tool(L().toolName(ev.name)));
-        else if (ev.phase === "retry") update(L().wait);
+        if (ev.phase === "wait") update(L().wait, L().titleWait);
+        else if (ev.phase === "think") update(L().think, L().titleThink);
+        else if (ev.phase === "text") update(L().text, L().titleText);
+        else if (ev.phase === "tool") update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name));
+        else if (ev.phase === "retry") update(L().wait, L().titleRetry);
         break;
-      case "tool_use":
-        update(L().tool(L().toolName(ev.name)));
+      case "tool_use": {
+        const todo = todoProgress(ev, L());
+        if (todo) update(todo.text, todo.title);
+        else update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name));
         break;
+      }
       case "perm_request":
         update(L().perm(L().toolName(ev.tool || ev.name)), L().waiting);
         break;
@@ -207,16 +252,16 @@ export function createWorkIsland(opts = {}) {
         update(L().resume, L().working);
         break;
       case "compacting":
-        update(L().compact);
+        update(L().compact, L().titleCompact);
         break;
       case "sub_progress":
-        update(L().sub(ev.desc || L().start));
+        update(L().sub(ev.desc || L().start), L().titleSub);
         break;
       case "run_idle":
-        if (ev.bg > 0) update(L().bg);
+        if (ev.bg > 0) update(L().bg, L().titleBg);
         break;
       case "error":
-        update(L().error);          // 不转发 message：可能带路径/命令输出
+        update("", L().titleError);   // 不转发 message：可能带路径/命令输出
         break;
       case "run_end":
         if (!active) break;

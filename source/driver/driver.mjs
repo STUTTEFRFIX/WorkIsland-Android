@@ -28,6 +28,17 @@ const TOOL_CN = {
   Agent: '子任务', Skill: '调用技能', KillShell: '收尾命令',
 };
 
+const toolLabel = (name) => TOOL_CN[name] || name || '工具';
+
+/** TodoWrite 的清单进度：{ title, text }；不是清单工具返回 null */
+function todoProgress(ev) {
+  const todos = ev && ev.input && Array.isArray(ev.input.todos) ? ev.input.todos : null;
+  if (!todos) return null;
+  const total = todos.length;
+  const done = todos.filter((t) => t && t.status === 'completed').length;
+  return { title: '整理清单', text: `清单 ${done}/${total}` };
+}
+
 let active = null;          // { id, startedAt, last }
 let doneTimer = null;
 let idleTimer = null;
@@ -123,35 +134,39 @@ function handleEvent(ev) {
       start(ev, '正在处理…');
       break;
     case 'run_busy':
-      update('继续处理…');
+      update('继续处理…', '正在干活');
       break;
     case 'phase':
-      if (ev.phase === 'wait') update('等模型回复…');
-      else if (ev.phase === 'think') update('正在想…');
-      else if (ev.phase === 'text') update('正在写回复…');
-      else if (ev.phase === 'tool') update('用 ' + (TOOL_CN[ev.name] || ev.name || '工具') + '…');
-      else if (ev.phase === 'retry') update('重试中…');
+      if (ev.phase === 'wait') update('等模型回复…', '等模型');
+      else if (ev.phase === 'think') update('正在想…', '思考中');
+      else if (ev.phase === 'text') update('正在写回复…', '写回复');
+      else if (ev.phase === 'tool') update('用 ' + toolLabel(ev.name) + '…', toolLabel(ev.name));
+      else if (ev.phase === 'retry') update('重试中…', '重试中');
       break;
-    case 'tool_use':
-      update('用 ' + (TOOL_CN[ev.name] || ev.name || '工具') + '…');
+    case 'tool_use': {
+      const todo = todoProgress(ev);
+      if (todo) update(todo.text, todo.title);
+      else update('用 ' + toolLabel(ev.name) + '…', toolLabel(ev.name));
       break;
+    }
     case 'perm_request':
-      update('需要你确认：' + (ev.tool || ev.name || '操作'), '等你确认');
+      update('需要你确认：' + toolLabel(ev.tool || ev.name), '等你确认');
       break;
     case 'perm_resolved':
       update('继续…', '正在干活');
       break;
     case 'compacting':
-      update('整理上下文…');
+      update('整理上下文…', '整理上下文');
       break;
     case 'sub_progress':
-      update('子任务：' + (ev.desc || '进行中') + '…');
+      update('子任务：' + (ev.desc || '进行中') + '…', '子任务');
       break;
     case 'run_idle':
-      if (ev.bg > 0) update('后台任务还在跑…');
+      if (ev.bg > 0) update('后台任务还在跑…', '后台任务');
       break;
     case 'error':
-      update('出错了：' + String(ev.message || '').slice(0, 60));
+      // 不转发 message：可能带路径/命令输出
+      update('', '出错了');
       break;
     case 'run_end':
       // 不按 runId 直接排除：换轮时 active.id 可能还是上一轮的。

@@ -298,10 +298,10 @@ index fbc8e6d..e751d15 100644
    }
 diff --git a/gateway/gw/work-island-core.mjs b/gateway/gw/work-island-core.mjs
 new file mode 100644
-index 0000000..c1732c5
+index 0000000..3763856
 --- /dev/null
 +++ b/gateway/gw/work-island-core.mjs
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,292 @@
 +// ── 工作岛核心：事件 → 状态文案 → 完成判定 ────────────────────────────────
 +// 纯逻辑，不碰进程、不读设置、不订阅总线；方便单元测试。
 +// 外面的 work-island.mjs 负责把它接到真实总线、runs 和 am 上。
@@ -311,6 +311,27 @@ index 0000000..c1732c5
 +//  · 收工看 runs（所有活跃轮次），不看 run；run_end 后仍要等 3 秒宽限。
 +//  · error 只显示「出错了」，不转发 message（可能含路径/命令输出）。
 +//  · 文案跟随 LAST_LANG：zh 开头用中文，否则英文。
++
++const ZH_TOOLS = {
++  Bash: "执行命令", Read: "读文件", Write: "写文件", Edit: "改文件",
++  Glob: "找文件", Grep: "搜代码", WebSearch: "查资料", WebFetch: "读网页",
++  Task: "子任务", Agent: "子任务", TodoWrite: "整理清单", NotebookEdit: "改笔记",
++  Skill: "调用技能", KillShell: "收尾命令",
++};
++
++const EN_TOOL_NAMES = {
++  Bash: "a command", Read: "a file", Write: "a file", Edit: "a file",
++  Glob: "files", Grep: "code", WebSearch: "the web", WebFetch: "a page",
++  Task: "a subtask", Agent: "a subtask", TodoWrite: "the list",
++  NotebookEdit: "a notebook", Skill: "a skill", KillShell: "a command",
++};
++
++const EN_TOOL_TITLES = {
++  Bash: "Running", Read: "Reading", Write: "Writing", Edit: "Editing",
++  Glob: "Finding", Grep: "Searching", WebSearch: "Searching", WebFetch: "Reading",
++  Task: "Subtask", Agent: "Subtask", TodoWrite: "Updating list",
++  NotebookEdit: "Editing", Skill: "Skill", KillShell: "Stopping",
++};
 +
 +const ZH = {
 +  working: "正在干活",
@@ -331,12 +352,18 @@ index 0000000..c1732c5
 +  idleTitle: "工作岛",
 +  idleText: "在后台等下一轮",
 +  took: (s) => `用时 ${s}`,
-+  toolName: (n) => ({
-+    Bash: "执行命令", Read: "读文件", Write: "写文件", Edit: "改文件",
-+    Glob: "找文件", Grep: "搜代码", WebSearch: "查资料", WebFetch: "读网页",
-+    Task: "子任务", Agent: "子任务", TodoWrite: "整理清单", NotebookEdit: "改笔记",
-+    Skill: "调用技能", KillShell: "收尾命令",
-+  })[n] || n || "工具",
++  titleWait: "等模型",
++  titleThink: "思考中",
++  titleText: "写回复",
++  titleRetry: "重试中",
++  titleCompact: "整理上下文",
++  titleSub: "子任务",
++  titleBg: "后台任务",
++  titleError: "出错了",
++  todoTitle: "整理清单",
++  todo: (d, t) => `清单 ${d}/${t}`,
++  toolName: (n) => ZH_TOOLS[n] || n || "工具",
++  toolTitle: (n) => ZH_TOOLS[n] || n || "工具",
 +};
 +
 +const EN = {
@@ -358,17 +385,32 @@ index 0000000..c1732c5
 +  idleTitle: "Work Island",
 +  idleText: "Waiting for the next run",
 +  took: (s) => `Took ${s}`,
-+  toolName: (n) => ({
-+    Bash: "a command", Read: "a file", Write: "a file", Edit: "a file",
-+    Glob: "files", Grep: "code", WebSearch: "the web", WebFetch: "a page",
-+    Task: "a subtask", Agent: "a subtask", TodoWrite: "the list",
-+    NotebookEdit: "a notebook", Skill: "a skill", KillShell: "a command",
-+  })[n] || n || "a tool",
++  titleWait: "Waiting",
++  titleThink: "Thinking",
++  titleText: "Writing",
++  titleRetry: "Retrying",
++  titleCompact: "Compacting",
++  titleSub: "Subtask",
++  titleBg: "Background",
++  titleError: "Error",
++  todoTitle: "Updating list",
++  todo: (d, t) => `List ${d}/${t}`,
++  toolName: (n) => EN_TOOL_NAMES[n] || n || "a tool",
++  toolTitle: (n) => EN_TOOL_TITLES[n] || n || "Tool",
 +};
 +
 +function humanDuration(sec, zh) {
 +  if (zh) return sec < 60 ? `${sec} 秒` : `${Math.floor(sec / 60)} 分 ${sec % 60} 秒`;
 +  return sec < 60 ? `${sec}s` : `${Math.floor(sec / 60)}m ${sec % 60}s`;
++}
++
++/** TodoWrite 的清单进度：{ title, text }；不是清单工具返回 null */
++function todoProgress(ev, l) {
++  const todos = ev && ev.input && Array.isArray(ev.input.todos) ? ev.input.todos : null;
++  if (!todos) return null;
++  const total = todos.length;
++  const done = todos.filter((t) => t && t.status === "completed").length;
++  return { title: l.todoTitle, text: l.todo(done, total) };
 +}
 +
 +/**
@@ -495,15 +537,18 @@ index 0000000..c1732c5
 +        update(L().resume, L().working);
 +        break;
 +      case "phase":
-+        if (ev.phase === "wait") update(L().wait);
-+        else if (ev.phase === "think") update(L().think);
-+        else if (ev.phase === "text") update(L().text);
-+        else if (ev.phase === "tool") update(L().tool(L().toolName(ev.name)));
-+        else if (ev.phase === "retry") update(L().wait);
++        if (ev.phase === "wait") update(L().wait, L().titleWait);
++        else if (ev.phase === "think") update(L().think, L().titleThink);
++        else if (ev.phase === "text") update(L().text, L().titleText);
++        else if (ev.phase === "tool") update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name));
++        else if (ev.phase === "retry") update(L().wait, L().titleRetry);
 +        break;
-+      case "tool_use":
-+        update(L().tool(L().toolName(ev.name)));
++      case "tool_use": {
++        const todo = todoProgress(ev, L());
++        if (todo) update(todo.text, todo.title);
++        else update(L().tool(L().toolName(ev.name)), L().toolTitle(ev.name));
 +        break;
++      }
 +      case "perm_request":
 +        update(L().perm(L().toolName(ev.tool || ev.name)), L().waiting);
 +        break;
@@ -511,16 +556,16 @@ index 0000000..c1732c5
 +        update(L().resume, L().working);
 +        break;
 +      case "compacting":
-+        update(L().compact);
++        update(L().compact, L().titleCompact);
 +        break;
 +      case "sub_progress":
-+        update(L().sub(ev.desc || L().start));
++        update(L().sub(ev.desc || L().start), L().titleSub);
 +        break;
 +      case "run_idle":
-+        if (ev.bg > 0) update(L().bg);
++        if (ev.bg > 0) update(L().bg, L().titleBg);
 +        break;
 +      case "error":
-+        update(L().error);          // 不转发 message：可能带路径/命令输出
++        update("", L().titleError);   // 不转发 message：可能带路径/命令输出
 +        break;
 +      case "run_end":
 +        if (!active) break;
@@ -551,10 +596,10 @@ index 0000000..c1732c5
 +}
 diff --git a/gateway/gw/work-island.mjs b/gateway/gw/work-island.mjs
 new file mode 100644
-index 0000000..6add6fb
+index 0000000..340179e
 --- /dev/null
 +++ b/gateway/gw/work-island.mjs
-@@ -0,0 +1,109 @@
+@@ -0,0 +1,111 @@
 +// ── 工作岛（可选集成）──────────────────────────────────────────────────────
 +// 在网关进程里直接订阅事件总线，把 Claude 的工作状态经 am 送给「工作岛」应用。
 +//
@@ -609,7 +654,9 @@ index 0000000..6add6fb
 +function detectApp(cb) {
 +  if (process.env.CCAPP_WORK_ISLAND === "1") return cb(true);
 +  if (process.env.CCAPP_WORK_ISLAND === "0") return cb(false);
-+  execFile("pm", ["list", "packages", PKG], { timeout: 3000 }, (e, out) => {
++  // pm 默认按“当前用户”查；应用 uid 会撞 INTERACT_ACROSS_USERS（asks to run as user 10），
++  // 必须显式 --user 0。包可见性由 AndroidManifest 的 <queries> 解决。
++  execFile("pm", ["list", "packages", "--user", "0", PKG], { timeout: 3000 }, (e, out) => {
 +    cb(!e && String(out).includes("package:" + PKG));
 +  });
 +}
@@ -694,10 +741,10 @@ index d5bfe69..b4eccd0 100644
 +process.on("SIGINT", () => { try { stopWorkIslandSync(); } catch {} try { bridgeProc?.kill(); } catch {} process.exit(0); });
 diff --git a/gateway/tests/work-island.test.mjs b/gateway/tests/work-island.test.mjs
 new file mode 100644
-index 0000000..3de7c94
+index 0000000..ca9e8c8
 --- /dev/null
 +++ b/gateway/tests/work-island.test.mjs
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,147 @@
 +// 工作岛核心：状态映射、换轮不误报、中止、确认、节流、中英文
 +import { test } from "node:test";
 +import assert from "node:assert/strict";
@@ -727,7 +774,28 @@ index 0000000..3de7c94
 +  assert.equal(sent.at(-1).title, "正在干活");
 +  assert.equal(sent.at(-1).text, "正在处理…");
 +  core.handleEvent({ type: "tool_use", name: "Read" });
++  assert.equal(sent.at(-1).title, "读文件");
 +  assert.equal(sent.at(-1).text, "用 读文件…");
++});
++
++test("清单：TodoWrite 显示已完成/总数", () => {
++  const { core, sent } = make();
++  core.handleEvent({ type: "run_start", startedAt: Date.now() });
++  core.handleEvent({
++    type: "tool_use",
++    name: "TodoWrite",
++    input: {
++      todos: [
++        { status: "completed" },
++        { status: "completed" },
++        { status: "pending" },
++        { status: "in_progress" },
++        { status: "pending" },
++      ],
++    },
++  });
++  assert.equal(sent.at(-1).title, "整理清单");
++  assert.equal(sent.at(-1).text, "清单 2/5");
 +});
 +
 +test("完成：任务完成 + 用时，8 秒后收起", async () => {
@@ -781,12 +849,13 @@ index 0000000..3de7c94
 +  assert.match(sent.at(-1).text, /执行命令/);
 +});
 +
-+test("错误：只显示「出错了」，不转发 message", () => {
++test("错误：标题「出错了」，不转发 message", () => {
 +  const { core, sent } = make();
 +  core.handleEvent({ type: "run_start", startedAt: Date.now() });
 +  core.handleEvent({ type: "error", message: "/secret/path token=abc" });
-+  assert.equal(sent.at(-1).text, "出错了");
-+  assert.ok(!sent.at(-1).text.includes("secret"));
++  assert.equal(sent.at(-1).title, "出错了");
++  assert.equal(sent.at(-1).text, "");
++  assert.ok(!JSON.stringify(sent.at(-1)).includes("secret"));
 +});
 +
 +test("英文：Working / Using a command…", () => {
@@ -794,6 +863,7 @@ index 0000000..3de7c94
 +  core.handleEvent({ type: "run_start", startedAt: Date.now() });
 +  assert.equal(sent.at(-1).title, "Working");
 +  core.handleEvent({ type: "tool_use", name: "Bash" });
++  assert.equal(sent.at(-1).title, "Running");
 +  assert.equal(sent.at(-1).text, "Using a command…");
 +});
 +

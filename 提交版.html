@@ -157,7 +157,8 @@
 </blockquote>
 <p>把 <strong>cccodroid 里 Claude 的实时工作状态</strong>，投到 <strong>ColorOS 16 的流体云 / 灵动岛</strong>上。</p>
 <ul>
-<li>干活时：岛上写「正在干活」，下面跟着「用 执行命令…」「正在想…」「等你确认…」</li>
+<li>干活时：胶囊标题跟着动作走——读文件 / 执行命令 / 思考中 / 等你确认；下面跟着更细的描述</li>
+<li><code>TodoWrite</code> 任务清单会显示「清单 x/y」</li>
 <li>收工：写「任务完成」+ 用时</li>
 <li>8 秒后：岛上收起，通知栏只留一条安静的「工作岛 · 在后台等下一轮」</li>
 </ul>
@@ -506,7 +507,9 @@
 </tbody>
 </table>
 <p>工具名映射：<code>Bash→执行命令</code>、<code>Read→读文件</code>、<code>Write/Edit→写/改文件</code>、<code>Grep→搜代码</code>、<code>WebSearch→查资料</code>、<code>Task/Agent→子任务</code>、<code>TodoWrite→整理清单</code> 等。</p>
-<p>标题固定为「正在干活」；权限确认时临时用「等你确认」；完成时用「任务完成」。</p>
+<blockquote>
+<p>标题会跟着动作走：读文件 / 执行命令 / 思考中 / 等模型 / 写回复 / 等你确认 / 整理清单 / 后台任务 / 出错了。文本保留更长的描述；<code>TodoWrite</code> 显示「清单 x/y」。完成时标题用「任务完成」。</p>
+</blockquote>
 <hr>
 <h2 id="6">6. 收工判定：四道关</h2>
 <p>这是整个项目踩坑最多的地方，单独说明。</p>
@@ -1250,6 +1253,12 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <td>应用内显示「通知：关」，可跳系统设置</td>
 <td>未做破坏性测试</td>
 </tr>
+<tr>
+<td>T11</td>
+<td>状态标题跟随动作 / 清单进度</td>
+<td>标题显示读文件 / 执行命令 / 思考中 / 等你确认；TodoWrite 显示清单 x/y</td>
+<td><strong>单测通过</strong>；真机待确认</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1700,7 +1709,7 @@ gateway: 9842 / 32734
 <tr>
 <td>6</td>
 <td>单测 + 整机</td>
-<td>11 个单测；两轮衔接/停网关真机复测</td>
+<td>12 个单测；两轮衔接/停网关真机复测</td>
 </tr>
 <tr>
 <td>7</td>
@@ -1775,16 +1784,24 @@ gateway: 9842 / 32734
 </ul>
 <h3 id="37">3.7 单元测试</h3>
 <pre><code class="language-bash">node scripts/test.mjs work-island
-# tests 11 / pass 11 / fail 0
+# tests 12 / pass 12 / fail 0
 </code></pre>
 <p>覆盖：状态映射、完成+收起、换轮不误报、宽限期取消、中止、等确认、
-错误脱敏、英文、1.5 秒节流、关开关发 IDLE。</p>
+错误脱敏、英文、1.5 秒节流、清单进度、关开关发 IDLE。</p>
 <h3 id="38">3.8 构建与安装</h3>
 <ul>
 <li><code>versionCode=2</code>、<code>versionName=1.1</code>，41,929 字节。</li>
 <li><code>pm install -r</code> 成功；通知权限授予。</li>
 <li>应用内状态：通知开 / 实时更新允许 / 电池不优化。</li>
 <li>截图：<code>screenshots/05-app.png</code>。</li>
+</ul>
+<h3 id="39-2026-10-26">3.9 状态标题跟随动作 + 清单进度（2026-10-26）</h3>
+<ul>
+<li>胶囊标题不再固定为「正在干活」，而是跟着当前动作走：
+  读文件 / 执行命令 / 思考中 / 等模型 / 写回复 / 等你确认 / 整理清单 / 后台任务 / 出错了。</li>
+<li><code>TodoWrite</code> 工具会显示「清单 x/y」。</li>
+<li>单测新增清单进度用例，<code>node scripts/test.mjs work-island</code> → <strong>12/12</strong>。</li>
+<li>驱动已重启；真机标题由主人目视确认。</li>
 </ul>
 <hr>
 <h2 id="4">4. 尚未验证 / 已知限制</h2>
