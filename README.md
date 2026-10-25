@@ -19,6 +19,8 @@
 
 更多截图见 `screenshots/`，完整边界见 [`STATUS.md`](STATUS.md)，方案见 [`docs/01-方案与设计.md`](docs/01-方案与设计.md)。
 
+**下载**：[v1.0.0 发布页](https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.0.0) · APK 与 PDF 在 Release 附件里。
+
 ---
 
 ## 交付物
