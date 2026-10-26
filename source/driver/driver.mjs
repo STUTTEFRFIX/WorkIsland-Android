@@ -67,22 +67,51 @@ function todoProgress(ev) {
 let active = null;          // { id, startedAt, last, step, done, total, title, text, state, anim }
 let animTimer = null;
 let animInFlight = false;
+// 档位由工作岛写在 Android/media 下（本应用可写、driver 有读存储权限）：
+// 0 关闭 / 1 标准 4 帧 / 2 流畅 8 帧。应用内预览不受影响，始终 60fps。
+const ANIM_CONF = "/storage/emulated/0/Android/media/com.dafeiyu.workisland/anim.conf";
+let animTier = 1;
+let animFrames = [0, 1, 3, 5];
+let animPos = 0;
+function applyAnimTier(v) {
+  if (v !== 0 && v !== 1 && v !== 2) return;
+  if (v === animTier) return;
+  animTier = v;
+  animFrames = v === 2 ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 1, 3, 5];
+  animPos = 0;
+  if (v === 0) {
+    stopAnim();
+    // 关掉动画时补一帧静止，别让脸停在眨眼/瞟眼上
+    if (active) send(A.update, active.title, active.text, active.startedAt, active.state,
+      active.step, active.done, active.total, -1, 0);
+  } else if (active) startAnim();
+  log("anim tier", v);
+}
+function readAnimTier() {
+  try { applyAnimTier(Number(fs.readFileSync(ANIM_CONF, "utf8").trim())); } catch {}
+}
+readAnimTier();
+setInterval(readAnimTier, 10000).unref?.();
 
-// 思考时头顶的省略号要动。实测同一个通知 ID 更新也会刷新前导图标
-// （thinking / error 两态截图不一样），所以只换 bitmap、不换通知 ID ——
-// 换 ID 才会让胶囊收回再弹出。节奏放慢到 800ms，别让它看起来在抽搐。
+// 岛上动画分两档：应用内 60fps，岛上只做慢速四帧（静止/瞟左/眨眼/瞟右）。
+// 实测同一个通知 ID 更新也会刷新前导图标，所以只换 bitmap、不换通知 ID ——
+// 换 ID 才会让胶囊收回再弹出。900ms 一帧，别让它看起来在抽搐。
 function tickAnim() {
-  if (!active || active.state !== 'thinking' || animInFlight) {
-    if (!active || active.state !== 'thinking') stopAnim();
+  if (!active || animTier === 0 || animInFlight) {
+    if (!active || animTier === 0) stopAnim();
     return;
   }
-  active.anim = (active.anim + 1) % 3;
+  animPos = (animPos + 1) % animFrames.length;
+  active.anim = animFrames[animPos];
   animInFlight = true;
   send(A.update, active.title, active.text, active.startedAt, active.state,
     active.step, active.done, active.total, -1, active.anim,
     () => { animInFlight = false; });
 }
-function startAnim() { if (!animTimer) animTimer = setInterval(tickAnim, 800); }
+function startAnim() {
+  if (animTier === 0) return;
+  if (!animTimer) animTimer = setInterval(tickAnim, 900);
+}
 function stopAnim() {
   if (animTimer) { clearInterval(animTimer); animTimer = null; }
   animInFlight = false;
@@ -142,7 +171,7 @@ function update(text, title, state) {
   active.state = st;
   active.anim = 0;
   send(A.update, t, text, active.startedAt, st, active.step, active.done, active.total);
-  if (st === 'thinking') startAnim(); else stopAnim();
+  startAnim();   // 两档动画：岛上四帧慢速，应用内 BotView 自己跑 60fps
 }
 
 function finish(reason) {

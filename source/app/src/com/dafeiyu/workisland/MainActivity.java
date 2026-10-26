@@ -159,6 +159,33 @@ public class MainActivity extends Activity {
         klp.setMargins(dp(8), 0, dp(8), dp(4));
         root.addView(soul, klp);
 
+        TextView animLabel = new TextView(this);
+        animLabel.setText("岛上动画（应用内预览始终 60fps）");
+        animLabel.setTextColor(FG);
+        animLabel.setTextSize(14);
+        LinearLayout.LayoutParams allp = new LinearLayout.LayoutParams(-1, -2);
+        allp.setMargins(dp(8), dp(6), dp(8), 0);
+        root.addView(animLabel, allp);
+
+        Spinner animSpinner = new Spinner(this);
+        ArrayAdapter<String> animAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item,
+                new String[]{"关闭", "标准（4 帧）", "流畅（8 帧）"});
+        animSpinner.setAdapter(animAdapter);
+        animSpinner.setSelection(Prefs.islandAnim(this));
+        animSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Prefs.setIslandAnim(MainActivity.this, position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        LinearLayout.LayoutParams anlp = new LinearLayout.LayoutParams(-1, -2);
+        anlp.setMargins(dp(12), 0, dp(12), dp(6));
+        root.addView(animSpinner, anlp);
+
         TextView soulNote = new TextView(this);
         soulNote.setText("关掉就退回旧的简笔图标。标识：! 请求　? 提问　≡ 清单　× 出错　⧗ 限额　… 思考　z 睡着");
         soulNote.setTextColor(0xFF6F6B64);
@@ -246,6 +273,7 @@ public class MainActivity extends Activity {
         }
         botKey = Prefs.icon(this);
         botView.setBot(botKey, botLook, botFailed);
+        Prefs.writeAnimTier(this);   // 让外面读的 driver 一开始就有档位文件
         refreshLabels();
         refresh();
 

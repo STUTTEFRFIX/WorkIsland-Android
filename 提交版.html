@@ -82,7 +82,7 @@
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
     <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>98c6082527f4f349fd45b1f46c8de79e5e3dc82745099a62c47652627ba9bbb2</div>
+  <div class="hash">APK SHA-256<br>6a871e15b4ec061997aac8e0b436263118a61db12ba6df5cef68934cc2b51f80</div>
 </section>
 
 <section class="toc">
@@ -265,7 +265,7 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  98c6082527f4f349fd45b1f46c8de79e5e3dc82745099a62c47652627ba9bbb2
+<pre><code>SHA-256  6a871e15b4ec061997aac8e0b436263118a61db12ba6df5cef68934cc2b51f80
 大小     338,665 字节
 </code></pre>
 <hr>
@@ -794,8 +794,12 @@ SIGNS  !  ?  ≡  ×  ⧗  …  z
 <p>通知的小图标本来是静态位图，ColorOS 又会在后台冻结应用，应用内定时器不可靠。
 所以动画帧由 <strong>driver</strong>（跑在网关进程里）推：</p>
 <ul>
-<li>思考时每 800 ms 发一帧 <code>--ei anim 0/1/2</code>：省略号的亮点从左跳到右，眼睛左右瞟，
-  身体上下浮 1.8%；应用只负责按帧重画。上一帧的 <code>am</code> 返回后才发下一帧，避免排队。</li>
+<li>所有状态都由 driver 推帧：默认每 900 ms 一帧，上一帧的 <code>am</code> 返回后才发下一帧，避免排队。</li>
+<li><strong>三档由应用里的「岛上动画」控制</strong>：关闭 / 标准（4 帧：静止·瞟左·闭眼·瞟右）/
+  流畅（8 帧：静止·瞟左·半眨·闭眼·半眨·瞟右·静止·呼吸）。档位写在
+  <code>/sdcard/Android/media/com.dafeiyu.workisland/anim.conf</code>，driver 每 10 秒读一次。</li>
+<li>思考时省略号亮格跟着帧轮转；关掉动画时补一帧静止，不会停在眨眼上。</li>
+<li>应用内 <code>BotView</code> 不受档位影响，始终 60fps（呼吸、眨眼、起跳、笑眼）。</li>
 <li><strong>通知 ID 始终是 1001</strong>：同一个 ID 的更新也会刷新前导图标（thinking / error 两态实测像素不同）；
   不换 ID，胶囊就不会收回再弹出（主人叫它「抽搐」）。</li>
 <li>第一帧直接是最终 bot，不再发 <code>morph 0/45/80</code> 唤醒帧：第一帧是 logo 时会被系统缓存一整轮，
@@ -1288,7 +1292,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <blockquote>
 <p>测试日期：2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>98c60825…bbb2</code>）</p>
+应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>6a871e15…1f80</code>）</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 测试环境</h2>
@@ -1694,7 +1698,7 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>98c60825…bbb2</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>6a871e15…1f80</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
@@ -1835,6 +1839,11 @@ gateway: 9842 / 32734
 <td>1.4</td>
 <td>上游 PR #22（OPEN）：清单接 <code>tasks</code> 事件（TaskCreate/TaskUpdate）、认不出的工具走通用文案、错误正文固定；单测 19/19，<code>source/upstream-pr/</code> 已同步</td>
 </tr>
+<tr>
+<td>2026-10-26</td>
+<td>1.4</td>
+<td>岛上动画三档（关闭 / 标准 4 帧 / 流畅 8 帧）：档位经 <code>Android/media/.../anim.conf</code> 交给 driver，900ms 一帧；应用内预览仍 60fps</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1852,7 +1861,7 @@ gateway: 9842 / 32734
 <blockquote>
 <p>记录时间：2026-10-25–26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>98c60825…bbb2</code>）
+应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>6a871e15…1f80</code>）
 宿主：cccodroid 0.4.2（实机）+ 0.4.6（测试网关，PR 分支）</p>
 </blockquote>
 <p>这篇文档把「怎么一步步做出来、踩了哪些坑、在真机上测了什么」全部摊开。代码、截图、测试记录都在仓库里，过程不藏在对话里。</p>
@@ -2317,8 +2326,10 @@ gateway: 9842 / 32734
   <code>等你确认</code>、<code>整理清单 2/4</code>；不再只显示一个动作词。</li>
 <li><strong>展开通知</strong>：标题带进度（<code>整理清单 · 1/4</code>），副标题是细节（<code>正在改 BotPainter · 清单 1/4</code>），
   右上角计时在走；进度条按清单分段，已完成的段亮起。</li>
-<li><strong>动效</strong>：永远同一个通知 ID；driver 每 800 ms 推一帧 <code>anim</code>（省略号亮点跳、眼睛左右瞟、身体轻浮），
-  只换 bitmap，不重建通知——换 ID 会让胶囊收回再弹出（「抽搐」）。</li>
+<li><strong>动效</strong>：永远同一个通知 ID；driver 每 900 ms 推一帧 <code>anim</code>，只换 bitmap，不重建通知——
+  换 ID 会让胶囊收回再弹出（「抽搐」）。</li>
+<li><strong>三档</strong>：应用里的「岛上动画」选关闭 / 标准（4 帧）/ 流畅（8 帧）；档位写在
+  <code>Android/media/com.dafeiyu.workisland/anim.conf</code>，driver 每 10 秒读一次。应用内 <code>BotView</code> 始终 60fps。</li>
 <li><strong>第一帧</strong>：直接是最终 bot，不发 <code>morph</code> 唤醒帧（第一帧是 logo 会被缓存一整轮）。</li>
 <li><strong>尺寸恒定</strong>：图标永远给头顶标识预留位置，<code>!</code> <code>?</code> <code>≡</code> 出现/消失时 bot 不会忽大忽小。</li>
 <li><strong>开关</strong>：「程序化 bot（四态 + 标识 + 体征）」关掉后，小/大图标退回 1.2 的简笔模型形状。</li>

@@ -92,14 +92,23 @@ final class BotPainter {
         // 待命就是「刚醒来」：只显示 logo；一干活才变成 bot。
         float morph = look == BotState.Look.IDLE ? 0f
                 : morphPercent >= 0 ? Math.max(0, Math.min(1, morphPercent / 100f)) : 1f;
-        int lit = look == BotState.Look.THINKING ? Math.abs(anim) % 3 : 0;
+        // 岛上的慢速帧：0 静止、1 瞟左、2 半眨眼、3 闭眼、4 半眨眼、5 瞟右、6 静止、7 呼吸。
+        // 标准档只发 0/1/3/5，流畅档发全 8 帧；应用内 BotView 不读这里，自己跑 60fps。
+        int frame = Math.abs(anim) % 8;
+        int lit = look == BotState.Look.THINKING ? frame % 3 : 0;
         Face face = faceFor(look, failed);
-        Pose pose = null;
+        Pose pose = new Pose();
         if (look == BotState.Look.THINKING) {
-            // 小图标也要看得出在动：眼睛左右瞟 + 整个身体轻轻上下浮。
             face.look = -0.55f + (lit - 1) * 0.22f;
-            pose = new Pose();
             pose.y = lit == 1 ? -0.018f : lit == 2 ? 0.018f : 0;
+            if (frame == 3) face.open = 0f;
+            else if (frame == 2 || frame == 4) face.open = 0.45f;
+        } else {
+            if (frame == 1) { face.look = 0.16f; pose.y = -0.010f; }
+            else if (frame == 2 || frame == 4) { face.open = 0.45f; }
+            else if (frame == 3) { face.open = 0f; }
+            else if (frame == 5) { face.look = -0.16f; pose.y = 0.010f; }
+            else if (frame == 7) { pose.y = -0.008f; }
         }
         draw(canvas, form, px, face, morph, 0f, sign, lit, 1f, pose);
         ICONS.put(cacheKey, bitmap);

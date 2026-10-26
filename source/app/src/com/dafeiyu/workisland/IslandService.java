@@ -23,6 +23,13 @@ public class IslandService extends Service {
     private String lastKey = "";
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        // 只在服务创建时写一次档位文件；别在每条 UPDATE 上重写，否则会盖掉调试时手改的值
+        Prefs.writeAnimTier(this);
+    }
+
+    @Override
     public IBinder onBind(Intent intent) {
         return null;
     }

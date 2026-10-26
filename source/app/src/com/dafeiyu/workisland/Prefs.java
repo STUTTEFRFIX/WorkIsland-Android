@@ -3,12 +3,16 @@ package com.dafeiyu.workisland;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.io.File;
+import java.io.FileWriter;
+
 final class Prefs {
     private static final String FILE = "island";
     private static final String TOKEN = "token";
     private static final String PORT = "port";
     private static final String ICON = "icon";
     private static final String SOUL = "soul";
+    private static final String ISLAND_ANIM = "islandAnim";
 
     private Prefs() {}
 
@@ -40,5 +44,32 @@ final class Prefs {
 
     static void setSoul(Context c, boolean value) {
         c.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean(SOUL, value).apply();
+    }
+
+    /** 岛上动画：0 关闭 / 1 标准（4 帧）/ 2 流畅（8 帧）。应用内预览始终 60fps，不受影响。 */
+    static int islandAnim(Context c) {
+        int v = c.getSharedPreferences(FILE, Context.MODE_PRIVATE).getInt(ISLAND_ANIM, 1);
+        return v < 0 || v > 2 ? 1 : v;
+    }
+
+    static void setIslandAnim(Context c, int value) {
+        c.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putInt(ISLAND_ANIM, value).apply();
+        writeAnimTier(c);
+    }
+
+    /**
+     * driver 跑在 cccodroid 里，读不到本应用的 SharedPreferences；
+     * 用 Android/media 下的一个小文件当信道（本应用可写、对方有读存储权限）。
+     */
+    static void writeAnimTier(Context c) {
+        try {
+            File[] dirs = c.getExternalMediaDirs();
+            if (dirs == null || dirs.length == 0 || dirs[0] == null) return;
+            File dir = dirs[0];
+            if (!dir.exists()) dir.mkdirs();
+            try (FileWriter w = new FileWriter(new File(dir, "anim.conf"))) {
+                w.write(String.valueOf(islandAnim(c)));
+            }
+        } catch (Throwable ignored) {}
     }
 }
