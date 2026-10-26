@@ -73,7 +73,7 @@ final class BotSheet {
         canvas.save();
         canvas.translate(x, y);
         BotState.Sign sign = BotState.sign(look, failed);
-        android.graphics.RectF content = BotPainter.content(form, px, sign);
+        android.graphics.RectF content = BotPainter.content(form, px, sign, look == BotState.Look.IDLE);
         canvas.translate((CELL - content.width()) / 2 - content.left,
                 (CELL - content.height()) / 2 - content.top);
         float morph = look == BotState.Look.IDLE ? 0f : 1f;

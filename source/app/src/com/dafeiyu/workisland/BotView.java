@@ -130,7 +130,7 @@ public final class BotView extends View {
         int lit = (int) (seconds * 2.5f) % 3;
         float alpha = sign == BotState.Sign.ELLIPSIS || sign == BotState.Sign.Z ? eased : 1;
 
-        android.graphics.RectF content = BotPainter.content(form, px, sign);
+        android.graphics.RectF content = BotPainter.content(form, px, sign, morph < 0.98f);
         canvas.save();
         canvas.translate((getWidth() - content.width()) / 2 - content.left,
                 (getHeight() - content.height()) / 2 - content.top);

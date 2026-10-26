@@ -101,7 +101,7 @@ public class MainActivity extends Activity {
 
         botView = new BotView(this);
         botView.setBot(botKey, botLook, botFailed);
-        stage.addView(botView, new LinearLayout.LayoutParams(dp(250), dp(250)));
+        stage.addView(botView, new LinearLayout.LayoutParams(dp(340), dp(340)));
 
         botLabel = new TextView(this);
         botLabel.setTextColor(MUTED);
@@ -123,7 +123,6 @@ public class MainActivity extends Activity {
         ArrayAdapter<String> lookAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, LOOK_NAMES);
         lookSpinner.setAdapter(lookAdapter);
-        lookSpinner.setSelection(2);
         lookSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -133,6 +132,8 @@ public class MainActivity extends Activity {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
+        // 等控件挂上去再选中「执行命令」，否则首帧会被默认的「待命」覆盖。
+        lookSpinner.post(() -> lookSpinner.setSelection(2));
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-1, -2);
         slp.setMargins(dp(12), 0, dp(12), dp(8));
         root.addView(lookSpinner, slp);
@@ -235,6 +236,8 @@ public class MainActivity extends Activity {
         scroll.setBackgroundColor(BG);
         scroll.addView(root);
         setContentView(scroll);
+        // 预览放大后内容会超出一屏，别让 ScrollView 自己滚到底把标题顶进状态栏。
+        scroll.post(() -> scroll.scrollTo(0, 0));
         ensureService();
 
         if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)

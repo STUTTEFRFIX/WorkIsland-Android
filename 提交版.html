@@ -170,6 +170,8 @@
 <li><strong>四态 bot</strong>：Wakes / Works / Asks / Done；14 种 look、7 个头顶标识（<code>! ? ≡ × ⧗ … z</code>）</li>
 <li><strong>21 个模型</strong>：每个 agent 有自己的形状、配色、眼睛，Claude 有手脚、DeepSeek 有肚子、Grok 有环、Cursor 缺一角、OpenClaw 有触须</li>
 <li><strong>可关</strong>：设置里的「程序化 bot」开关关掉就退回旧的简笔图标</li>
+<li><strong>岛上不空</strong>：折叠胶囊显示「思考中 1/4」这种状态 + 清单进度；展开后有计时、副标题和分段进度条</li>
+<li><strong>会动</strong>：思考时头顶省略号逐帧跳、眼睛左右瞟、身体轻浮；每轮开始有 0.4 秒 logo→bot 的唤醒</li>
 </ul>
 <p>不是另开一个任务清单，也不是模拟动画——数据直接来自 cccodroid 网关的真实事件流。</p>
 <table>
@@ -255,7 +257,7 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  47f62b8a17e6218382c7ad06826317409bea29252da0414ed7cda91ddd6be994
+<pre><code>SHA-256  53ba7c0e0b2e3ca84aacc984a10511ba6cf42f512880232227cd2f763fc48938
 大小     338,665 字节
 </code></pre>
 <hr>
@@ -320,7 +322,16 @@
 <p>0.4.7 起上游改为进程内订阅（<code>onPublish</code> + <code>runList</code>），不再单独起 driver；本仓库的 <code>source/driver/</code> 是 0.4.2–0.4.6 的部署方式。两种方式发送给同一个应用。</p>
 <p>详细设计见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
 <hr>
-<h2 id="_5">许可与第三方说明</h2>
+<h2 id="_5">参考与致谢</h2>
+<ul>
+<li><a href="https://github.com/jazzenchen/agent-hud-open">jazzenchen/agent-hud-open</a>
+  （Apache-2.0）：四态 bot、14 look、7 个标识、BotSpec 与渲染几何的移植来源。</li>
+<li><a href="https://github.com/greyoak111/cccodroid">cccodroid</a>：网关事件流、终端与宿主能力。</li>
+<li><a href="https://github.com/lobehub/lobe-icons">LobeHub Icons</a>（MIT）：21 个模型图标；
+  商标归各自所有者，非官方关联。</li>
+</ul>
+<hr>
+<h2 id="_6">许可与第三方说明</h2>
 <p>本项目使用 <strong>Apache-2.0</strong>，见 <a href="LICENSE"><code>LICENSE</code></a>。</p>
 <p>第三方图标与许可：Agent HUD 图标（Apache-2.0）、LobeHub 模型图标（MIT），
 详见 <a href="THIRD_PARTY.md"><code>THIRD_PARTY.md</code></a> 与 <a href="LICENSES/"><code>LICENSES/</code></a>。</p>
@@ -758,6 +769,32 @@ SIGNS  !  ?  ≡  ×  ⧗  …  z
 <p><strong>开关与回退</strong></p>
 <p><code>Prefs.soul</code> 默认开。设置页的「程序化 bot（四态 + 标识 + 体征）」关掉后，通知图标退回
 1.2 的简笔画法；应用内仍可预览。</p>
+<p><strong>岛上信息：别让胶囊空着</strong></p>
+<ul>
+<li><strong>折叠胶囊</strong>用 <code>Notification.Builder.setShortCriticalText()</code>：显示「工作状态 + 清单进度」，
+  例如 <code>思考中 1/4</code>、<code>等你确认</code>、<code>整理清单 2/4</code>。ColorOS 的流体云优先显示这段文字，
+  比只放一个短标题更满。</li>
+<li><strong>展开通知</strong>：</li>
+<li>标题 <code>整理清单 · 1/4</code>；</li>
+<li>副标题（<code>setSubText</code>）<code>正在改 BotPainter · 清单 1/4</code>，原来的 <code>cccodroid</code> 换掉；</li>
+<li><code>setUsesChronometer(true)</code> 提供实时计时；</li>
+<li><code>ProgressStyle.setProgressSegments()</code>：清单有几条就分几段，已完成的段用状态色，
+    没完成的段用 20% 白；进度条上的 tracker 还是那只 bot。</li>
+<li>没有清单时退回原来的状态名，进度条保持 indeterminate，不硬凑步骤。</li>
+</ul>
+<p><strong>动效：通知图标也会动</strong></p>
+<p>通知的小图标本来是静态位图，ColorOS 又会在后台冻结应用，应用内定时器不可靠。
+所以动画帧由 <strong>driver</strong>（跑在网关进程里）推：</p>
+<ul>
+<li>思考时每 380 ms 发一帧 <code>--ei anim 0/1/2</code>：省略号的亮点从左跳到右，眼睛左右瞟，
+  身体上下浮 1.8%；应用只负责按帧重画。</li>
+<li>每轮开始发三帧 <code>--ei morph 0/45/80</code>，再回到正常帧：logo 0.4 秒变成 bot，
+  避免「模型硬切出来」。</li>
+<li>图标按 <code>(模型, look, 失败, 尺寸, morph, anim)</code> 做 24 张 LRU 缓存，重建通知时不再每帧重新渲染，
+  减少闪白。</li>
+<li>身体比例恒定：图标永远给头顶标识预留位置（即使当前没有 <code>!</code>/<code>?</code>/<code>≡</code>），
+  所以标识出现/消失时 bot 不会忽大忽小，也不会贴边被圆形槽裁掉。</li>
+</ul>
 <p><strong>许可</strong></p>
 <p>移植自 <code>agent-hud-open</code>（Apache-2.0），bot 素材来自 LobeHub（MIT），商标归各自所有者；
 未使用 Anthropic 的 Clawd sprites。许可全文见 <code>LICENSES/agent-hud-open-LICENSE.txt</code>。</p>
@@ -1240,7 +1277,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <blockquote>
 <p>测试日期：2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>47f62b8a…e994</code>）</p>
+应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>53ba7c0e…8938</code>）</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 测试环境</h2>
@@ -1398,6 +1435,30 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <td>21 个模型 + 14 look 全量渲染 &lt; 1 s</td>
 <td><strong>通过</strong>（<code>10-bot-states.png</code> 一次生成）</td>
 </tr>
+<tr>
+<td>T19</td>
+<td>岛上折叠胶囊信息</td>
+<td>显示「状态 + 清单进度」，不再只有动作</td>
+<td><strong>通过</strong>：<code>dumpsys</code> 中 <code>shortCriticalText=思考中 1/4</code>，截图 <code>13-island-thinking.png</code></td>
+</tr>
+<tr>
+<td>T20</td>
+<td>展开通知信息</td>
+<td>标题带进度、副标题有细节、计时在走、进度条按清单分段</td>
+<td><strong>通过</strong>（<code>11-notification-bot.png</code>）</td>
+</tr>
+<tr>
+<td>T21</td>
+<td>思考时图标动起来</td>
+<td>省略号亮点移动、眼睛左右瞟、身体轻浮</td>
+<td>代码与帧已落地（driver 380 ms/帧）；目视为主观项</td>
+</tr>
+<tr>
+<td>T22</td>
+<td>标识出现/消失不改变身体大小</td>
+<td><code>!</code> <code>?</code> <code>≡</code> 切换时 bot 尺寸恒定，不贴边裁切</td>
+<td><strong>通过</strong>：图标固定为标识预留位置，94% 内容框</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1502,6 +1563,10 @@ gateway: 9842 / 32734
 <td><code>screenshots/12-island-ask.png</code></td>
 <td>岛上实时胶囊：bot + <code>!</code> +「等你确认」</td>
 </tr>
+<tr>
+<td><code>screenshots/13-island-thinking.png</code></td>
+<td>思考三帧：胶囊「思考中 1/4」，省略号亮点在动</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1576,6 +1641,12 @@ gateway: 9842 / 32734
 <td>DeepSeek 的鳍按「完全展开」画在身体外</td>
 <td>静止时收起，只保留肚子；扑腾时才露鳍</td>
 </tr>
+<tr>
+<td>11</td>
+<td>切换状态时模型「切出」/忽大忽小</td>
+<td>图标按「身体 + 标识」一起缩放，<code>!</code>/<code>?</code>/<code>≡</code> 出现时身体被迫缩小</td>
+<td>永远预留标识位置；身体比例恒定，切换只换表情不换尺寸</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1612,7 +1683,7 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>47f62b8a…e994</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>53ba7c0e…8938</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
@@ -1738,6 +1809,11 @@ gateway: 9842 / 32734
 <td>1.4</td>
 <td>移植 agent-hud-open 的 bot 模型：四态 Wakes/Works/Asks/Done、14 look、7 个标识（<code>! ? ≡ × ⧗ … z</code>）、20+2 个 mark 的 BotSpec（轮廓/配色/眼睛/鳍/环/触须/四肢）；应用内 BotView 动效预览；通知大/小图标同源；「程序化 bot」开关；修 START_STICKY null intent 崩溃与 1×1 配色场越界</td>
 </tr>
+<tr>
+<td>2026-10-26</td>
+<td>1.4</td>
+<td>岛上信息增强：胶囊显示「状态 + 清单进度」，展开通知加计时、副标题、分段进度条；思考省略号逐帧动画与唤起变形；图标尺寸恒定，修「切出」</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1755,7 +1831,7 @@ gateway: 9842 / 32734
 <blockquote>
 <p>记录时间：2026-10-25–26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>47f62b8a…e994</code>）
+应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>53ba7c0e…8938</code>）
 宿主：cccodroid 0.4.2（实机）+ 0.4.6（测试网关，PR 分支）</p>
 </blockquote>
 <p>这篇文档把「怎么一步步做出来、踩了哪些坑、在真机上测了什么」全部摊开。代码、截图、测试记录都在仓库里，过程不藏在对话里。</p>
@@ -2038,6 +2114,13 @@ gateway: 9842 / 32734
    通知大图标是 bot；<code>screenshots/09</code>–<code>12</code>。</li>
 <li>另外修掉一个长期问题：<code>START_STICKY</code> 用 null intent 重启 <code>IslandService</code> 会 NPE 崩溃，
    这是「应用被杀后起不来」的一半原因。</li>
+<li>主人反馈「岛上模型旁边太空」：折叠胶囊改用 <code>setShortCriticalText</code>（状态 + 清单进度），
+   展开通知加 <code>setSubText</code>、计时和分段进度条；清单 4 条就画 4 段。</li>
+<li>主人反馈「思考时点点不动、切换生硬、模型切出」：
+   - driver 每 380 ms 推一帧 <code>anim</code>，省略号亮点会跳，眼睛左右瞟，身体上下浮；
+   - 每轮开始推 <code>morph 0/45/80</code> 三帧，logo 0.4 秒变 bot；
+   - 图标按 look/anim 做 LRU 缓存；身体比例恒定（永远给标识留位置），
+     所以 <code>!</code> <code>?</code> <code>≡</code> 出现时 bot 不会突然缩小、贴边被裁。</li>
 </ol>
 <hr>
 <h2 id="4">4. 尚未验证 / 已知限制</h2>
@@ -2205,6 +2288,13 @@ gateway: 9842 / 32734
 <li><strong>四态</strong>：Wakes（只显示 logo）→ Works（bot）→ Asks（bot + <code>! ? ≡</code>）→ Done（笑眼）。</li>
 <li><strong>小图标</strong>：160 px，按当前 look 画 bot + 头顶标识；状态色仍用于通知底色。</li>
 <li><strong>大图标</strong>：256 px 的同一只 bot，展开通知可见。</li>
+<li><strong>折叠胶囊</strong>：<code>setShortCriticalText</code> 显示「状态 + 清单进度」，例如 <code>思考中 1/4</code>、
+  <code>等你确认</code>、<code>整理清单 2/4</code>；不再只显示一个动作词。</li>
+<li><strong>展开通知</strong>：标题带进度（<code>整理清单 · 1/4</code>），副标题是细节（<code>正在改 BotPainter · 清单 1/4</code>），
+  右上角计时在走；进度条按清单分段，已完成的段亮起。</li>
+<li><strong>动效</strong>：driver 每 380 ms 推一帧 <code>anim</code>（省略号亮点跳、眼睛左右瞟、身体轻浮）；
+  每轮开始推 <code>morph 0/45/80</code> 三帧做 logo→bot 唤醒。</li>
+<li><strong>尺寸恒定</strong>：图标永远给头顶标识预留位置，<code>!</code> <code>?</code> <code>≡</code> 出现/消失时 bot 不会忽大忽小。</li>
 <li><strong>开关</strong>：「程序化 bot（四态 + 标识 + 体征）」关掉后，小/大图标退回 1.2 的简笔模型形状。</li>
 <li>状态色（通知 color，不是 bot 颜色）：</li>
 </ul>
@@ -2375,7 +2465,8 @@ gateway: 9842 / 32734
 </tr>
 </tbody>
 </table>
-<p>新名字和旧名字都认；driver 更新在 <code>source/driver/driver.mjs</code>，网关重启后生效。</p>
+<p>新名字和旧名字都认；driver 更新在 <code>source/driver/driver.mjs</code>，网关重启后生效。
+<code>step</code> 仍会由 driver 发出来，但 1.4 不再显示「第 N 步」——胶囊回到工作状态 + 清单进度。</p>
 <p><strong>两个这次修掉的坑：</strong></p>
 <ul>
 <li><code>IslandService</code> 被系统以 <code>START_STICKY</code> + null intent 重启时会直接 NPE 崩溃——
@@ -2505,6 +2596,6 @@ gateway: 9842 / 32734
 <li>上游 PR：#21</li>
 <li>应用仓库：https://github.com/STUTTEFRFIX/WorkIsland-Android</li>
 </ul></article>
-<section class="gallery page-break"><h2>界面截图</h2><div class="grid"><figure><img src="screenshots/01-working.png" alt="工作态：鱼图标 +「正在干活」"><figcaption>工作态：鱼图标 +「正在干活」</figcaption></figure><figure><img src="screenshots/02-done.png" alt="完成态：「任务完成」+ 用时"><figcaption>完成态：「任务完成」+ 用时</figcaption></figure><figure><img src="screenshots/03-idle.png" alt="8 秒后：岛上收起"><figcaption>8 秒后：岛上收起</figcaption></figure><figure><img src="screenshots/04-background.png" alt="后台：两个应用都退到桌面，岛仍在"><figcaption>后台：两个应用都退到桌面，岛仍在</figcaption></figure><figure><img src="screenshots/05-app.png" alt="应用界面：通知开 / 实时更新允许 / 电池不优化"><figcaption>应用界面：通知开 / 实时更新允许 / 电池不优化</figcaption></figure><figure><img src="screenshots/06-final.png" alt="聊天界面 + 胶囊"><figcaption>聊天界面 + 胶囊</figcaption></figure><figure><img src="screenshots/09-bot-preview.png" alt="四态 bot：应用内预览（干活 · 执行命令）"><figcaption>四态 bot：应用内预览（干活 · 执行命令）</figcaption></figure><figure><img src="screenshots/10-bot-states.png" alt="21 个模型 + 14 个 look 的对照表"><figcaption>21 个模型 + 14 个 look 的对照表</figcaption></figure><figure><img src="screenshots/11-notification-bot.png" alt="通知面板：bot 大图标 + 头顶 !"><figcaption>通知面板：bot 大图标 + 头顶 !</figcaption></figure><figure><img src="screenshots/12-island-ask.png" alt="岛上「等你确认」+ !"><figcaption>岛上「等你确认」+ !</figcaption></figure></div></section>
+<section class="gallery page-break"><h2>界面截图</h2><div class="grid"><figure><img src="screenshots/01-working.png" alt="工作态：鱼图标 +「正在干活」"><figcaption>工作态：鱼图标 +「正在干活」</figcaption></figure><figure><img src="screenshots/02-done.png" alt="完成态：「任务完成」+ 用时"><figcaption>完成态：「任务完成」+ 用时</figcaption></figure><figure><img src="screenshots/03-idle.png" alt="8 秒后：岛上收起"><figcaption>8 秒后：岛上收起</figcaption></figure><figure><img src="screenshots/04-background.png" alt="后台：两个应用都退到桌面，岛仍在"><figcaption>后台：两个应用都退到桌面，岛仍在</figcaption></figure><figure><img src="screenshots/05-app.png" alt="应用界面：通知开 / 实时更新允许 / 电池不优化"><figcaption>应用界面：通知开 / 实时更新允许 / 电池不优化</figcaption></figure><figure><img src="screenshots/06-final.png" alt="聊天界面 + 胶囊"><figcaption>聊天界面 + 胶囊</figcaption></figure><figure><img src="screenshots/09-bot-preview.png" alt="四态 bot：应用内预览（干活 · 执行命令）"><figcaption>四态 bot：应用内预览（干活 · 执行命令）</figcaption></figure><figure><img src="screenshots/10-bot-states.png" alt="21 个模型 + 14 个 look 的对照表"><figcaption>21 个模型 + 14 个 look 的对照表</figcaption></figure><figure><img src="screenshots/11-notification-bot.png" alt="通知面板：bot 大图标 + 头顶 !"><figcaption>通知面板：bot 大图标 + 头顶 !</figcaption></figure><figure><img src="screenshots/12-island-ask.png" alt="岛上「等你确认」+ !"><figcaption>岛上「等你确认」+ !</figcaption></figure><figure><img src="screenshots/13-island-thinking.png" alt="思考三帧：胶囊「思考中 1/4」，省略号亮点在动"><figcaption>思考三帧：胶囊「思考中 1/4」，省略号亮点在动</figcaption></figure></div></section>
 </body>
 </html>

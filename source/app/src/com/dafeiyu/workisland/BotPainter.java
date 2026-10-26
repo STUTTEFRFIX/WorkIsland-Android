@@ -29,6 +29,8 @@ final class BotPainter {
     }
 
     private static final int INK = 0xFF0D0D0F;
+    /** 通知上和预览里都要看得清，眼睛整体比 agent-hud 原版放大一点。 */
+    private static final float EYE_W = 1.30f, EYE_H = 1.15f;
 
     private BotPainter() {}
 
@@ -49,25 +51,68 @@ final class BotPainter {
         return face;
     }
 
+    private static final java.util.LinkedHashMap<String, Bitmap> ICONS =
+            new java.util.LinkedHashMap<>(24, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(java.util.Map.Entry<String, Bitmap> eldest) {
+                    return size() > 24;
+                }
+            };
+
     /** 通知小图标：128/160/192 都行，内容按 1.6 倍 mark 排布。 */
     static Bitmap icon(Context context, String key, BotState.Look look, boolean failed, int size) {
+        return icon(context, key, look, failed, size, -1, 0);
+    }
+
+    /**
+     * @param morphPercent -1 = 按状态取（待命 0、其余 100）；0..100 = 指定变形进度（做唤醒动画）
+     * @param anim         思考时省略号的亮格帧（0..2）
+     */
+    static Bitmap icon(Context context, String key, BotState.Look look, boolean failed,
+                       int size, int morphPercent, int anim) {
+        String cacheKey = key + "|" + look + "|" + failed + "|" + size + "|" + morphPercent + "|" + anim;
+        Bitmap cached = ICONS.get(cacheKey);
+        if (cached != null && !cached.isRecycled()) return cached;
+
         BotForm form = BotForm.get(context, key, false);
         Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         // 身体占画布的六成左右，比 1.6 倍留白那版大一圈；再按实际内容居中。
         float px = size / 1.25f;
         BotState.Sign sign = BotState.sign(look, failed);
-        RectF content = content(form, px, sign);
-        canvas.translate((size - content.width()) / 2 - content.left,
-                (size - content.height()) / 2 - content.top);
+        RectF content = content(form, px, sign,
+                look == BotState.Look.IDLE || morphPercent >= 0, true);
+        // 岛上图标本来就小：把内容铺满画布，但永远给头顶标识留位置——
+        // 这样出现/收起 ! ? ≡ 时，身体不会忽大忽小被「切」一下。
+        float scale = Math.min(size * 0.94f / content.width(),
+                size * 0.94f / content.height());
+        canvas.translate((size - content.width() * scale) / 2 - content.left * scale,
+                (size - content.height() * scale) / 2 - content.top * scale);
+        canvas.scale(scale, scale);
         // 待命就是「刚醒来」：只显示 logo；一干活才变成 bot。
-        float morph = look == BotState.Look.IDLE ? 0f : 1f;
-        draw(canvas, form, px, faceFor(look, failed), morph, 0f, sign, 0, 1f);
+        float morph = look == BotState.Look.IDLE ? 0f
+                : morphPercent >= 0 ? Math.max(0, Math.min(1, morphPercent / 100f)) : 1f;
+        int lit = look == BotState.Look.THINKING ? Math.abs(anim) % 3 : 0;
+        Face face = faceFor(look, failed);
+        Pose pose = null;
+        if (look == BotState.Look.THINKING) {
+            // 小图标也要看得出在动：眼睛左右瞟 + 整个身体轻轻上下浮。
+            face.look = -0.55f + (lit - 1) * 0.22f;
+            pose = new Pose();
+            pose.y = lit == 1 ? -0.018f : lit == 2 ? 0.018f : 0;
+        }
+        draw(canvas, form, px, face, morph, 0f, sign, lit, 1f, pose);
+        ICONS.put(cacheKey, bitmap);
         return bitmap;
     }
 
     /** 内容（身体 + 头顶标识）在画布像素里的包围盒，用来把 bot 放大并居中。 */
-    static RectF content(BotForm form, float px, BotState.Sign sign) {
+    static RectF content(BotForm form, float px, BotState.Sign sign, boolean includeLogo) {
+        return content(form, px, sign, includeLogo, sign != null);
+    }
+
+    static RectF content(BotForm form, float px, BotState.Sign sign, boolean includeLogo,
+                         boolean reserveSign) {
         RectF box = new RectF(Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE);
         float cx = form.spec.center[0], cy = form.spec.center[1];
         if (form.spec.ownEyes != null) {
@@ -81,9 +126,17 @@ final class BotPainter {
                 box.right = Math.max(box.right, x);
                 box.top = Math.min(box.top, y);
                 box.bottom = Math.max(box.bottom, y);
+                if (includeLogo) {
+                    float lx = (MARGIN + cx + (float) Math.cos(a) * form.logo[i]) * px;
+                    float ly = (MARGIN + cy + (float) Math.sin(a) * form.logo[i]) * px;
+                    box.left = Math.min(box.left, lx);
+                    box.right = Math.max(box.right, lx);
+                    box.top = Math.min(box.top, ly);
+                    box.bottom = Math.max(box.bottom, ly);
+                }
             }
         }
-        if (sign != null) {
+        if (sign != null || reserveSign) {
             RectF placed = signBox(form, px);
             box.union(placed);
         }
@@ -479,9 +532,9 @@ final class BotPainter {
                     * (float) Math.sqrt(Math.max(0, Math.cos(pitch)));
             float big = (1 + 0.26f * side * face.lean) * face.wide
                     * (0.6f + 0.4f * face.open) * size;
-            float width = s.eyeWidth * r * big * narrow;
+            float width = s.eyeWidth * r * big * narrow * EYE_W;
             float height = s.eyeHeight * r * big * tall
-                    * Math.max(0.08f, face.open);
+                    * Math.max(0.08f, face.open) * EYE_H;
             c.save();
             c.translate(x, y);
             if (face.happy < 0.98f && face.crossed < 0.98f) {
@@ -645,7 +698,7 @@ final class BotPainter {
         for (RectF r : bright) path.addRect(r, Path.Direction.CW);
         c.drawPath(path, p);
         if (!dim.isEmpty()) {
-            p.setAlpha(Math.round(255 * 0.35f * alpha));
+            p.setAlpha(Math.round(255 * 0.20f * alpha));
             Path faint = new Path();
             for (RectF r : dim) faint.addRect(r, Path.Direction.CW);
             c.drawPath(faint, p);

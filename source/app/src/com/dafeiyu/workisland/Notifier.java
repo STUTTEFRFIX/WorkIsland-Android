@@ -34,12 +34,28 @@ public final class Notifier {
     private Notifier() {}
 
     static Notification build(Context c, String title, String text, long since, boolean done, String state, String face) {
+        return build(c, title, text, since, done, state, face, 0, 0, 0);
+    }
+
+    /**
+     * @param step      本轮第几个工具动作（0 = 还没开始）
+     * @param todoDone  TodoWrite 已完成的条数
+     * @param todoTotal TodoWrite 总条数（0 = 没有清单）
+     */
+    static Notification build(Context c, String title, String text, long since, boolean done,
+                              String state, String face, int step, int todoDone, int todoTotal) {
+        return build(c, title, text, since, done, state, face, step, todoDone, todoTotal, -1, 0);
+    }
+
+    static Notification build(Context c, String title, String text, long since, boolean done,
+                              String state, String face, int step, int todoDone, int todoTotal,
+                              int morph, int anim) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
         ensureChannel(nm);
 
         String st = state == null || state.isEmpty() ? (done ? "done" : "working") : state;
-        Icon small = smallIcon(c, st, face);
-        Icon large = largeIcon(c, st, face);
+        Icon small = smallIcon(c, st, face, morph, anim);
+        Icon large = largeIcon(c, st, face, morph, anim);
         int color = statusColor(st);
 
         Intent open = new Intent(c, MainActivity.class);
@@ -51,21 +67,39 @@ public final class Notifier {
                 .setProgressTrackerIcon(small)
                 .setStyledByProgress(true);
         if (done) {
-            style.setProgress(100);
+            style.setProgress(todoTotal > 0 ? todoTotal : 100);
             style.setProgressEndIcon(Icon.createWithResource(c, R.drawable.ic_done));
+        } else if (todoTotal > 0 && todoTotal <= 8) {
+            // 清单就是「进行到哪一步」：一条一段，已完成的段亮起来。
+            java.util.List<Notification.ProgressStyle.Segment> segments = new java.util.ArrayList<>();
+            for (int i = 0; i < todoTotal; i++)
+                segments.add(new Notification.ProgressStyle.Segment(1)
+                        .setColor(i < todoDone ? color : 0x33FFFFFF));
+            style.setProgressSegments(segments);
+            style.setProgressIndeterminate(false);
+            style.setProgress(Math.max(0, Math.min(todoTotal, todoDone)));
         } else {
             style.setProgressIndeterminate(true);
         }
 
         if (title == null || title.isEmpty()) title = done ? "任务完成" : "正在干活";
         if (text == null) text = "";
+        BotState.Look look = BotState.look(st);
+        // 折叠胶囊显示的是 shortCriticalText：放回原来的工作状态，只在有清单时补一个进度。
+        String baseTitle = title;
+        String progress = done ? "" : todoTotal > 0 ? todoDone + "/" + todoTotal : "";
+        if (!progress.isEmpty() && !title.contains(progress)) title = baseTitle + " · " + progress;
+        StringBuilder sub = new StringBuilder(text.isEmpty() ? BotState.lookName(look) : text);
+        if (todoTotal > 0 && !sub.toString().contains("清单"))
+            sub.append(" · 清单 ").append(todoDone).append("/").append(todoTotal);
+        String shortText = progress.isEmpty() ? baseTitle : baseTitle + " " + progress;
 
         Notification.Builder b = new Notification.Builder(c, CHANNEL)
                 .setSmallIcon(small)
                 .setLargeIcon(large)
                 .setContentTitle(title)
                 .setContentText(text)
-                .setSubText("cccodroid")
+                .setSubText(sub)
                 .setColor(color)
                 .setCategory(Notification.CATEGORY_PROGRESS)
                 .setOngoing(true)
@@ -76,6 +110,7 @@ public final class Notifier {
                 .setUsesChronometer(!done)
                 .setContentIntent(pi)
                 .setStyle(style);
+        if (!shortText.isEmpty()) b.setShortCriticalText(shortText);
 
         Bundle extras = new Bundle();
         extras.putBoolean(EXTRA_PROMOTED, true);
@@ -115,12 +150,16 @@ public final class Notifier {
 
     /** 小图标：程序化 bot（四态 + 标识 + 每个 agent 的体征）；关掉开关就用旧的简笔图标。 */
     private static Icon smallIcon(Context c, String state, String face) {
+        return smallIcon(c, state, face, -1, 0);
+    }
+
+    private static Icon smallIcon(Context c, String state, String face, int morph, int anim) {
         String choice = Prefs.icon(c);
         int size = 160;
         if (Prefs.soul(c)) {
             BotState.Look look = BotState.look(state);
             return Icon.createWithBitmap(BotPainter.icon(c, specKey(choice), look,
-                    BotState.failed(state), size));
+                    BotState.failed(state), size, morph, anim));
         }
         int legacy = 128;
         Bitmap bmp = Bitmap.createBitmap(legacy, legacy, Bitmap.Config.ARGB_8888);
@@ -297,9 +336,13 @@ public final class Notifier {
 
     /** 通知面板里的大图标也用同一只 bot，比品牌 logo 更有「人」。 */
     private static Icon largeIcon(Context c, String state, String face) {
+        return largeIcon(c, state, face, -1, 0);
+    }
+
+    private static Icon largeIcon(Context c, String state, String face, int morph, int anim) {
         if (Prefs.soul(c)) {
             return Icon.createWithBitmap(BotPainter.icon(c, specKey(Prefs.icon(c)),
-                    BotState.look(state), BotState.failed(state), 256));
+                    BotState.look(state), BotState.failed(state), 256, morph, anim));
         }
         String choice = Prefs.icon(c);
         int res = "hud".equals(choice) ? R.mipmap.ic_launcher : iconRes(choice);
@@ -322,8 +365,19 @@ public final class Notifier {
     }
 
     static void post(Context c, String title, String text, long since, boolean done, String state, String face) {
+        post(c, title, text, since, done, state, face, 0, 0, 0);
+    }
+
+    static void post(Context c, String title, String text, long since, boolean done,
+                     String state, String face, int step, int todoDone, int todoTotal) {
+        post(c, title, text, since, done, state, face, step, todoDone, todoTotal, -1, 0);
+    }
+
+    static void post(Context c, String title, String text, long since, boolean done,
+                     String state, String face, int step, int todoDone, int todoTotal,
+                     int morph, int anim) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
-        nm.notify(ID, build(c, title, text, since, done, state, face));
+        nm.notify(ID, build(c, title, text, since, done, state, face, step, todoDone, todoTotal, morph, anim));
     }
 
     static void post(Context c, String title, String text, long since, boolean done) {

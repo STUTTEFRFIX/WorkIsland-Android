@@ -20,6 +20,11 @@ public class IslandReceiver extends BroadcastReceiver {
             i.getLongExtra("since", System.currentTimeMillis()),
             Notifier.ACTION_DONE.equals(a),
             i.getStringExtra("state"),
-            i.getStringExtra("face"));
+            i.getStringExtra("face"),
+            i.getIntExtra("step", 0),
+            i.getIntExtra("todoDone", 0),
+            i.getIntExtra("todoTotal", 0),
+            i.getIntExtra("morph", -1),
+            i.getIntExtra("anim", 0));
     }
 }

@@ -52,19 +52,39 @@ function todoProgress(ev) {
   return { title: '整理清单', text: `清单 ${done}/${total}`, state: 'plan' };
 }
 
-let active = null;          // { id, startedAt, last }
+let active = null;          // { id, startedAt, last, step, done, total, title, text, state, anim }
+let animTimer = null;
+
+/** 思考时头顶省略号要动：由 driver 每 380ms 推一帧，应用只负责画。 */
+function tickAnim() {
+  if (!active || active.state !== 'thinking') { stopAnim(); return; }
+  active.anim = (active.anim + 1) % 3;
+  send(A.update, active.title, active.text, active.startedAt, active.state,
+    active.step, active.done, active.total, -1, active.anim);
+}
+function startAnim() {
+  if (animTimer) return;
+  animTimer = setInterval(tickAnim, 380);
+}
+function stopAnim() {
+  if (animTimer) { clearInterval(animTimer); animTimer = null; }
+}
 let doneTimer = null;
 let idleTimer = null;
 let verifying = false;
 
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 
-function send(action, title, text, since, state) {
+function send(action, title, text, since, state, step = 0, todoDone = 0, todoTotal = 0, morph = -1, anim = 0) {
   const args = ['start-foreground-service', '--user', '0', '-n', SVC, '-a', action];
   if (title) args.push('--es', 'title', title);
   if (text) args.push('--es', 'text', text);
   if (state) args.push('--es', 'state', state);
   if (since) args.push('--el', 'since', String(since));
+  if (step) args.push('--ei', 'step', String(step));
+  if (todoTotal) args.push('--ei', 'todoDone', String(todoDone), '--ei', 'todoTotal', String(todoTotal));
+  if (morph >= 0) args.push('--ei', 'morph', String(morph));
+  if (anim) args.push('--ei', 'anim', String(anim));
   const attempt = (n) => execFile('am', args, { timeout: 8000 }, (e, out, err) => {
     if (!e) return;
     if (n < 2) return setTimeout(() => attempt(n + 1), 800);
@@ -81,25 +101,40 @@ function start(run, text) {
   if (doneTimer) { clearTimeout(doneTimer); doneTimer = null; }
   if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
   verifying = false;
-  active = { id: (run && run.id) || '', startedAt: Number(run && run.startedAt) || Date.now(), last: '' };
+  active = { id: (run && run.id) || '', startedAt: Number(run && run.startedAt) || Date.now(),
+    last: '', step: 0, done: 0, total: 0, title: '正在干活', text: text || '正在处理…',
+    state: 'working', anim: 0 };
   log('start', active.id || '?', active.startedAt);
-  update(text || '正在处理…', '正在干活', 'working');
+  // 从 logo 变成 bot：三帧唤醒，别让模型硬生生切出来。
+  const waking = active;
+  send(A.update, waking.title, waking.text, waking.startedAt, waking.state, 0, 0, 0, 0);
+  setTimeout(() => { if (active === waking) send(A.update, waking.title, waking.text, waking.startedAt, waking.state, 0, 0, 0, 45); }, 130);
+  setTimeout(() => { if (active === waking) send(A.update, waking.title, waking.text, waking.startedAt, waking.state, 0, 0, 0, 80); }, 260);
+  setTimeout(() => { if (active === waking) update(waking.text, waking.title, waking.state); }, 390);
+  startAnim();
 }
 
 function update(text, title, state) {
   if (!active) return;
   const t = title || '正在干活';
   const st = state || 'working';
-  const key = t + '|' + text + '|' + st;
+  const key = t + '|' + text + '|' + st + '|' + active.step + '|' + active.done + '/' + active.total;
   if (key === active.last) return;
   active.last = key;
-  send(A.update, t, text, active.startedAt, st);
+  active.title = t;
+  active.text = text;
+  active.state = st;
+  active.anim = 0;
+  send(A.update, t, text, active.startedAt, st, active.step, active.done, active.total);
+  if (st === 'thinking') startAnim(); else stopAnim();
 }
 
 function finish(reason) {
   if (!active) return;
   const ms = Math.max(0, Date.now() - active.startedAt);
+  const step = active.step, done = active.total ? active.total : active.done, total = active.total;
   active = null;
+  stopAnim();
   verifying = false;
   const sec = Math.round(ms / 1000);
   const human = sec < 60 ? `${sec} 秒` : `${Math.floor(sec / 60)} 分 ${sec % 60} 秒`;
@@ -109,7 +144,7 @@ function finish(reason) {
     doneTimer = null;
     if (active) return;
     log('done', human, reason || '');
-    send(A.done, '', '', 0, 'done');
+    send(A.done, '', '', 0, 'done', step, done, total);
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(() => { idleTimer = null; if (!active) { log('idle'); send(A.idle, '', '', 0, 'idle'); } }, 8000);
   }, 3000);
@@ -159,9 +194,15 @@ function handleEvent(ev) {
       else if (ev.phase === 'retry') update('重试中…', '重试中', 'thinking');
       break;
     case 'tool_use': {
+      if (active) active.step++;
       const todo = todoProgress(ev);
-      if (todo) update(todo.text, todo.title, todo.state);
-      else update('用 ' + toolLabel(ev.name) + '…', toolLabel(ev.name), toolState(ev.name));
+      if (todo) {
+        if (active) {
+          const m = /清单\s*(\d+)\/(\d+)/.exec(todo.text);
+          if (m) { active.done = Number(m[1]); active.total = Number(m[2]); }
+        }
+        update(todo.text, todo.title, todo.state);
+      } else update('用 ' + toolLabel(ev.name) + '…', toolLabel(ev.name), toolState(ev.name));
       break;
     }
     case 'perm_request':

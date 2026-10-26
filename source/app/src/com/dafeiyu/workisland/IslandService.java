@@ -48,20 +48,28 @@ public class IslandService extends Service {
             goIdle(intent.getStringExtra("title"), intent.getStringExtra("text"));
             return START_STICKY;
         }
+        int step = intent.getIntExtra("step", 0);
+        int todoDone = intent.getIntExtra("todoDone", 0);
+        int todoTotal = intent.getIntExtra("todoTotal", 0);
+        int morph = intent.getIntExtra("morph", -1);
+        int anim = intent.getIntExtra("anim", 0);
         if (Notifier.ACTION_DONE.equals(action)) {
-            finishRun(intent.getStringExtra("title"), intent.getStringExtra("text"));
+            finishRun(intent.getStringExtra("title"), intent.getStringExtra("text"),
+                    step, todoDone, todoTotal);
             return START_STICKY;
         }
 
         startWorking(intent.getLongExtra("since", System.currentTimeMillis()),
                 intent.getStringExtra("text"), intent.getStringExtra("title"),
-                intent.getStringExtra("state"), intent.getStringExtra("face"));
+                intent.getStringExtra("state"), intent.getStringExtra("face"),
+                step, todoDone, todoTotal, morph, anim);
         return START_STICKY;
     }
 
-    private synchronized void startWorking(long at, String text, String title, String state, String face) {
+    private synchronized void startWorking(long at, String text, String title, String state, String face,
+                                           int step, int todoDone, int todoTotal, int morph, int anim) {
         if (working) {
-            updateWorking(text, title, state, face);
+            updateWorking(text, title, state, face, step, todoDone, todoTotal, morph, anim);
             return;
         }
         working = true;
@@ -72,31 +80,32 @@ public class IslandService extends Service {
         String x = text == null ? "正在处理…" : text;
         String st = state == null || state.isEmpty() ? "working" : state;
         String f = face == null || face.isEmpty() ? "open" : face;
-        Notification n = Notifier.build(this, t, x, startedAt, false, st, f);
+        Notification n = Notifier.build(this, t, x, startedAt, false, st, f, step, todoDone, todoTotal, morph, anim);
         startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
-        lastKey = t + "|" + x + "|" + st + "|" + f;
+        lastKey = t + "|" + x + "|" + st + "|" + f + "|" + step + "|" + todoDone + "/" + todoTotal + "|" + morph + "|" + anim;
         Log.d("WorkIsland", "work start " + lastKey);
     }
 
-    private synchronized void updateWorking(String text, String title, String state, String face) {
+    private synchronized void updateWorking(String text, String title, String state, String face,
+                                            int step, int todoDone, int todoTotal, int morph, int anim) {
         if (!working) {
-            startWorking(System.currentTimeMillis(), text, title, state, face);
+            startWorking(System.currentTimeMillis(), text, title, state, face, step, todoDone, todoTotal, morph, anim);
             return;
         }
         String t = title == null || title.isEmpty() ? "正在干活" : title;
         String x = text == null ? "" : text;
         String st = state == null || state.isEmpty() ? "working" : state;
         String f = face == null || face.isEmpty() ? "open" : face;
-        String key = t + "|" + x + "|" + st + "|" + f;
+        String key = t + "|" + x + "|" + st + "|" + f + "|" + step + "|" + todoDone + "/" + todoTotal + "|" + morph + "|" + anim;
         if (key.equals(lastKey)) return;
         lastKey = key;
         getSystemService(NotificationManager.class).cancel(IDLE_ID);
-        Notification n = Notifier.build(this, t, x, startedAt, false, st, f);
+        Notification n = Notifier.build(this, t, x, startedAt, false, st, f, step, todoDone, todoTotal, morph, anim);
         startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         Log.d("WorkIsland", "work update " + key);
     }
 
-    private synchronized void finishRun(String title, String text) {
+    private synchronized void finishRun(String title, String text, int step, int todoDone, int todoTotal) {
         if (!working) return;
         working = false;
         long ms = Math.max(0, System.currentTimeMillis() - startedAt);
@@ -106,7 +115,8 @@ public class IslandService extends Service {
         String t = title == null || title.isEmpty() ? "任务完成" : title;
         String x = text == null || text.isEmpty() ? fallback : text;
         getSystemService(NotificationManager.class).cancel(IDLE_ID);
-        Notification n = Notifier.build(this, t, x, System.currentTimeMillis(), true, "done", "happy");
+        Notification n = Notifier.build(this, t, x, System.currentTimeMillis(), true, "done", "happy",
+                step, todoTotal > 0 ? todoTotal : todoDone, todoTotal);
         startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         Log.d("WorkIsland", "work done " + t + " / " + x);
     }

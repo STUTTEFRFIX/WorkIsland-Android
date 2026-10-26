@@ -41,7 +41,7 @@ def main() -> None:
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
     <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>47f62b8a17e6218382c7ad06826317409bea29252da0414ed7cda91ddd6be994</div>
+  <div class="hash">APK SHA-256<br>6484f58e1c298784d765c18c1dc35aabe11004cdff037440774b074140caa8ca</div>
 </section>
 """
 
@@ -88,6 +88,7 @@ def main() -> None:
         ("screenshots/10-bot-states.png", "21 个模型 + 14 个 look 的对照表"),
         ("screenshots/11-notification-bot.png", "通知面板：bot 大图标 + 头顶 !"),
         ("screenshots/12-island-ask.png", "岛上「等你确认」+ !"),
+        ("screenshots/13-island-thinking.png", "思考三帧：胶囊「思考中 1/4」，省略号亮点在动"),
     ]
     gallery = ['<section class="gallery page-break"><h2>界面截图</h2><div class="grid">']
     for src, cap in shots:

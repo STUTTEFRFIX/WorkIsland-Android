@@ -14,6 +14,8 @@
 - **四态 bot**：Wakes / Works / Asks / Done；14 种 look、7 个头顶标识（`! ? ≡ × ⧗ … z`）
 - **21 个模型**：每个 agent 有自己的形状、配色、眼睛，Claude 有手脚、DeepSeek 有肚子、Grok 有环、Cursor 缺一角、OpenClaw 有触须
 - **可关**：设置里的「程序化 bot」开关关掉就退回旧的简笔图标
+- **岛上不空**：折叠胶囊显示「思考中 1/4」这种状态 + 清单进度；展开后有计时、副标题和分段进度条
+- **会动**：思考时头顶省略号逐帧跳、眼睛左右瞟、身体轻浮；每轮开始有 0.4 秒 logo→bot 的唤醒
 
 不是另开一个任务清单，也不是模拟动画——数据直接来自 cccodroid 网关的真实事件流。
 
@@ -21,9 +23,9 @@
 |---|---|---|
 | <img src="screenshots/01-working.png" width="230"> | <img src="screenshots/02-done.png" width="230"> | <img src="screenshots/03-idle.png" width="230"> |
 
-| 四态 bot（应用内预览） | 21 个模型 / 14 个 look | 通知里也带上标识 |
-|---|---|---|
-| <img src="screenshots/09-bot-preview.png" width="230"> | <img src="screenshots/10-bot-states.png" width="230"> | <img src="screenshots/11-notification-bot.png" width="230"> |
+| 四态 bot（应用内预览） | 21 个模型 / 14 个 look | 通知里也带上标识 | 思考时的胶囊 |
+|---|---|---|---|
+| <img src="screenshots/09-bot-preview.png" width="210"> | <img src="screenshots/10-bot-states.png" width="210"> | <img src="screenshots/11-notification-bot.png" width="210"> | <img src="screenshots/13-island-thinking.png" width="210"> |
 
 更多截图见 `screenshots/`（含四态 bot、模型对照、岛上 `!` 标识、图标选择器），完整边界见 [`STATUS.md`](STATUS.md)，方案见 [`docs/01-方案与设计.md`](docs/01-方案与设计.md)。
 
@@ -48,7 +50,7 @@
 APK 校验：
 
 ```
-SHA-256  47f62b8a17e6218382c7ad06826317409bea29252da0414ed7cda91ddd6be994
+SHA-256  53ba7c0e0b2e3ca84aacc984a10511ba6cf42f512880232227cd2f763fc48938
 大小     338,665 字节
 ```
 
@@ -90,6 +92,16 @@ SHA-256  47f62b8a17e6218382c7ad06826317409bea29252da0414ed7cda91ddd6be994
 0.4.7 起上游改为进程内订阅（`onPublish` + `runList`），不再单独起 driver；本仓库的 `source/driver/` 是 0.4.2–0.4.6 的部署方式。两种方式发送给同一个应用。
 
 详细设计见 [`docs/01-方案与设计.md`](docs/01-方案与设计.md)。
+
+---
+
+## 参考与致谢
+
+- [jazzenchen/agent-hud-open](https://github.com/jazzenchen/agent-hud-open)
+  （Apache-2.0）：四态 bot、14 look、7 个标识、BotSpec 与渲染几何的移植来源。
+- [cccodroid](https://github.com/greyoak111/cccodroid)：网关事件流、终端与宿主能力。
+- [LobeHub Icons](https://github.com/lobehub/lobe-icons)（MIT）：21 个模型图标；
+  商标归各自所有者，非官方关联。
 
 ---
 
