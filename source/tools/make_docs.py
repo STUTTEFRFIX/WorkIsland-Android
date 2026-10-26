@@ -41,7 +41,7 @@ def main() -> None:
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
     <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>6484f58e1c298784d765c18c1dc35aabe11004cdff037440774b074140caa8ca</div>
+  <div class="hash">APK SHA-256<br>47f62b8a17e6218382c7ad06826317409bea29252da0414ed7cda91ddd6be994</div>
 </section>
 """
 

@@ -94,26 +94,21 @@ public class MainActivity extends Activity {
         root.addView(status, lp(0, 0, 0, 16));
 
         // ---- bot 舞台 ----
+        // 不装进卡片：让 bot 直接站在这页纸上，像一枚自己躺着的感叹号。
         LinearLayout stage = new LinearLayout(this);
         stage.setOrientation(LinearLayout.VERTICAL);
         stage.setGravity(Gravity.CENTER_HORIZONTAL);
-        GradientDrawable stageBg = new GradientDrawable();
-        stageBg.setColor(CARD);
-        stageBg.setCornerRadius(dp(22));
-        stageBg.setStroke(dp(1), STROKE);
-        stage.setBackground(stageBg);
-        stage.setPadding(dp(10), dp(10), dp(10), dp(10));
 
         botView = new BotView(this);
         botView.setBot(botKey, botLook, botFailed);
-        stage.addView(botView, new LinearLayout.LayoutParams(dp(200), dp(200)));
+        stage.addView(botView, new LinearLayout.LayoutParams(dp(250), dp(250)));
 
         botLabel = new TextView(this);
-        botLabel.setTextColor(FG);
-        botLabel.setTextSize(14);
+        botLabel.setTextColor(MUTED);
+        botLabel.setTextSize(13);
         botLabel.setGravity(Gravity.CENTER);
-        stage.addView(botLabel, lp(0, 4, 0, 6));
-        root.addView(stage, lp(0, 0, 0, 10));
+        stage.addView(botLabel, lp(0, 2, 0, 4));
+        root.addView(stage, lp(0, 0, 0, 12));
 
         LinearLayout phases = new LinearLayout(this);
         phases.setOrientation(LinearLayout.HORIZONTAL);

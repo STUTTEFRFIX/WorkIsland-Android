@@ -123,6 +123,9 @@
 <li>driver 被杀后由守护循环/网关看门狗拉起</li>
 <li>cccodroid 与工作岛都退到后台 8 秒，driver、网关、前台服务仍存活</li>
 <li>构建、签名、安装、通知授权在设备上通过</li>
+<li>四态 bot（Wakes/Works/Asks/Done）、14 look、7 个标识在真机上目视通过</li>
+<li>21 个模型的轮廓/配色/眼睛/装饰全部渲染通过（对照表 <code>screenshots/10-bot-states.png</code>）</li>
+<li>通知大/小图标与岛上胶囊显示同一只 bot；<code>!</code> / <code>?</code> / <code>≡</code> / <code>×</code> / <code>z</code> 实测可见</li>
 </ul>
 <h2 id="_3">未验证</h2>
 <ul>
@@ -141,6 +144,8 @@
 <li>cccodroid 升级可能覆盖 <code>files/app</code> 下的网关文件，需要重新接入。</li>
 <li>工作岛的服务是 exported 的，同机应用可以伪造显示状态（仅影响显示）；生产化需加签名级权限。</li>
 <li>胶囊外观由系统绘制，未使用 OPPO UPK 自定义卡片。</li>
+<li>通知图标是静态帧：四态和标识准确，但呼吸/眨眼/起跳只在应用内预览里动。</li>
+<li>21 个模型图标是 LobeHub 的品牌标识，公开发布前请自行确认商标使用。</li>
 </ul>
 <h2 id="_5">反馈</h2>
 <p>如果你在别的 ColorOS 版本或机型上试了，欢迎带上：</p>
@@ -183,7 +188,23 @@
 </tr>
 </tbody>
 </table>
-<p>更多截图见 <code>screenshots/</code>（含 <code>07-icon-state.png</code> 状态图标、<code>08-icon-picker.png</code> 图标选择器），完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
+<table>
+<thead>
+<tr>
+<th>四态 bot（应用内预览）</th>
+<th>21 个模型 / 14 个 look</th>
+<th>通知里也带上标识</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img src="screenshots/09-bot-preview.png" width="230"></td>
+<td><img src="screenshots/10-bot-states.png" width="230"></td>
+<td><img src="screenshots/11-notification-bot.png" width="230"></td>
+</tr>
+</tbody>
+</table>
+<p>更多截图见 <code>screenshots/</code>（含四态 bot、模型对照、岛上 <code>!</code> 标识、图标选择器），完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
 <p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases">Release 页面</a> · 1.4 的 APK 与 PDF 也在本仓库 <code>apk/</code>、<code>pdf/</code> 里。</p>
 <hr>
 <h2 id="_1">交付物</h2>
@@ -234,7 +255,7 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  6484f58e1c298784d765c18c1dc35aabe11004cdff037440774b074140caa8ca
+<pre><code>SHA-256  47f62b8a17e6218382c7ad06826317409bea29252da0414ed7cda91ddd6be994
 大小     338,665 字节
 </code></pre>
 <hr>
@@ -1219,7 +1240,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <blockquote>
 <p>测试日期：2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>6484f58e…a8ca</code>）</p>
+应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>47f62b8a…e994</code>）</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 测试环境</h2>
@@ -1591,7 +1612,7 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>6484f58e…a8ca</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>47f62b8a…e994</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
@@ -1734,7 +1755,7 @@ gateway: 9842 / 32734
 <blockquote>
 <p>记录时间：2026-10-25–26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>6484f58e…a8ca</code>）
+应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>47f62b8a…e994</code>）
 宿主：cccodroid 0.4.2（实机）+ 0.4.6（测试网关，PR 分支）</p>
 </blockquote>
 <p>这篇文档把「怎么一步步做出来、踩了哪些坑、在真机上测了什么」全部摊开。代码、截图、测试记录都在仓库里，过程不藏在对话里。</p>
