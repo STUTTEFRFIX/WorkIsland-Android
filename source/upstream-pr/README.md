@@ -1,17 +1,15 @@
-# 上游集成完整源码（PR #21）
+# 上游集成完整源码（PR #21 + #22）
 
-这些文件来自 cccodroid 上游 PR #21 的分支 `feat/work-island-signed`：
+这些文件来自 cccodroid 上游的工作岛集成：
 
-https://github.com/greyoak111/cccodroid/pull/21
+- **PR #21（已合并）**：网关内订阅、`bus.mjs` / `settings.mjs`、`server.mjs`、设置页、`AndroidManifest.xml`、上游文档。分支 `feat/work-island-signed`。
+- **PR #22（OPEN，基于 v0.4.9 main）**：标题跟随动作、清单进度（`tasks` 事件 / `TaskCreate` / `TaskUpdate`）、`state` extra，以及 review 后的修正（MCP 工具名通用化、固定错误正文）。分支 `feat/work-island-followup`。
 
-包含：
+本目录里的 `gateway/gw/work-island-core.mjs`、`gateway/gw/work-island.mjs`、`gateway/tests/work-island.test.mjs` 已更新到 **PR #22 的最新提交**；单测 **19 条**。其余文件保持 #21 合并时的版本。
 
-- `gateway/gw/work-island.mjs` / `work-island-core.mjs`：网关内订阅与纯逻辑核心
-- `gateway/gw/bus.mjs` / `settings.mjs`：`onPublish` 钩子、`workIsland` 开关
-- `gateway/server.mjs`：启动接入与 SIGTERM 收尾
-- `gateway/web/index.html` / `app/12-model-caps.js`：设置页复选框
-- `gateway/tests/work-island.test.mjs`：11 个单测
-- `android/AndroidManifest.xml`：`<queries>` 可见性
-- `docs/work-island.md` / `work-island.zh-CN.md`：上游文档
+完整 diff：
 
-完整 diff 见 `../upstream-pr-review.patch`。上游项目与这些文件使用 Apache-2.0。
+- `../upstream-pr-review.patch`：PR #21
+- `../upstream-pr-review-22.patch`：PR #22
+
+上游项目与这些文件使用 Apache-2.0。

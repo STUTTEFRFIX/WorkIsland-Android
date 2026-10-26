@@ -42,8 +42,9 @@
 | `source/driver/driver.mjs` | 独立状态驱动：0.4.2–0.4.6 的部署方式 |
 | `source/gateway/work-island.mjs` | 0.4.2–0.4.6 的网关模块（spawn 独立 driver） |
 | `source/gateway/server.mjs` | 0.4.2–0.4.6 已接入的网关入口（原文件见 `server.mjs.original`） |
-| `source/upstream-pr/` | 上游 PR #21 的完整源码（网关内订阅 + 设置 + 单测 + 清单） |
+| `source/upstream-pr/` | 上游 PR #21 合并版 + #22 跟进（网关内订阅 / 清单 / state / 单测 19 条） |
 | `source/upstream-pr-review.patch` | 上游 PR #21 的完整 diff |
+| `source/upstream-pr-review-22.patch` | 上游 PR #22（OPEN）的完整 diff |
 | `screenshots/` | 工作态、完成态、收起、后台存活、应用界面截图 |
 | `docs/` | 方案与设计、开发部署、测试报告、提交说明、开发过程与真机测试、状态与保活 |
 

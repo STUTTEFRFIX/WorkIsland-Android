@@ -240,11 +240,15 @@
 </tr>
 <tr>
 <td><code>source/upstream-pr/</code></td>
-<td>上游 PR #21 的完整源码（网关内订阅 + 设置 + 单测 + 清单）</td>
+<td>上游 PR #21 合并版 + #22 跟进（网关内订阅 / 清单 / state / 单测 19 条）</td>
 </tr>
 <tr>
 <td><code>source/upstream-pr-review.patch</code></td>
 <td>上游 PR #21 的完整 diff</td>
+</tr>
+<tr>
+<td><code>source/upstream-pr-review-22.patch</code></td>
+<td>上游 PR #22（OPEN）的完整 diff</td>
 </tr>
 <tr>
 <td><code>screenshots/</code></td>
@@ -1136,8 +1140,9 @@ curl -s -N -H &quot;X-CC-Token: $TOKEN&quot; \
 <li><code>gateway/gw/bus.mjs</code> 提供 <code>onPublish(fn)</code>；收工判定直接读 <code>runList()</code>；</li>
 <li>设置 → <strong>工作岛（ColorOS 灵动岛）</strong> → 打开；默认关闭；</li>
 <li>打开后才异步检测应用、开始送状态；关掉发一次 IDLE；</li>
-<li>更新限频 1.5 秒；<code>error</code> 只显示「出错了」；文案跟随 <code>LAST_LANG</code>（中/英）；</li>
+<li>更新限频 1.5 秒；<code>error</code> 只显示「出错了 / 这一轮出错了」；文案跟随 <code>LAST_LANG</code>（中/英）；</li>
 <li>清单 <code>&lt;queries&gt;</code> 已加 <code>com.dafeiyu.workisland</code>；如果设备上仍检测不到，可用 <code>CCAPP_WORK_ISLAND=1</code> 强制开启。</li>
+<li>跟进 <a href="https://github.com/greyoak111/cccodroid/pull/22">PR #22</a>（OPEN）：标题跟随动作、<code>tasks</code> 事件的清单进度、<code>state</code> extra；<code>source/upstream-pr/</code> 的 core / driver / 单测已同步到该分支（单测 19 条）。</li>
 </ul>
 <p>对本仓库的部署来说，0.4.7+ <strong>不需要</strong>第 4.1–4.5 节的独立 driver；保留它们是给 0.4.2–0.4.6 的。</p>
 <hr>
@@ -1821,6 +1826,11 @@ gateway: 9842 / 32734
 <td>1.4</td>
 <td>修「抽搐」：通知 ID 固定 1001，思考动画每 800 ms 一帧只换 bitmap（换 ID 会让胶囊收回再弹出）；删除 morph 唤醒帧；重新签名 APK</td>
 </tr>
+<tr>
+<td>2026-10-26</td>
+<td>1.4</td>
+<td>上游 PR #22（OPEN）：清单接 <code>tasks</code> 事件（TaskCreate/TaskUpdate）、认不出的工具走通用文案、错误正文固定；单测 19/19，<code>source/upstream-pr/</code> 已同步</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -2147,6 +2157,7 @@ gateway: 9842 / 32734
 <h2 id="5">5. 过程链接</h2>
 <ul>
 <li>上游 PR #21：https://github.com/greyoak111/cccodroid/pull/21</li>
+<li>上游 PR #22（OPEN，跟进标题/清单/state 与 review 修正）：https://github.com/greyoak111/cccodroid/pull/22</li>
 <li>上游 review 与回复：#20（已关闭）→ #21</li>
 <li>整机复测评论：https://github.com/greyoak111/cccodroid/pull/21#issuecomment-6398984906</li>
 <li>工作岛仓库：https://github.com/STUTTEFRFIX/WorkIsland-Android</li>
@@ -2604,7 +2615,7 @@ gateway: 9842 / 32734
 <ul>
 <li>状态标题的代码：<code>source/driver/driver.mjs</code>、<code>source/upstream-pr/gateway/gw/work-island-core.mjs</code></li>
 <li>单测：<code>source/upstream-pr/gateway/tests/work-island.test.mjs</code></li>
-<li>上游 PR：#21</li>
+<li>上游 PR：#21（已合并）、#22（OPEN，标题/清单/state 与 review 修正）</li>
 <li>应用仓库：https://github.com/STUTTEFRFIX/WorkIsland-Android</li>
 </ul></article>
 <section class="gallery page-break"><h2>界面截图</h2><div class="grid"><figure><img src="screenshots/01-working.png" alt="工作态：鱼图标 +「正在干活」"><figcaption>工作态：鱼图标 +「正在干活」</figcaption></figure><figure><img src="screenshots/02-done.png" alt="完成态：「任务完成」+ 用时"><figcaption>完成态：「任务完成」+ 用时</figcaption></figure><figure><img src="screenshots/03-idle.png" alt="8 秒后：岛上收起"><figcaption>8 秒后：岛上收起</figcaption></figure><figure><img src="screenshots/04-background.png" alt="后台：两个应用都退到桌面，岛仍在"><figcaption>后台：两个应用都退到桌面，岛仍在</figcaption></figure><figure><img src="screenshots/05-app.png" alt="应用界面：通知开 / 实时更新允许 / 电池不优化"><figcaption>应用界面：通知开 / 实时更新允许 / 电池不优化</figcaption></figure><figure><img src="screenshots/06-final.png" alt="聊天界面 + 胶囊"><figcaption>聊天界面 + 胶囊</figcaption></figure><figure><img src="screenshots/09-bot-preview.png" alt="四态 bot：应用内预览（干活 · 执行命令）"><figcaption>四态 bot：应用内预览（干活 · 执行命令）</figcaption></figure><figure><img src="screenshots/10-bot-states.png" alt="21 个模型 + 14 个 look 的对照表"><figcaption>21 个模型 + 14 个 look 的对照表</figcaption></figure><figure><img src="screenshots/11-notification-bot.png" alt="通知面板：bot 大图标 + 头顶 !"><figcaption>通知面板：bot 大图标 + 头顶 !</figcaption></figure><figure><img src="screenshots/12-island-ask.png" alt="岛上「等你确认」+ !"><figcaption>岛上「等你确认」+ !</figcaption></figure><figure><img src="screenshots/13-island-thinking.png" alt="思考三帧：胶囊「思考中 1/4」，省略号亮点在动"><figcaption>思考三帧：胶囊「思考中 1/4」，省略号亮点在动</figcaption></figure></div></section>
