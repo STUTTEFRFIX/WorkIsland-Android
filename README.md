@@ -46,7 +46,7 @@
 | `source/upstream-pr-review.patch` | 上游 PR #21 的完整 diff |
 | `source/upstream-pr-review-22.patch` | 上游 PR #22（OPEN）的完整 diff |
 | `screenshots/` | 工作态、完成态、收起、后台存活、应用界面截图 |
-| `docs/` | 方案与设计、开发部署、测试报告、提交说明、开发过程与真机测试、状态与保活 |
+| `docs/` | 方案与设计、开发部署、测试报告、提交说明、开发过程与真机测试、状态与保活、厂商适配 |
 
 APK 校验：
 

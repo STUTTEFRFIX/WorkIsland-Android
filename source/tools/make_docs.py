@@ -16,6 +16,7 @@ DOCS = [
     ("docs/04-提交说明.md", "四、提交说明"),
     ("docs/05-开发过程与真机测试.md", "五、开发过程与真机测试"),
     ("docs/06-状态与保活.md", "六、状态与保活"),
+    ("docs/07-厂商适配.md", "七、厂商适配"),
 ]
 
 def md(path: pathlib.Path) -> str:
@@ -35,13 +36,13 @@ def main() -> None:
   <p class="sub">把 Claude 的工作状态，放到灵动岛上</p>
   <div class="rule"></div>
   <div class="meta">
-    <div><span>宿主</span>cccodroid 0.4.2</div>
+    <div><span>宿主</span>cccodroid 0.4.2–0.4.10</div>
     <div><span>设备</span>OnePlus PJA110 · ColorOS 16.0.3</div>
     <div><span>应用</span>com.dafeiyu.workisland 1.4</div>
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
     <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>6484f58e1c298784d765c18c1dc35aabe11004cdff037440774b074140caa8ca</div>
+  <div class="hash">APK SHA-256<br>98c6082527f4f349fd45b1f46c8de79e5e3dc82745099a62c47652627ba9bbb2</div>
 </section>
 """
 
@@ -55,17 +56,19 @@ def main() -> None:
     <tr><td>项目说明</td><td>一句话、交付物、快速开始、测试环境</td></tr>
     <tr><td>一、方案与设计</td><td>背景与问题、总体架构、状态机、事件文案、收工判定、关键技术、安全与限制</td></tr>
     <tr><td>二、开发与部署</td><td>目录落点、构建链、安装、网关接入、driver 部署、保活、调试、回滚</td></tr>
-    <tr><td>三、测试报告</td><td>12 个用例、关键日志、截图索引、6 个问题与修复</td></tr>
+    <tr><td>三、测试报告</td><td>18 个用例、关键日志、截图索引、6 个问题与修复</td></tr>
     <tr><td>四、提交说明</td><td>验收步骤、设计要点、已知限制、变更记录</td></tr>
     <tr><td>五、开发过程与真机测试</td><td>时间线、踩坑与修法、全部真机测试记录、过程链接</td></tr>
     <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、后台保活与自动恢复</td></tr>
+    <tr><td>七、厂商适配</td><td>vivo / 小米 / 红魔 的上岛条件、私有通道、Shizuku 旁路与我们的策略</td></tr>
   </table>
   <div class="toc-note">
-    <b>三个非显然结论</b>
+    <b>四个非显然结论</b>
     <ol>
       <li>ColorOS 16 的流体云直接接 Android 16 Live Updates，不需要 OPPO 私有白名单。</li>
       <li>ColorOS 会在后台冻结应用（连前台服务也冻），所以定时器必须放在网关 driver 里。</li>
       <li>收工要看 <code>runs</code> 而不是 <code>run</code>，并且要二次复查 + 3 秒宽限，否则会提前报完成。</li>
+      <li>vivo 国行的原子岛是白名单制；小米/红米 HyperOS 3.0.300+ 理论上会自动包标准 Live Updates，但还没真机验证。</li>
     </ol>
   </div>
 </section>"""
