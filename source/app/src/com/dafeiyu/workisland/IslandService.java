@@ -75,13 +75,14 @@ public class IslandService extends Service {
         working = true;
         startedAt = at > 0 ? at : System.currentTimeMillis();
         lastKey = "";
-        getSystemService(NotificationManager.class).cancel(IDLE_ID);
         String t = title == null || title.isEmpty() ? "正在干活" : title;
         String x = text == null ? "正在处理…" : text;
         String st = state == null || state.isEmpty() ? "working" : state;
         String f = face == null || face.isEmpty() ? "open" : face;
         Notification n = Notifier.build(this, t, x, startedAt, false, st, f, step, todoDone, todoTotal, morph, anim);
-        startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        post(n);
+        // 先让新通知上岛，再撤掉待机的旧通知：反过来会空一小段，胶囊就先收回去再弹出来。
+        getSystemService(NotificationManager.class).cancel(IDLE_ID);
         lastKey = t + "|" + x + "|" + st + "|" + f + "|" + step + "|" + todoDone + "/" + todoTotal + "|" + morph + "|" + anim;
         Log.d("WorkIsland", "work start " + lastKey);
     }
@@ -99,10 +100,18 @@ public class IslandService extends Service {
         String key = t + "|" + x + "|" + st + "|" + f + "|" + step + "|" + todoDone + "/" + todoTotal + "|" + morph + "|" + anim;
         if (key.equals(lastKey)) return;
         lastKey = key;
-        getSystemService(NotificationManager.class).cancel(IDLE_ID);
         Notification n = Notifier.build(this, t, x, startedAt, false, st, f, step, todoDone, todoTotal, morph, anim);
-        startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        post(n);
         Log.d("WorkIsland", "work update " + key);
+    }
+
+    /**
+     * 永远用同一个通知 ID：换 ID 时胶囊会收回再弹出（主人叫它「抽搐」）。
+     * 同一个 ID 的更新本来就能换前导图标（thinking 和 error 两态实测像素不同），
+     * 所以思考时只换 bitmap，不动通知的身份。
+     */
+    private void post(Notification n) {
+        startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
     }
 
     private synchronized void finishRun(String title, String text, int step, int todoDone, int todoTotal) {
@@ -117,7 +126,7 @@ public class IslandService extends Service {
         getSystemService(NotificationManager.class).cancel(IDLE_ID);
         Notification n = Notifier.build(this, t, x, System.currentTimeMillis(), true, "done", "happy",
                 step, todoTotal > 0 ? todoTotal : todoDone, todoTotal);
-        startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        post(n);
         Log.d("WorkIsland", "work done " + t + " / " + x);
     }
 

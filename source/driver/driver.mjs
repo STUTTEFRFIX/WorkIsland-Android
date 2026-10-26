@@ -10,7 +10,19 @@ import { execFile, execFileSync } from 'node:child_process';
 
 const HOME = '/data/user/0/cc.codroid/files/home';
 const TOKEN = fs.readFileSync(HOME + '/.gateway-token', 'utf8').trim();
-try { fs.writeFileSync(HOME + '/.work-island.pid', String(process.pid)); } catch {}
+// 只允许一个 driver：网关看门狗可能会重复拉起，两个 driver 会互相抢状态、让岛上图标乱跳。
+try {
+  const pidFile = HOME + '/.work-island.pid';
+  const old = Number(fs.readFileSync(pidFile, 'utf8').trim());
+  if (old && old !== process.pid && fs.existsSync('/proc/' + old)) {
+    const cmd = fs.readFileSync('/proc/' + old + '/cmdline', 'utf8');
+    if (cmd.includes('driver.mjs')) {
+      console.log(new Date().toISOString(), 'another driver already running:', old);
+      process.exit(0);
+    }
+  }
+  fs.writeFileSync(pidFile, String(process.pid));
+} catch {}
 const PORT = 8791;
 const PKG = 'com.dafeiyu.workisland';
 const SVC = PKG + '/.IslandService';
@@ -54,28 +66,35 @@ function todoProgress(ev) {
 
 let active = null;          // { id, startedAt, last, step, done, total, title, text, state, anim }
 let animTimer = null;
+let animInFlight = false;
 
-/** 思考时头顶省略号要动：由 driver 每 380ms 推一帧，应用只负责画。 */
+// 思考时头顶的省略号要动。实测同一个通知 ID 更新也会刷新前导图标
+// （thinking / error 两态截图不一样），所以只换 bitmap、不换通知 ID ——
+// 换 ID 才会让胶囊收回再弹出。节奏放慢到 800ms，别让它看起来在抽搐。
 function tickAnim() {
-  if (!active || active.state !== 'thinking') { stopAnim(); return; }
+  if (!active || active.state !== 'thinking' || animInFlight) {
+    if (!active || active.state !== 'thinking') stopAnim();
+    return;
+  }
   active.anim = (active.anim + 1) % 3;
+  animInFlight = true;
   send(A.update, active.title, active.text, active.startedAt, active.state,
-    active.step, active.done, active.total, -1, active.anim);
+    active.step, active.done, active.total, -1, active.anim,
+    () => { animInFlight = false; });
 }
-function startAnim() {
-  if (animTimer) return;
-  animTimer = setInterval(tickAnim, 380);
-}
+function startAnim() { if (!animTimer) animTimer = setInterval(tickAnim, 800); }
 function stopAnim() {
   if (animTimer) { clearInterval(animTimer); animTimer = null; }
+  animInFlight = false;
 }
+
 let doneTimer = null;
 let idleTimer = null;
 let verifying = false;
 
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 
-function send(action, title, text, since, state, step = 0, todoDone = 0, todoTotal = 0, morph = -1, anim = 0) {
+function send(action, title, text, since, state, step = 0, todoDone = 0, todoTotal = 0, morph = -1, anim = 0, done = null) {
   const args = ['start-foreground-service', '--user', '0', '-n', SVC, '-a', action];
   if (title) args.push('--es', 'title', title);
   if (text) args.push('--es', 'text', text);
@@ -86,9 +105,10 @@ function send(action, title, text, since, state, step = 0, todoDone = 0, todoTot
   if (morph >= 0) args.push('--ei', 'morph', String(morph));
   if (anim) args.push('--ei', 'anim', String(anim));
   const attempt = (n) => execFile('am', args, { timeout: 8000 }, (e, out, err) => {
-    if (!e) return;
+    if (!e) { if (done) done(); return; }
     if (n < 2) return setTimeout(() => attempt(n + 1), 800);
     log('am failed', e.message, String(err || '').slice(0, 120));
+    if (done) done();
   });
   attempt(0);
 }
@@ -105,13 +125,9 @@ function start(run, text) {
     last: '', step: 0, done: 0, total: 0, title: '正在干活', text: text || '正在处理…',
     state: 'working', anim: 0 };
   log('start', active.id || '?', active.startedAt);
-  // 从 logo 变成 bot：三帧唤醒，别让模型硬生生切出来。
-  const waking = active;
-  send(A.update, waking.title, waking.text, waking.startedAt, waking.state, 0, 0, 0, 0);
-  setTimeout(() => { if (active === waking) send(A.update, waking.title, waking.text, waking.startedAt, waking.state, 0, 0, 0, 45); }, 130);
-  setTimeout(() => { if (active === waking) send(A.update, waking.title, waking.text, waking.startedAt, waking.state, 0, 0, 0, 80); }, 260);
-  setTimeout(() => { if (active === waking) update(waking.text, waking.title, waking.state); }, 390);
-  startAnim();
+  // ColorOS 会缓存流体云的 leading icon：第一帧必须就是最终的 bot。
+  // 之前的 morph 唤醒帧会让它把 logo 缓存一整轮，看起来就像「模型被切掉了」。
+  update(text || '正在处理…', '正在干活', 'working');
 }
 
 function update(text, title, state) {

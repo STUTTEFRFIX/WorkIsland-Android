@@ -257,7 +257,7 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  53ba7c0e0b2e3ca84aacc984a10511ba6cf42f512880232227cd2f763fc48938
+<pre><code>SHA-256  98c6082527f4f349fd45b1f46c8de79e5e3dc82745099a62c47652627ba9bbb2
 大小     338,665 字节
 </code></pre>
 <hr>
@@ -786,11 +786,13 @@ SIGNS  !  ?  ≡  ×  ⧗  …  z
 <p>通知的小图标本来是静态位图，ColorOS 又会在后台冻结应用，应用内定时器不可靠。
 所以动画帧由 <strong>driver</strong>（跑在网关进程里）推：</p>
 <ul>
-<li>思考时每 380 ms 发一帧 <code>--ei anim 0/1/2</code>：省略号的亮点从左跳到右，眼睛左右瞟，
-  身体上下浮 1.8%；应用只负责按帧重画。</li>
-<li>每轮开始发三帧 <code>--ei morph 0/45/80</code>，再回到正常帧：logo 0.4 秒变成 bot，
-  避免「模型硬切出来」。</li>
-<li>图标按 <code>(模型, look, 失败, 尺寸, morph, anim)</code> 做 24 张 LRU 缓存，重建通知时不再每帧重新渲染，
+<li>思考时每 800 ms 发一帧 <code>--ei anim 0/1/2</code>：省略号的亮点从左跳到右，眼睛左右瞟，
+  身体上下浮 1.8%；应用只负责按帧重画。上一帧的 <code>am</code> 返回后才发下一帧，避免排队。</li>
+<li><strong>通知 ID 始终是 1001</strong>：同一个 ID 的更新也会刷新前导图标（thinking / error 两态实测像素不同）；
+  不换 ID，胶囊就不会收回再弹出（主人叫它「抽搐」）。</li>
+<li>第一帧直接是最终 bot，不再发 <code>morph 0/45/80</code> 唤醒帧：第一帧是 logo 时会被系统缓存一整轮，
+  看起来像「模型被切掉」。</li>
+<li>图标按 <code>(模型, look, 失败, 尺寸, morph, anim)</code> 做 24 张 LRU 缓存，同一 ID 更新时不再每帧重新渲染，
   减少闪白。</li>
 <li>身体比例恒定：图标永远给头顶标识预留位置（即使当前没有 <code>!</code>/<code>?</code>/<code>≡</code>），
   所以标识出现/消失时 bot 不会忽大忽小，也不会贴边被圆形槽裁掉。</li>
@@ -1277,7 +1279,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <blockquote>
 <p>测试日期：2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>53ba7c0e…8938</code>）</p>
+应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>98c60825…bbb2</code>）</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 测试环境</h2>
@@ -1451,7 +1453,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <td>T21</td>
 <td>思考时图标动起来</td>
 <td>省略号亮点移动、眼睛左右瞟、身体轻浮</td>
-<td>代码与帧已落地（driver 380 ms/帧）；目视为主观项</td>
+<td><strong>通过</strong>：同一通知 ID 注入 anim 0/1/2，胶囊图标逐帧不同；800 ms/帧，胶囊不收回（<code>13-island-thinking.png</code>）</td>
 </tr>
 <tr>
 <td>T22</td>
@@ -1683,7 +1685,7 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>53ba7c0e…8938</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>98c60825…bbb2</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
@@ -1812,7 +1814,12 @@ gateway: 9842 / 32734
 <tr>
 <td>2026-10-26</td>
 <td>1.4</td>
-<td>岛上信息增强：胶囊显示「状态 + 清单进度」，展开通知加计时、副标题、分段进度条；思考省略号逐帧动画与唤起变形；图标尺寸恒定，修「切出」</td>
+<td>岛上信息增强：胶囊显示「状态 + 清单进度」，展开通知加计时、副标题、分段进度条；思考省略号逐帧动画；图标尺寸恒定，修「切出」</td>
+</tr>
+<tr>
+<td>2026-10-26</td>
+<td>1.4</td>
+<td>修「抽搐」：通知 ID 固定 1001，思考动画每 800 ms 一帧只换 bitmap（换 ID 会让胶囊收回再弹出）；删除 morph 唤醒帧；重新签名 APK</td>
 </tr>
 </tbody>
 </table>
@@ -1831,7 +1838,7 @@ gateway: 9842 / 32734
 <blockquote>
 <p>记录时间：2026-10-25–26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>53ba7c0e…8938</code>）
+应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>98c60825…bbb2</code>）
 宿主：cccodroid 0.4.2（实机）+ 0.4.6（测试网关，PR 分支）</p>
 </blockquote>
 <p>这篇文档把「怎么一步步做出来、踩了哪些坑、在真机上测了什么」全部摊开。代码、截图、测试记录都在仓库里，过程不藏在对话里。</p>
@@ -2117,8 +2124,11 @@ gateway: 9842 / 32734
 <li>主人反馈「岛上模型旁边太空」：折叠胶囊改用 <code>setShortCriticalText</code>（状态 + 清单进度），
    展开通知加 <code>setSubText</code>、计时和分段进度条；清单 4 条就画 4 段。</li>
 <li>主人反馈「思考时点点不动、切换生硬、模型切出」：
-   - driver 每 380 ms 推一帧 <code>anim</code>，省略号亮点会跳，眼睛左右瞟，身体上下浮；
-   - 每轮开始推 <code>morph 0/45/80</code> 三帧，logo 0.4 秒变 bot；
+   - 先试过换通知 ID 重建（每 380 ms 一帧），结果胶囊每次收回再弹出，主人说像「抽搐」；
+   - 查清后改成：永远同一个通知 ID，driver 每 800 ms 推一帧 <code>anim</code>，只换 bitmap；
+     上一帧的 <code>am</code> 回来再发下一帧，胶囊不再收回；
+   - 实测同一 ID 的 thinking / error 更新，图标像素不同——之前「ColorOS 缓存图标」的结论是错的；
+   - 删掉每轮开始的 <code>morph 0/45/80</code> 唤醒帧：第一帧是 logo 会被缓存一整轮，看起来像「模型切出」；
    - 图标按 look/anim 做 LRU 缓存；身体比例恒定（永远给标识留位置），
      所以 <code>!</code> <code>?</code> <code>≡</code> 出现时 bot 不会突然缩小、贴边被裁。</li>
 </ol>
@@ -2292,8 +2302,9 @@ gateway: 9842 / 32734
   <code>等你确认</code>、<code>整理清单 2/4</code>；不再只显示一个动作词。</li>
 <li><strong>展开通知</strong>：标题带进度（<code>整理清单 · 1/4</code>），副标题是细节（<code>正在改 BotPainter · 清单 1/4</code>），
   右上角计时在走；进度条按清单分段，已完成的段亮起。</li>
-<li><strong>动效</strong>：driver 每 380 ms 推一帧 <code>anim</code>（省略号亮点跳、眼睛左右瞟、身体轻浮）；
-  每轮开始推 <code>morph 0/45/80</code> 三帧做 logo→bot 唤醒。</li>
+<li><strong>动效</strong>：永远同一个通知 ID；driver 每 800 ms 推一帧 <code>anim</code>（省略号亮点跳、眼睛左右瞟、身体轻浮），
+  只换 bitmap，不重建通知——换 ID 会让胶囊收回再弹出（「抽搐」）。</li>
+<li><strong>第一帧</strong>：直接是最终 bot，不发 <code>morph</code> 唤醒帧（第一帧是 logo 会被缓存一整轮）。</li>
 <li><strong>尺寸恒定</strong>：图标永远给头顶标识预留位置，<code>!</code> <code>?</code> <code>≡</code> 出现/消失时 bot 不会忽大忽小。</li>
 <li><strong>开关</strong>：「程序化 bot（四态 + 标识 + 体征）」关掉后，小/大图标退回 1.2 的简笔模型形状。</li>
 <li>状态色（通知 color，不是 bot 颜色）：</li>
