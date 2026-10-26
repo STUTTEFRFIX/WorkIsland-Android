@@ -79,6 +79,7 @@ public final class BotView extends View {
 
         BotPainter.Pose pose = new BotPainter.Pose();
         BotPainter.Face face = BotPainter.faceFor(look, failed);
+        face.frame = (int) ((seconds * 2.2f) % 8);   // 焊枪火花在应用内也逐帧跳
         boolean attention = BotState.isAttention(look);
         boolean done = look == BotState.Look.DONE && !failed;
 

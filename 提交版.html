@@ -82,7 +82,7 @@
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
     <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>6a871e15b4ec061997aac8e0b436263118a61db12ba6df5cef68934cc2b51f80</div>
+  <div class="hash">APK SHA-256<br>270d7684ad5ee7d9d70fb4604c3b5135776c53c1d408bd96928f3c2e619eb5c1</div>
 </section>
 
 <section class="toc">
@@ -265,8 +265,8 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  6a871e15b4ec061997aac8e0b436263118a61db12ba6df5cef68934cc2b51f80
-大小     338,665 字节
+<pre><code>SHA-256  270d7684ad5ee7d9d70fb4604c3b5135776c53c1d408bd96928f3c2e619eb5c1
+大小     342,761 字节
 </code></pre>
 <hr>
 <h2 id="_2">快速开始</h2>
@@ -766,13 +766,16 @@ SIGNS  !  ?  ≡  ×  ⧗  …  z
 <li><strong>装饰</strong>：Claude 的手脚（像素块四肢）、DeepSeek 的浅色肚子、Grok 的土星环、
   Cursor 的缺口、OpenCode 的像素块、Pi 的腿、Hermes 的云、OpenClaw 的触须、Qoder 的绿光。</li>
 <li><strong>状态表情</strong>：睁眼 / 眨眼 / 眯眼 / 睁大 / 笑眼 / 叉眼；<code>crossesEyes</code> 的 mark 在出错时叉眼。</li>
+<li><strong>干活配件</strong>：Works 阶段的五个 look（<code>plain</code> / 四种 tool，不含思考、压缩）会戴护目镜、
+  右手握一把焊枪。镜片和眼睛共用 <code>eyePos</code> 坐标，瞟/抬眼时一起走；枪口点在身前，
+  电弧光与五根火花按帧换位置。其他阶段不戴。</li>
 </ul>
 <p><strong>渲染与动效</strong></p>
 <ul>
 <li>归一化坐标：一个 mark 占 1×1，四周留 0.3；通知小图标 160 px，大图标 256 px。</li>
 <li>应用内 <code>BotView</code> 逐帧跑完整动效：0.5 s logo→bot 变形、3 s 呼吸、2.2–4.5 s 随机眨眼、
   请求时 0.45 s 起跳、完成时 0.6 s 弹一下、思考时眼睛向上瞟并转动。</li>
-<li>通知图标是静态帧，不能逐帧动；但每次状态更新都会重画，四态和标识是准的。</li>
+<li>通知图标本身不会自己动；由 driver 推 <code>anim</code> 帧重画（见下面的「动效：通知图标也会动」），四态和标识是准的。</li>
 </ul>
 <p><strong>开关与回退</strong></p>
 <p><code>Prefs.soul</code> 默认开。设置页的「程序化 bot（四态 + 标识 + 体征）」关掉后，通知图标退回
@@ -1292,7 +1295,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <blockquote>
 <p>测试日期：2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>6a871e15…1f80</code>）</p>
+应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>270d7684…b5c1</code>）</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 测试环境</h2>
@@ -1698,7 +1701,7 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>6a871e15…1f80</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.4，342,761 字节，SHA-256 <code>270d7684…b5c1</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
@@ -1844,6 +1847,11 @@ gateway: 9842 / 32734
 <td>1.4</td>
 <td>岛上动画三档（关闭 / 标准 4 帧 / 流畅 8 帧）：档位经 <code>Android/media/.../anim.conf</code> 交给 driver，900ms 一帧；应用内预览仍 60fps</td>
 </tr>
+<tr>
+<td>2026-10-26</td>
+<td>1.4</td>
+<td>干活配件：护目镜 + 焊枪（镜片跟随眼睛、火花按帧跳），只给 Works 五个 look；修 ColorOS 胶囊小图标回退应用图标（<code>oplus_smallicon_use_app_icon=false</code>）</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1861,7 +1869,7 @@ gateway: 9842 / 32734
 <blockquote>
 <p>记录时间：2026-10-25–26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>6a871e15…1f80</code>）
+应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>270d7684…b5c1</code>）
 宿主：cccodroid 0.4.2（实机）+ 0.4.6（测试网关，PR 分支）</p>
 </blockquote>
 <p>这篇文档把「怎么一步步做出来、踩了哪些坑、在真机上测了什么」全部摊开。代码、截图、测试记录都在仓库里，过程不藏在对话里。</p>
@@ -2332,6 +2340,7 @@ gateway: 9842 / 32734
   <code>Android/media/com.dafeiyu.workisland/anim.conf</code>，driver 每 10 秒读一次。应用内 <code>BotView</code> 始终 60fps。</li>
 <li><strong>第一帧</strong>：直接是最终 bot，不发 <code>morph</code> 唤醒帧（第一帧是 logo 会被缓存一整轮）。</li>
 <li><strong>尺寸恒定</strong>：图标永远给头顶标识预留位置，<code>!</code> <code>?</code> <code>≡</code> 出现/消失时 bot 不会忽大忽小。</li>
+<li><strong>干活配件</strong>：<code>plain</code> / 四种 tool 戴护目镜、拿焊枪（镜片跟随眼睛，火花按帧跳）；思考、压缩、请求、完成、待机都不戴。</li>
 <li><strong>开关</strong>：「程序化 bot（四态 + 标识 + 体征）」关掉后，小/大图标退回 1.2 的简笔模型形状。</li>
 <li>状态色（通知 color，不是 bot 颜色）：</li>
 </ul>
