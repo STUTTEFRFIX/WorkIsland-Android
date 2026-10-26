@@ -26,18 +26,22 @@ const TOOL_CN = {
   Glob: '找文件', Grep: '搜代码', WebSearch: '查资料', WebFetch: '读网页',
   Task: '子任务', TodoWrite: '整理清单', NotebookEdit: '改笔记',
   Agent: '子任务', Skill: '调用技能', KillShell: '收尾命令',
+  AskUserQuestion: '有话问你', ExitPlanMode: '等你确认',
 };
 
+// 工作岛的 14 种 look 名字；Java 侧 BotState 也认旧的 running/reading 等。
 const TOOL_STATE = {
-  Bash: 'running', KillShell: 'running',
-  Read: 'reading', Glob: 'reading', Grep: 'reading',
-  Write: 'writing', Edit: 'writing', NotebookEdit: 'writing',
-  WebSearch: 'searching', WebFetch: 'searching',
-  Task: 'subtask', Agent: 'subtask', Skill: 'working',
+  Bash: 'tool-command', KillShell: 'tool-command',
+  Read: 'tool-read', Glob: 'tool-read', Grep: 'tool-read',
+  Write: 'tool-edit', Edit: 'tool-edit', NotebookEdit: 'tool-edit',
+  WebSearch: 'tool-read', WebFetch: 'tool-read',
+  Task: 'thinking', Agent: 'thinking', Skill: 'plain',
+  AskUserQuestion: 'question', ExitPlanMode: 'permission',
+  TodoWrite: 'plan',
 };
 
 const toolLabel = (name) => TOOL_CN[name] || name || '工具';
-const toolState = (name) => TOOL_STATE[name] || 'working';
+const toolState = (name) => TOOL_STATE[name] || 'plain';
 
 /** TodoWrite 的清单进度：{ title, text }；不是清单工具返回 null */
 function todoProgress(ev) {
@@ -45,7 +49,7 @@ function todoProgress(ev) {
   if (!todos) return null;
   const total = todos.length;
   const done = todos.filter((t) => t && t.status === 'completed').length;
-  return { title: '整理清单', text: `清单 ${done}/${total}`, state: 'planning' };
+  return { title: '整理清单', text: `清单 ${done}/${total}`, state: 'plan' };
 }
 
 let active = null;          // { id, startedAt, last }
@@ -145,12 +149,12 @@ function handleEvent(ev) {
       start(ev, '正在处理…');
       break;
     case 'run_busy':
-      update('继续处理…', '正在干活', 'working');
+      update('继续处理…', '正在干活', 'plain');
       break;
     case 'phase':
       if (ev.phase === 'wait') update('等模型回复…', '等模型', 'thinking');
       else if (ev.phase === 'think') update('正在想…', '思考中', 'thinking');
-      else if (ev.phase === 'text') update('正在写回复…', '写回复', 'writing');
+      else if (ev.phase === 'text') update('正在写回复…', '写回复', 'plain');
       else if (ev.phase === 'tool') update('用 ' + toolLabel(ev.name) + '…', toolLabel(ev.name), toolState(ev.name));
       else if (ev.phase === 'retry') update('重试中…', '重试中', 'thinking');
       break;
@@ -161,19 +165,19 @@ function handleEvent(ev) {
       break;
     }
     case 'perm_request':
-      update('需要你确认：' + toolLabel(ev.tool || ev.name), '等你确认', 'waiting');
+      update('需要你确认：' + toolLabel(ev.tool || ev.name), '等你确认', 'permission');
       break;
     case 'perm_resolved':
-      update('继续…', '正在干活', 'working');
+      update('继续…', '正在干活', 'plain');
       break;
     case 'compacting':
-      update('整理上下文…', '整理上下文', 'thinking');
+      update('整理上下文…', '整理上下文', 'compacting');
       break;
     case 'sub_progress':
-      update('子任务：' + (ev.desc || '进行中') + '…', '子任务', 'subtask');
+      update('子任务：' + (ev.desc || '进行中') + '…', '子任务', 'thinking');
       break;
     case 'run_idle':
-      if (ev.bg > 0) update('后台任务还在跑…', '后台任务', 'working');
+      if (ev.bg > 0) update('后台任务还在跑…', '后台任务', 'plain');
       break;
     case 'error':
       // 不转发 message：可能带路径/命令输出

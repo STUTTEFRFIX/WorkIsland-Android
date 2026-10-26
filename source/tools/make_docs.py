@@ -37,11 +37,11 @@ def main() -> None:
   <div class="meta">
     <div><span>宿主</span>cccodroid 0.4.2</div>
     <div><span>设备</span>OnePlus PJA110 · ColorOS 16.0.3</div>
-    <div><span>应用</span>com.dafeiyu.workisland 1.2</div>
+    <div><span>应用</span>com.dafeiyu.workisland 1.4</div>
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
     <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>21e38c0057a43f8958abacde53c60411574bb685e71258c91ec00b596c5fc6b0</div>
+  <div class="hash">APK SHA-256<br>6484f58e1c298784d765c18c1dc35aabe11004cdff037440774b074140caa8ca</div>
 </section>
 """
 
@@ -58,7 +58,7 @@ def main() -> None:
     <tr><td>三、测试报告</td><td>12 个用例、关键日志、截图索引、6 个问题与修复</td></tr>
     <tr><td>四、提交说明</td><td>验收步骤、设计要点、已知限制、变更记录</td></tr>
     <tr><td>五、开发过程与真机测试</td><td>时间线、踩坑与修法、全部真机测试记录、过程链接</td></tr>
-    <tr><td>六、状态与保活</td><td>标题跟随动作、清单进度、后台保活与自动恢复方案</td></tr>
+    <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、后台保活与自动恢复</td></tr>
   </table>
   <div class="toc-note">
     <b>三个非显然结论</b>
@@ -84,6 +84,10 @@ def main() -> None:
         ("screenshots/04-background.png", "后台：两个应用都退到桌面，岛仍在"),
         ("screenshots/05-app.png", "应用界面：通知开 / 实时更新允许 / 电池不优化"),
         ("screenshots/06-final.png", "聊天界面 + 胶囊"),
+        ("screenshots/09-bot-preview.png", "四态 bot：应用内预览（干活 · 执行命令）"),
+        ("screenshots/10-bot-states.png", "21 个模型 + 14 个 look 的对照表"),
+        ("screenshots/11-notification-bot.png", "通知面板：bot 大图标 + 头顶 !"),
+        ("screenshots/12-island-ask.png", "岛上「等你确认」+ !"),
     ]
     gallery = ['<section class="gallery page-break"><h2>界面截图</h2><div class="grid">']
     for src, cap in shots:

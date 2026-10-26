@@ -29,7 +29,12 @@ public class IslandService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String action = intent != null ? intent.getAction() : null;
+        // 系统在进程被杀后会用 null intent 重启 START_STICKY 服务；没有意图就没有状态可画。
+        if (intent == null) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+        String action = intent.getAction();
         if (action == null) action = Notifier.ACTION_UPDATE;
 
         if (Notifier.ACTION_CANCEL.equals(action)) {
@@ -50,13 +55,13 @@ public class IslandService extends Service {
 
         startWorking(intent.getLongExtra("since", System.currentTimeMillis()),
                 intent.getStringExtra("text"), intent.getStringExtra("title"),
-                intent.getStringExtra("state"));
+                intent.getStringExtra("state"), intent.getStringExtra("face"));
         return START_STICKY;
     }
 
-    private synchronized void startWorking(long at, String text, String title, String state) {
+    private synchronized void startWorking(long at, String text, String title, String state, String face) {
         if (working) {
-            updateWorking(text, title, state);
+            updateWorking(text, title, state, face);
             return;
         }
         working = true;
@@ -66,25 +71,27 @@ public class IslandService extends Service {
         String t = title == null || title.isEmpty() ? "正在干活" : title;
         String x = text == null ? "正在处理…" : text;
         String st = state == null || state.isEmpty() ? "working" : state;
-        Notification n = Notifier.build(this, t, x, startedAt, false, st);
+        String f = face == null || face.isEmpty() ? "open" : face;
+        Notification n = Notifier.build(this, t, x, startedAt, false, st, f);
         startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
-        lastKey = t + "|" + x + "|" + st;
+        lastKey = t + "|" + x + "|" + st + "|" + f;
         Log.d("WorkIsland", "work start " + lastKey);
     }
 
-    private synchronized void updateWorking(String text, String title, String state) {
+    private synchronized void updateWorking(String text, String title, String state, String face) {
         if (!working) {
-            startWorking(System.currentTimeMillis(), text, title, state);
+            startWorking(System.currentTimeMillis(), text, title, state, face);
             return;
         }
         String t = title == null || title.isEmpty() ? "正在干活" : title;
         String x = text == null ? "" : text;
         String st = state == null || state.isEmpty() ? "working" : state;
-        String key = t + "|" + x + "|" + st;
+        String f = face == null || face.isEmpty() ? "open" : face;
+        String key = t + "|" + x + "|" + st + "|" + f;
         if (key.equals(lastKey)) return;
         lastKey = key;
         getSystemService(NotificationManager.class).cancel(IDLE_ID);
-        Notification n = Notifier.build(this, t, x, startedAt, false, st);
+        Notification n = Notifier.build(this, t, x, startedAt, false, st, f);
         startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         Log.d("WorkIsland", "work update " + key);
     }
@@ -99,7 +106,7 @@ public class IslandService extends Service {
         String t = title == null || title.isEmpty() ? "任务完成" : title;
         String x = text == null || text.isEmpty() ? fallback : text;
         getSystemService(NotificationManager.class).cancel(IDLE_ID);
-        Notification n = Notifier.build(this, t, x, System.currentTimeMillis(), true, "done");
+        Notification n = Notifier.build(this, t, x, System.currentTimeMillis(), true, "done", "happy");
         startForeground(ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         Log.d("WorkIsland", "work done " + t + " / " + x);
     }

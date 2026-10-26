@@ -8,6 +8,7 @@ final class Prefs {
     private static final String TOKEN = "token";
     private static final String PORT = "port";
     private static final String ICON = "icon";
+    private static final String SOUL = "soul";
 
     private Prefs() {}
 
@@ -30,5 +31,14 @@ final class Prefs {
 
     static void setIcon(Context c, String value) {
         c.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putString(ICON, value).apply();
+    }
+
+    /** 程序化 bot（四态 + 标识 + 每个 agent 的体征）；关掉就退回旧的简笔图标。 */
+    static boolean soul(Context c) {
+        return c.getSharedPreferences(FILE, Context.MODE_PRIVATE).getBoolean(SOUL, true);
+    }
+
+    static void setSoul(Context c, boolean value) {
+        c.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean(SOUL, value).apply();
     }
 }

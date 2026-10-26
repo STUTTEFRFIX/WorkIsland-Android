@@ -78,11 +78,11 @@
   <div class="meta">
     <div><span>宿主</span>cccodroid 0.4.2</div>
     <div><span>设备</span>OnePlus PJA110 · ColorOS 16.0.3</div>
-    <div><span>应用</span>com.dafeiyu.workisland 1.2</div>
+    <div><span>应用</span>com.dafeiyu.workisland 1.4</div>
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
     <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>21e38c0057a43f8958abacde53c60411574bb685e71258c91ec00b596c5fc6b0</div>
+  <div class="hash">APK SHA-256<br>6484f58e1c298784d765c18c1dc35aabe11004cdff037440774b074140caa8ca</div>
 </section>
 
 <section class="toc">
@@ -97,7 +97,7 @@
     <tr><td>三、测试报告</td><td>12 个用例、关键日志、截图索引、6 个问题与修复</td></tr>
     <tr><td>四、提交说明</td><td>验收步骤、设计要点、已知限制、变更记录</td></tr>
     <tr><td>五、开发过程与真机测试</td><td>时间线、踩坑与修法、全部真机测试记录、过程链接</td></tr>
-    <tr><td>六、状态与保活</td><td>标题跟随动作、清单进度、后台保活与自动恢复方案</td></tr>
+    <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、后台保活与自动恢复</td></tr>
   </table>
   <div class="toc-note">
     <b>三个非显然结论</b>
@@ -162,8 +162,9 @@
 <li><code>TodoWrite</code> 任务清单会显示「清单 x/y」</li>
 <li>收工：写「任务完成」+ 用时</li>
 <li>8 秒后：岛上收起，通知栏只留一条安静的「工作岛 · 在后台等下一轮」</li>
-<li><strong>图标可换</strong>：Agent HUD / DeepSeek / Claude / OpenClaw / 小鱼；颜色和角标跟着状态变
-  （读文件紫、执行命令蓝、等你确认黄、完成绿、出错红）</li>
+<li><strong>四态 bot</strong>：Wakes / Works / Asks / Done；14 种 look、7 个头顶标识（<code>! ? ≡ × ⧗ … z</code>）</li>
+<li><strong>21 个模型</strong>：每个 agent 有自己的形状、配色、眼睛，Claude 有手脚、DeepSeek 有肚子、Grok 有环、Cursor 缺一角、OpenClaw 有触须</li>
+<li><strong>可关</strong>：设置里的「程序化 bot」开关关掉就退回旧的简笔图标</li>
 </ul>
 <p>不是另开一个任务清单，也不是模拟动画——数据直接来自 cccodroid 网关的真实事件流。</p>
 <table>
@@ -183,7 +184,7 @@
 </tbody>
 </table>
 <p>更多截图见 <code>screenshots/</code>（含 <code>07-icon-state.png</code> 状态图标、<code>08-icon-picker.png</code> 图标选择器），完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
-<p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases/tag/v1.2.0">v1.2.0 发布页</a> · APK 与 PDF 在 Release 附件里。</p>
+<p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases">Release 页面</a> · 1.4 的 APK 与 PDF 也在本仓库 <code>apk/</code>、<code>pdf/</code> 里。</p>
 <hr>
 <h2 id="_1">交付物</h2>
 <table>
@@ -196,7 +197,7 @@
 <tbody>
 <tr>
 <td><code>apk/WorkIsland.apk</code></td>
-<td>可直接安装的 APK（<code>com.dafeiyu.workisland</code>，versionName 1.2）</td>
+<td>可直接安装的 APK（<code>com.dafeiyu.workisland</code>，versionName 1.4）</td>
 </tr>
 <tr>
 <td><code>source/app/</code></td>
@@ -233,8 +234,8 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  21e38c0057a43f8958abacde53c60411574bb685e71258c91ec00b596c5fc6b0
-大小     140,714 字节
+<pre><code>SHA-256  6484f58e1c298784d765c18c1dc35aabe11004cdff037440774b074140caa8ca
+大小     338,665 字节
 </code></pre>
 <hr>
 <h2 id="_2">快速开始</h2>
@@ -277,7 +278,7 @@
 </tr>
 <tr>
 <td>应用</td>
-<td>com.dafeiyu.workisland 1.2</td>
+<td>com.dafeiyu.workisland 1.4</td>
 </tr>
 <tr>
 <td>构建</td>
@@ -306,7 +307,7 @@
 <p>工作岛是<strong>第三方应用的可选集成</strong>：cccodroid 只负责把状态送出来，不包含也不负责本应用的功能。</p>
 </blockquote></article><article class="doc page-break"><div class="doc-title">一、方案与设计</div><h1 id="_1">工作岛 · 方案与设计</h1>
 <blockquote>
-<p>版本 1.2 · 2026-10-26
+<p>版本 1.4 · 2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3（Android 16 / SDK 36）
 宿主：cccodroid 0.4.2（包名 <code>cc.codroid</code>）</p>
 </blockquote>
@@ -594,7 +595,7 @@ try {
 </tr>
 <tr>
 <td>小图标</td>
-<td>鱼形矢量图</td>
+<td>程序化 bot（四态 + 头顶标识；关掉开关则退回鱼形/模型简笔图）</td>
 <td>同</td>
 </tr>
 <tr>
@@ -669,6 +670,76 @@ requires android.permission.INTERACT_ACROSS_USERS_FULL
 <li>ColorOS 自己的「自启动」「最近任务锁定」需要用户手动开启（adb 管不到）。</li>
 </ul>
 <p><strong>边界：</strong> 强行停止（force-stop）会杀掉一切，任何应用都无法自救；重新打开 cccodroid 后网关模块会重新拉起 driver。这是 Android 的规则，不是缺陷。</p>
+<h3 id="79-bot">7.9 程序化 bot：四态、标识与体征</h3>
+<p>1.3 之前，岛上图标是「模型形状 + 两只眼睛」的简笔版。1.4 按 <code>jazzenchen/agent-hud-open</code>
+（Apache-2.0）的 BotState / BotSigns / BotSpec / BotRenderer 逐项移植成 Java，形成一套完整的
+「灵魂」：</p>
+<p><strong>四种阶段（Wakes / Works / Asks / Done）</strong></p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>look</th>
+<th>岛上表现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wakes</td>
+<td><code>idle</code></td>
+<td>只显示该 agent 的 logo（鲸鱼、星芒、立方体……）</td>
+</tr>
+<tr>
+<td>Works</td>
+<td><code>plain</code> / 思考 / 压缩 / 四种 tool</td>
+<td>logo 0.5 秒变成 bot；呼吸、眨眼、干活时鳍扑腾</td>
+</tr>
+<tr>
+<td>Asks</td>
+<td><code>permission</code> / <code>question</code> / <code>plan</code></td>
+<td>bot 蹦一下、睁大眼睛；头顶 <code>!</code> / <code>?</code> / <code>≡</code></td>
+</tr>
+<tr>
+<td>Done</td>
+<td><code>done</code></td>
+<td>弹一下、笑眼（^^），2.4 秒后安静</td>
+</tr>
+</tbody>
+</table>
+<p><strong>14 种 look 与 7 个标识</strong></p>
+<pre><code>LOOKS  permission question plan compacting thinking
+       tool-edit tool-command tool-read tool-long-command
+       plain no-news idle asleep done
+SIGNS  !  ?  ≡  ×  ⧗  …  z
+</code></pre>
+<p>标识按优先级取第一个：<code>permission !</code> &gt; <code>question ?</code> &gt; <code>plan ≡</code> &gt; <code>failed ×</code> &gt; <code>badge ⧗</code> &gt;
+<code>thinking …</code> &gt; <code>asleep z</code>。字形是 5×7 点阵，绘制时带一圈 1 px 的暗色描边和 35% 的
+淡格，<code>…</code> 的亮点会随节拍在三个格子里跳。</p>
+<p><strong>BotSpec：每个 agent 的体征</strong></p>
+<p>20 个内置 mark + Agent HUD + 小鱼，各自的字段：</p>
+<ul>
+<li><strong>轮廓</strong>：圆 / 圆角矩形 / 多边形 / 猫耳 / bob / <code>outline</code>（从素材 alpha 径向采 360 点、
+  两次滑窗平滑）。所以形状跟着素材走，不是手画的近似。</li>
+<li><strong>配色</strong>：纯色、线性渐变，或从素材采样出的 60×60 配色场（3 次盒式模糊）。</li>
+<li><strong>眼睛</strong>：高度、宽度、圆角、间距、是否平排（<code>across</code>），可单独指定 <code>eyeColor</code>；
+  Copilot 保留素材本身的眼窝，用 <code>ownEyes</code> 在上面画会动的眼睛。</li>
+<li><strong>装饰</strong>：Claude 的手脚（像素块四肢）、DeepSeek 的浅色肚子、Grok 的土星环、
+  Cursor 的缺口、OpenCode 的像素块、Pi 的腿、Hermes 的云、OpenClaw 的触须、Qoder 的绿光。</li>
+<li><strong>状态表情</strong>：睁眼 / 眨眼 / 眯眼 / 睁大 / 笑眼 / 叉眼；<code>crossesEyes</code> 的 mark 在出错时叉眼。</li>
+</ul>
+<p><strong>渲染与动效</strong></p>
+<ul>
+<li>归一化坐标：一个 mark 占 1×1，四周留 0.3；通知小图标 160 px，大图标 256 px。</li>
+<li>应用内 <code>BotView</code> 逐帧跑完整动效：0.5 s logo→bot 变形、3 s 呼吸、2.2–4.5 s 随机眨眼、
+  请求时 0.45 s 起跳、完成时 0.6 s 弹一下、思考时眼睛向上瞟并转动。</li>
+<li>通知图标是静态帧，不能逐帧动；但每次状态更新都会重画，四态和标识是准的。</li>
+</ul>
+<p><strong>开关与回退</strong></p>
+<p><code>Prefs.soul</code> 默认开。设置页的「程序化 bot（四态 + 标识 + 体征）」关掉后，通知图标退回
+1.2 的简笔画法；应用内仍可预览。</p>
+<p><strong>许可</strong></p>
+<p>移植自 <code>agent-hud-open</code>（Apache-2.0），bot 素材来自 LobeHub（MIT），商标归各自所有者；
+未使用 Anthropic 的 Clawd sprites。许可全文见 <code>LICENSES/agent-hud-open-LICENSE.txt</code>。</p>
 <hr>
 <h2 id="8">8. 接口与契约</h2>
 <h3 id="81-http">8.1 网关 HTTP</h3>
@@ -927,7 +998,7 @@ apksigner sign --ks island.keystore \
 <ul>
 <li>交付包<strong>不包含私钥</strong>（<code>island.keystore</code> 留在本机工作区）。重新生成密钥会改变签名，已安装的旧版必须先卸载再装。</li>
 <li><code>resources.arsc</code> 由 aapt2 输出时已是未压缩且 4 字节对齐，实测可直接安装；如果换工具链后安装报 <code>resources.arsc ... not aligned</code>，再补 zipalign。</li>
-<li>APK 版本：<code>versionCode=3</code>、<code>versionName=1.2</code>。</li>
+<li>APK 版本：<code>versionCode=5</code>、<code>versionName=1.4</code>。</li>
 </ul>
 <h3 id="34">3.4 安装</h3>
 <p>共享目录 <code>/sdcard</code> 里的 APK 不能直接 <code>pm install</code>（SELinux 文件上下文问题），先经 shell 拷到 <code>/data/local/tmp</code>：</p>
@@ -1148,7 +1219,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <blockquote>
 <p>测试日期：2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：com.dafeiyu.workisland 1.2（APK SHA-256 <code>21e38c00…c6b0</code>）</p>
+应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>6484f58e…a8ca</code>）</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 测试环境</h2>
@@ -1270,6 +1341,42 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <td>选 DeepSeek 后小图标变鲸鱼；执行命令蓝色、完成绿色</td>
 <td><strong>真机目视通过</strong>（蓝色胶囊 +「执行命令」）；选择器 UI 已出现</td>
 </tr>
+<tr>
+<td>T13</td>
+<td>四态预览</td>
+<td>醒来=logo，干活/请求/完成=bot；切换有 0.5 s 变形</td>
+<td><strong>真机目视通过</strong>（<code>09-bot-preview.png</code>）</td>
+</tr>
+<tr>
+<td>T14</td>
+<td>21 个模型 / 14 个 look</td>
+<td>每个模型有自己的轮廓、配色、眼睛；14 个 look 的标识和表情正确</td>
+<td><strong>真机目视通过</strong>（<code>10-bot-states.png</code>，21×1 + 14 格对照）</td>
+</tr>
+<tr>
+<td>T15</td>
+<td>头顶标识</td>
+<td>请求 <code>!</code>、提问 <code>?</code>、清单 <code>≡</code>、出错 <code>×</code>、睡着 <code>z</code>、思考 <code>…</code></td>
+<td><strong>真机目视通过</strong>；岛上「等你确认」显示 <code>!</code>（<code>12-island-ask.png</code>）</td>
+</tr>
+<tr>
+<td>T16</td>
+<td>通知大/小图标</td>
+<td>大图标 256 px、小图标 160 px 都是同一只 bot；待机只显示 logo</td>
+<td><strong>真机目视通过</strong>（<code>11-notification-bot.png</code>）</td>
+</tr>
+<tr>
+<td>T17</td>
+<td>程序化 bot 开关</td>
+<td>关掉后退回 1.2 的简笔图标；应用内仍可预览</td>
+<td>代码路径已实现；未做关/开往返截图</td>
+</tr>
+<tr>
+<td>T18</td>
+<td>22.6 GB 设备上的渲染耗时</td>
+<td>21 个模型 + 14 look 全量渲染 &lt; 1 s</td>
+<td><strong>通过</strong>（<code>10-bot-states.png</code> 一次生成）</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1358,6 +1465,22 @@ gateway: 9842 / 32734
 <td><code>screenshots/06-final.png</code></td>
 <td>聊天界面 + 胶囊「正在干活」</td>
 </tr>
+<tr>
+<td><code>screenshots/09-bot-preview.png</code></td>
+<td>应用内 bot 预览：蓝色 DeepSeek bot +「干活 · 执行命令」</td>
+</tr>
+<tr>
+<td><code>screenshots/10-bot-states.png</code></td>
+<td>21 个模型的 bot + 14 个 look 的标识/表情对照</td>
+</tr>
+<tr>
+<td><code>screenshots/11-notification-bot.png</code></td>
+<td>通知面板：大图标是 bot，头顶 <code>!</code>，标题「等你确认」</td>
+</tr>
+<tr>
+<td><code>screenshots/12-island-ask.png</code></td>
+<td>岛上实时胶囊：bot + <code>!</code> +「等你确认」</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1408,6 +1531,30 @@ gateway: 9842 / 32734
 <td>服务尚未就绪</td>
 <td>driver 对 <code>am</code> 失败重试两次</td>
 </tr>
+<tr>
+<td>7</td>
+<td>应用被杀后起不来（长期存在）</td>
+<td><code>START_STICKY</code> 用 null intent 重启服务，<code>onStartCommand</code> 直接取 extra → NPE</td>
+<td>收到 null intent 直接 <code>stopSelf()</code>，等 driver 下一条状态重新拉起</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Copilot 变成一块白方块</td>
+<td>给素材染色用 <code>PorterDuffColorFilter(SRC_IN)</code> 画矩形，颜色滤镜看不到目标 alpha，把镂空填满了</td>
+<td>改成 <code>PorterDuffXfermode(SRC_IN)</code> 叠加，保留眼窝/镂空</td>
+</tr>
+<tr>
+<td>9</td>
+<td>某些模型一画就崩</td>
+<td>从素材采样出 1×1 配色场后仍按 <code>(30,30)</code> 取色</td>
+<td>按实际宽高取像素</td>
+</tr>
+<tr>
+<td>10</td>
+<td>静止时圆身体边上多三个小点</td>
+<td>DeepSeek 的鳍按「完全展开」画在身体外</td>
+<td>静止时收起，只保留肚子；扑腾时才露鳍</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1444,12 +1591,12 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.2，140,714 字节，SHA-256 <code>21e38c00…c6b0</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>6484f58e…a8ca</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
 <td><code>source/app/</code></td>
-<td>AndroidManifest、6 个 Java 类、res、<code>build.sh</code></td>
+<td>AndroidManifest、12 个 Java 类（含 BotState/BotSpecs/BotForm/BotPainter/BotView）、res、<code>build.sh</code></td>
 </tr>
 <tr>
 <td>驱动</td>
@@ -1484,12 +1631,12 @@ gateway: 9842 / 32734
 <tr>
 <td>测试报告</td>
 <td><code>docs/03-测试报告.md</code></td>
-<td>10 个用例、关键日志、问题修复记录</td>
+<td>18 个用例、关键日志、10 个问题修复记录</td>
 </tr>
 <tr>
 <td>截图</td>
 <td><code>screenshots/</code></td>
-<td>工作态、完成态、收起、后台存活、应用界面</td>
+<td>工作态、完成态、收起、后台存活、应用界面、四态 bot、标识</td>
 </tr>
 </tbody>
 </table>
@@ -1560,6 +1707,16 @@ gateway: 9842 / 32734
 <td>1.2</td>
 <td>Agent HUD 图标、按模型换图标（DeepSeek/Claude/OpenClaw/小鱼）、状态色与角标、标题跟动作、TodoWrite 清单 x/y；网关/驱动加 <code>state</code> extra</td>
 </tr>
+<tr>
+<td>2026-10-26</td>
+<td>1.3</td>
+<td>图标扩到 21 个模型；小图标 = 模型形状 + 两只眼睛（干活竖眼、完成闭眼、出错叉眼）；状态色</td>
+</tr>
+<tr>
+<td>2026-10-26</td>
+<td>1.4</td>
+<td>移植 agent-hud-open 的 bot 模型：四态 Wakes/Works/Asks/Done、14 look、7 个标识（<code>! ? ≡ × ⧗ … z</code>）、20+2 个 mark 的 BotSpec（轮廓/配色/眼睛/鳍/环/触须/四肢）；应用内 BotView 动效预览；通知大/小图标同源；「程序化 bot」开关；修 START_STICKY null intent 崩溃与 1×1 配色场越界</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1567,12 +1724,17 @@ gateway: 9842 / 32734
 <ul>
 <li>应用与驱动代码为本次项目自写，可随交付包分发。</li>
 <li>使用了 cccodroid 的网关事件流与终端能力；未修改其 Java 层。</li>
+<li>四态 bot、14 look、7 个标识与 BotSpec 移植自
+  <a href="https://github.com/jazzenchen/agent-hud-open"><code>jazzenchen/agent-hud-open</code></a>（Apache-2.0），
+  许可全文见 <code>LICENSES/agent-hud-open-LICENSE.txt</code>。</li>
+<li>模型图标来自 LobeHub（MIT），商标归各自所有者，非官方关联；未使用 Anthropic 的
+  Clawd sprites。</li>
 <li>通知样式参考 Android 16 Live Updates 官方规范。</li>
 </ul></article><article class="doc page-break"><div class="doc-title">五、开发过程与真机测试</div><h1 id="_1">开发过程与真机测试</h1>
 <blockquote>
 <p>记录时间：2026-10-25–26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：工作岛 1.2（versionCode 3，APK SHA-256 <code>21e38c00…c6b0</code>）
+应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>6484f58e…a8ca</code>）
 宿主：cccodroid 0.4.2（实机）+ 0.4.6（测试网关，PR 分支）</p>
 </blockquote>
 <p>这篇文档把「怎么一步步做出来、踩了哪些坑、在真机上测了什么」全部摊开。代码、截图、测试记录都在仓库里，过程不藏在对话里。</p>
@@ -1828,6 +1990,34 @@ gateway: 9842 / 32734
 <li>截图：<code>screenshots/07-icon-state.png</code>、<code>screenshots/08-icon-picker.png</code>。</li>
 <li>单测仍为 12/12；图标/选择器为真机目视验证。</li>
 </ul>
+<h3 id="311-bot-agent-hud-2026-10-26">3.11 四态 bot：把 agent-hud 的「灵魂」搬进来（2026-10-26）</h3>
+<p>主人给了 <code>jazzenchen/agent-hud-open</code>，说四态、14 look、7 个标识和每个 agent 的体征
+「就是灵魂」，想要。实现过程：</p>
+<ol>
+<li>在 <code>workspace/agent-hud-open</code> 找到 Swift → TS 的完整移植：<code>bot-state</code>、<code>bot-signs</code>、
+   <code>bot-spec</code>、<code>bot-form</code>、<code>bot-renderer</code>、<code>bot-motion</code>。</li>
+<li>Java 侧新增 6 个类：
+   - <code>BotState</code>：14 look、四态、标识优先级、旧状态名兼容；
+   - <code>BotSpecs</code>：20 个 agent + hud/小鱼的形状/配色/眼睛/装饰；
+   - <code>BotForm</code>：素材 256×256 径向 360 点 + 60×60 配色场；
+   - <code>BotPainter</code>：轮廓、配色、鳍/环/缺口/触须/四肢、眼睛、头顶点阵标识；
+   - <code>BotView</code>：应用内逐帧动效（0.5 s 变形、呼吸、眨眼、起跳、笑眼）；
+   - <code>BotSheet</code>：21 个模型 × 14 look 的对照表，<code>--ez sheet true</code> 打开。</li>
+<li><code>Notifier</code> 的小图标（160 px）和大图标（256 px）都改走 <code>BotPainter</code>；
+   <code>MainActivity</code> 加四态按钮、look 选择器和「程序化 bot」开关。</li>
+<li>driver 的 <code>state</code> 从 <code>running/reading/...</code> 细化到 <code>tool-command/tool-read/tool-edit/...</code>，
+   并给 <code>AskUserQuestion</code> / <code>ExitPlanMode</code> 单独的 <code>question</code> / <code>permission</code>。</li>
+<li>真机踩坑：
+   - 只画出了鳍，身体不见 → 构造 <code>BotForm</code> 时忘了把采样出的 <code>logo/body</code> 数组传进去；
+   - Copilot 是一块白方块 → 颜色滤镜 <code>SRC_IN</code> 看不到目标 alpha，把镂空填满，改用 Xfermode；
+   - 一画就崩 → 1×1 配色场取 <code>(30,30)</code> 越界；
+   - 圆身体边上的三个小点 → DeepSeek 静止时露出的鳍尖，收起来；
+   - 图标偏小 → 按内容包围盒放大并居中（约 1.3 倍）。</li>
+<li>验证：21 个模型 × 14 look 对照表一次生成；岛上「等你确认」显示 <code>!</code>；
+   通知大图标是 bot；<code>screenshots/09</code>–<code>12</code>。</li>
+<li>另外修掉一个长期问题：<code>START_STICKY</code> 用 null intent 重启 <code>IslandService</code> 会 NPE 崩溃，
+   这是「应用被杀后起不来」的一半原因。</li>
+</ol>
 <hr>
 <h2 id="4">4. 尚未验证 / 已知限制</h2>
 <ul>
@@ -1852,7 +2042,7 @@ gateway: 9842 / 32734
 <blockquote>
 <p>2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16
-应用：工作岛 1.2 · cccodroid 0.4.2（实机）</p>
+应用：工作岛 1.4 · cccodroid 0.4.2（实机）</p>
 </blockquote>
 <p>这篇文档分两部分：<strong>岛上现在能显示哪些状态</strong>，以及 <strong>应用被系统杀掉后怎么恢复</strong>。</p>
 <hr>
@@ -1984,14 +2174,18 @@ gateway: 9842 / 32734
 </tbody>
 </table>
 <p>单测：<code>node scripts/test.mjs work-island</code> → <strong>12/12</strong>（新增清单进度用例）。</p>
-<h3 id="15">1.5 图标：模型形状 + 状态色 + 角标</h3>
+<h3 id="15-bot">1.5 图标：四态 bot + 模型体征</h3>
 <ul>
 <li><strong>启动图标</strong>：Agent HUD 的黑色胶囊 + 绿/黄/红辉光（来自 agent-hud-open，Apache-2.0）。</li>
-<li><strong>岛上图标</strong>：应用内「岛上图标（按模型自选）」可选
-  Agent HUD / DeepSeek / Claude / OpenClaw / 小鱼。</li>
-<li><strong>小图标</strong>：选中的模型形状，画成当前状态的颜色，右下角加状态角标。</li>
-<li><strong>大图标</strong>：彩色的模型图标，展开通知可见。</li>
-<li>状态色：</li>
+<li><strong>岛上图标</strong>：应用内「岛上图标（按模型自选）」可选 <strong>21 个</strong>：
+  Agent HUD / DeepSeek / Claude / Codex / Grok / Cursor / Copilot / Antigravity /
+  Kimi / Qwen / OpenCode / Pi / Hermes / GLM / ZCode / Qoder / CodeBuddy /
+  WorkBuddy / OpenClaw / Devin / 小鱼。</li>
+<li><strong>四态</strong>：Wakes（只显示 logo）→ Works（bot）→ Asks（bot + <code>! ? ≡</code>）→ Done（笑眼）。</li>
+<li><strong>小图标</strong>：160 px，按当前 look 画 bot + 头顶标识；状态色仍用于通知底色。</li>
+<li><strong>大图标</strong>：256 px 的同一只 bot，展开通知可见。</li>
+<li><strong>开关</strong>：「程序化 bot（四态 + 标识 + 体征）」关掉后，小/大图标退回 1.2 的简笔模型形状。</li>
+<li>状态色（通知 color，不是 bot 颜色）：</li>
 </ul>
 <table>
 <thead>
@@ -2040,11 +2234,132 @@ gateway: 9842 / 32734
 </tbody>
 </table>
 <ul>
-<li>驱动/核心在 <code>UPDATE</code> 里带 <code>state</code>；应用据此选颜色、画角标。</li>
-<li>截图：<code>screenshots/07-icon-state.png</code>（执行命令 → 蓝色胶囊）、
-  <code>screenshots/08-icon-picker.png</code>（图标选择器）。</li>
-<li>许可：Agent HUD 图标 Apache-2.0；模型图标来自 LobeHub（MIT），商标归各自所有者，
-  非官方关联；未使用 Anthropic 的 Clawd sprites。见 <a href="../THIRD_PARTY.md"><code>THIRD_PARTY.md</code></a>。</li>
+<li>驱动/核心在 <code>UPDATE</code> 里带 <code>state</code>，应用先映射成 look，再画 bot。</li>
+<li>截图：<code>screenshots/09-bot-preview.png</code>（应用内预览）、<code>10-bot-states.png</code>
+  （21 个模型 + 14 个 look 对照）、<code>11-notification-bot.png</code>（通知里的 bot + <code>!</code>）、
+  <code>12-island-ask.png</code>（岛上「等你确认」）。</li>
+<li>许可：Agent HUD 与 bot 渲染移植自 agent-hud-open（Apache-2.0）；模型图标来自
+  LobeHub（MIT），商标归各自所有者，非官方关联；未使用 Anthropic 的 Clawd sprites。
+  见 <a href="../THIRD_PARTY.md"><code>THIRD_PARTY.md</code></a>。</li>
+</ul>
+<h3 id="16-look">1.6 状态名 → look → 标识</h3>
+<table>
+<thead>
+<tr>
+<th>driver 发送</th>
+<th>look</th>
+<th>阶段</th>
+<th>头顶</th>
+<th>眼睛</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>waiting</code> / <code>permission</code></td>
+<td>permission</td>
+<td>Asks</td>
+<td><code>!</code></td>
+<td>睁大</td>
+</tr>
+<tr>
+<td><code>question</code></td>
+<td>question</td>
+<td>Asks</td>
+<td><code>?</code></td>
+<td>睁大、左右看</td>
+</tr>
+<tr>
+<td><code>plan</code> / <code>planning</code> / <code>TodoWrite</code></td>
+<td>plan</td>
+<td>Asks</td>
+<td><code>≡</code></td>
+<td>睁大</td>
+</tr>
+<tr>
+<td><code>thinking</code> / <code>subtask</code> / <code>retry</code></td>
+<td>thinking</td>
+<td>Works</td>
+<td><code>…</code></td>
+<td>向上瞟</td>
+</tr>
+<tr>
+<td><code>writing</code></td>
+<td>tool-edit</td>
+<td>Works</td>
+<td>—</td>
+<td>平视</td>
+</tr>
+<tr>
+<td><code>running</code> / <code>Bash</code></td>
+<td>tool-command</td>
+<td>Works</td>
+<td>—</td>
+<td>平视</td>
+</tr>
+<tr>
+<td><code>reading</code> / <code>searching</code></td>
+<td>tool-read</td>
+<td>Works</td>
+<td>—</td>
+<td>平视</td>
+</tr>
+<tr>
+<td><code>working</code> / <code>plain</code></td>
+<td>plain</td>
+<td>Works</td>
+<td>—</td>
+<td>平视</td>
+</tr>
+<tr>
+<td><code>compacting</code></td>
+<td>compacting</td>
+<td>Works</td>
+<td>—</td>
+<td>眯眼</td>
+</tr>
+<tr>
+<td><code>asleep</code></td>
+<td>asleep</td>
+<td>—</td>
+<td><code>z</code></td>
+<td>闭眼</td>
+</tr>
+<tr>
+<td><code>no-news</code></td>
+<td>no-news</td>
+<td>—</td>
+<td>—</td>
+<td>半透明</td>
+</tr>
+<tr>
+<td><code>idle</code></td>
+<td>idle</td>
+<td>Wakes</td>
+<td>—</td>
+<td>只显示 logo</td>
+</tr>
+<tr>
+<td><code>done</code></td>
+<td>done</td>
+<td>Done</td>
+<td>—</td>
+<td>笑眼</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>failed</code></td>
+<td>任意</td>
+<td>—</td>
+<td><code>×</code></td>
+<td>叉眼</td>
+</tr>
+</tbody>
+</table>
+<p>新名字和旧名字都认；driver 更新在 <code>source/driver/driver.mjs</code>，网关重启后生效。</p>
+<p><strong>两个这次修掉的坑：</strong></p>
+<ul>
+<li><code>IslandService</code> 被系统以 <code>START_STICKY</code> + null intent 重启时会直接 NPE 崩溃——
+  这就是之前「应用被杀后起不来」的一半原因；现在收到 null intent 直接 <code>stopSelf</code>。</li>
+<li>从素材采样出的配色场如果是 1×1 色块，取 <code>(30,30)</code> 会越界崩溃；现在按实际宽高取。</li>
 </ul>
 <hr>
 <h2 id="_3">二、后台保活与自动恢复</h2>
@@ -2169,6 +2484,6 @@ gateway: 9842 / 32734
 <li>上游 PR：#21</li>
 <li>应用仓库：https://github.com/STUTTEFRFIX/WorkIsland-Android</li>
 </ul></article>
-<section class="gallery page-break"><h2>界面截图</h2><div class="grid"><figure><img src="screenshots/01-working.png" alt="工作态：鱼图标 +「正在干活」"><figcaption>工作态：鱼图标 +「正在干活」</figcaption></figure><figure><img src="screenshots/02-done.png" alt="完成态：「任务完成」+ 用时"><figcaption>完成态：「任务完成」+ 用时</figcaption></figure><figure><img src="screenshots/03-idle.png" alt="8 秒后：岛上收起"><figcaption>8 秒后：岛上收起</figcaption></figure><figure><img src="screenshots/04-background.png" alt="后台：两个应用都退到桌面，岛仍在"><figcaption>后台：两个应用都退到桌面，岛仍在</figcaption></figure><figure><img src="screenshots/05-app.png" alt="应用界面：通知开 / 实时更新允许 / 电池不优化"><figcaption>应用界面：通知开 / 实时更新允许 / 电池不优化</figcaption></figure><figure><img src="screenshots/06-final.png" alt="聊天界面 + 胶囊"><figcaption>聊天界面 + 胶囊</figcaption></figure></div></section>
+<section class="gallery page-break"><h2>界面截图</h2><div class="grid"><figure><img src="screenshots/01-working.png" alt="工作态：鱼图标 +「正在干活」"><figcaption>工作态：鱼图标 +「正在干活」</figcaption></figure><figure><img src="screenshots/02-done.png" alt="完成态：「任务完成」+ 用时"><figcaption>完成态：「任务完成」+ 用时</figcaption></figure><figure><img src="screenshots/03-idle.png" alt="8 秒后：岛上收起"><figcaption>8 秒后：岛上收起</figcaption></figure><figure><img src="screenshots/04-background.png" alt="后台：两个应用都退到桌面，岛仍在"><figcaption>后台：两个应用都退到桌面，岛仍在</figcaption></figure><figure><img src="screenshots/05-app.png" alt="应用界面：通知开 / 实时更新允许 / 电池不优化"><figcaption>应用界面：通知开 / 实时更新允许 / 电池不优化</figcaption></figure><figure><img src="screenshots/06-final.png" alt="聊天界面 + 胶囊"><figcaption>聊天界面 + 胶囊</figcaption></figure><figure><img src="screenshots/09-bot-preview.png" alt="四态 bot：应用内预览（干活 · 执行命令）"><figcaption>四态 bot：应用内预览（干活 · 执行命令）</figcaption></figure><figure><img src="screenshots/10-bot-states.png" alt="21 个模型 + 14 个 look 的对照表"><figcaption>21 个模型 + 14 个 look 的对照表</figcaption></figure><figure><img src="screenshots/11-notification-bot.png" alt="通知面板：bot 大图标 + 头顶 !"><figcaption>通知面板：bot 大图标 + 头顶 !</figcaption></figure><figure><img src="screenshots/12-island-ask.png" alt="岛上「等你确认」+ !"><figcaption>岛上「等你确认」+ !</figcaption></figure></div></section>
 </body>
 </html>
