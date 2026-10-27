@@ -12,6 +12,15 @@
     `BotForm`（360 点轮廓 / 60×60 配色场）、`BotRenderer`（身体、装饰、表情）。
   - 移植的是行为与几何常量，语言从 Swift/TypeScript 改为 Java，运行在 Android Canvas 上。
 
+## Shizuku API（保活授权）
+
+- 来源：[RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku) 的 API 13.1.5
+  （`api` / `provider` / `shared` / `aidl` 四个 jar，放在 `source/app/libs/`）。
+- 许可：Apache-2.0，全文见
+  [`LICENSES/Shizuku-API-LICENSE.txt`](LICENSES/Shizuku-API-LICENSE.txt)。
+- 用途：应用内申请 Shizuku 授权、设置页显示授权状态；保活链用它执行 shell 身份的操作
+  （appops、拉起服务、force-stop 后重拉）。
+
 ## 模型图标（21 个）
 
 - 来源：`agent-hud-open` 的 `src/packages/hud/src/assets/*.png`，原始图标来自

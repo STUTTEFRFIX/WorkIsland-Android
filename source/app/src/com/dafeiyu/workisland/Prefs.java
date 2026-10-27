@@ -13,6 +13,7 @@ final class Prefs {
     private static final String ICON = "icon";
     private static final String SOUL = "soul";
     private static final String ISLAND_ANIM = "islandAnim";
+    private static final String KEEP_ALIVE = "keepAlive";
 
     private Prefs() {}
 
@@ -62,13 +63,31 @@ final class Prefs {
      * 用 Android/media 下的一个小文件当信道（本应用可写、对方有读存储权限）。
      */
     static void writeAnimTier(Context c) {
+        writeMedia(c, "anim.conf", String.valueOf(islandAnim(c)));
+    }
+
+    /** 保活开关：外部的看门狗读这个文件决定是否拉起 / 停止 driver。 */
+    static boolean keepAlive(Context c) {
+        return c.getSharedPreferences(FILE, Context.MODE_PRIVATE).getBoolean(KEEP_ALIVE, true);
+    }
+
+    static void setKeepAlive(Context c, boolean value) {
+        c.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean(KEEP_ALIVE, value).apply();
+        writeKeepAlive(c);
+    }
+
+    static void writeKeepAlive(Context c) {
+        writeMedia(c, "keepalive.conf", keepAlive(c) ? "1" : "0");
+    }
+
+    private static void writeMedia(Context c, String name, String value) {
         try {
             File[] dirs = c.getExternalMediaDirs();
             if (dirs == null || dirs.length == 0 || dirs[0] == null) return;
             File dir = dirs[0];
             if (!dir.exists()) dir.mkdirs();
-            try (FileWriter w = new FileWriter(new File(dir, "anim.conf"))) {
-                w.write(String.valueOf(islandAnim(c)));
+            try (FileWriter w = new FileWriter(new File(dir, name))) {
+                w.write(value);
             }
         } catch (Throwable ignored) {}
     }

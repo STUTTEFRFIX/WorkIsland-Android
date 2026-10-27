@@ -39,7 +39,9 @@
 |---|---|
 | `apk/WorkIsland.apk` | 可直接安装的 APK（`com.dafeiyu.workisland`，versionName 1.4） |
 | `source/app/` | Android 16 Live Update 应用源码（Java + 资源 + 构建脚本） |
+| `source/app/libs/` | Shizuku API 13.1.5（api / provider / shared / aidl，Apache-2.0） |
 | `source/driver/driver.mjs` | 独立状态驱动：0.4.2–0.4.6 的部署方式 |
+| `source/driver/watchdog.mjs` | 保活看门狗：脱离网关进程树，15 秒检查并重拉 driver |
 | `source/gateway/work-island.mjs` | 0.4.2–0.4.6 的网关模块（spawn 独立 driver） |
 | `source/gateway/server.mjs` | 0.4.2–0.4.6 已接入的网关入口（原文件见 `server.mjs.original`） |
 | `source/upstream-pr/` | 上游 PR #21 合并版 + #22 跟进（网关内订阅 / 清单 / state / 单测 19 条） |
@@ -51,8 +53,8 @@
 APK 校验：
 
 ```
-SHA-256  270d7684ad5ee7d9d70fb4604c3b5135776c53c1d408bd96928f3c2e619eb5c1
-大小     342,761 字节
+SHA-256  b7296f917ac3b990fce5162a9854cc72651568dca60d53dc62cdc8b79cf31530
+大小     363,241 字节
 ```
 
 ---

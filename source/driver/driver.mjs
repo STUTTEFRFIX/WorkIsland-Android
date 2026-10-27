@@ -123,6 +123,21 @@ let verifying = false;
 
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 
+const AM = "/system/bin/am";
+const PRIV = process.env.WI_PRIV || "priv";
+let lastRecover = 0;
+
+/** 应用卡死时 am 会一直回 Not found；用 Shizuku（shell）把它 force-stop 掉，下一帧再拉起来。 */
+function recover() {
+  const now = Date.now();
+  if (now - lastRecover < 60000) return;
+  lastRecover = now;
+  log("recover: force-stop work island");
+  execFile(PRIV, ["--", AM, "force-stop", PKG], { timeout: 12000 }, (e, out, err) => {
+    if (e) log("recover failed", e.message, String(err || "").slice(0, 120));
+  });
+}
+
 function send(action, title, text, since, state, step = 0, todoDone = 0, todoTotal = 0, morph = -1, anim = 0, done = null) {
   const args = ['start-foreground-service', '--user', '0', '-n', SVC, '-a', action];
   if (title) args.push('--es', 'title', title);
@@ -133,11 +148,17 @@ function send(action, title, text, since, state, step = 0, todoDone = 0, todoTot
   if (todoTotal) args.push('--ei', 'todoDone', String(todoDone), '--ei', 'todoTotal', String(todoTotal));
   if (morph >= 0) args.push('--ei', 'morph', String(morph));
   if (anim) args.push('--ei', 'anim', String(anim));
-  const attempt = (n) => execFile('am', args, { timeout: 8000 }, (e, out, err) => {
+  const attempt = (n) => execFile(AM, args, { timeout: 8000 }, (e, out, err) => {
     if (!e) { if (done) done(); return; }
     if (n < 2) return setTimeout(() => attempt(n + 1), 800);
     log('am failed', e.message, String(err || '').slice(0, 120));
-    if (done) done();
+    // Shizuku 兜底：shell 身份再试一次；再不行就把卡死的应用 force-stop 掉
+    execFile(PRIV, ['--', AM, ...args], { timeout: 12000 }, (e2, o2, err2) => {
+      if (!e2) { log('am ok via priv'); if (done) done(); return; }
+      log('priv am failed', e2.message, String(err2 || '').slice(0, 120));
+      recover();
+      if (done) done();
+    });
   });
   attempt(0);
 }

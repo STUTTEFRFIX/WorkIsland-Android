@@ -25,8 +25,9 @@ public class IslandService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        // 只在服务创建时写一次档位文件；别在每条 UPDATE 上重写，否则会盖掉调试时手改的值
+        // 只在服务创建时写一次档位/保活文件；别在每条 UPDATE 上重写，否则会盖掉调试时手改的值
         Prefs.writeAnimTier(this);
+        Prefs.writeKeepAlive(this);
     }
 
     @Override

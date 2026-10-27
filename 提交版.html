@@ -82,7 +82,7 @@
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
     <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>270d7684ad5ee7d9d70fb4604c3b5135776c53c1d408bd96928f3c2e619eb5c1</div>
+  <div class="hash">APK SHA-256<br>b7296f917ac3b990fce5162a9854cc72651568dca60d53dc62cdc8b79cf31530</div>
 </section>
 
 <section class="toc">
@@ -231,8 +231,16 @@
 <td>Android 16 Live Update 应用源码（Java + 资源 + 构建脚本）</td>
 </tr>
 <tr>
+<td><code>source/app/libs/</code></td>
+<td>Shizuku API 13.1.5（api / provider / shared / aidl，Apache-2.0）</td>
+</tr>
+<tr>
 <td><code>source/driver/driver.mjs</code></td>
 <td>独立状态驱动：0.4.2–0.4.6 的部署方式</td>
+</tr>
+<tr>
+<td><code>source/driver/watchdog.mjs</code></td>
+<td>保活看门狗：脱离网关进程树，15 秒检查并重拉 driver</td>
 </tr>
 <tr>
 <td><code>source/gateway/work-island.mjs</code></td>
@@ -265,8 +273,8 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  270d7684ad5ee7d9d70fb4604c3b5135776c53c1d408bd96928f3c2e619eb5c1
-大小     342,761 字节
+<pre><code>SHA-256  b7296f917ac3b990fce5162a9854cc72651568dca60d53dc62cdc8b79cf31530
+大小     363,241 字节
 </code></pre>
 <hr>
 <h2 id="_2">快速开始</h2>
@@ -1295,7 +1303,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <blockquote>
 <p>测试日期：2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>270d7684…b5c1</code>）</p>
+应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>b7296f91…1530</code>）</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 测试环境</h2>
@@ -1701,7 +1709,7 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.4，342,761 字节，SHA-256 <code>270d7684…b5c1</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.4，363,241 字节，SHA-256 <code>b7296f91…1530</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
@@ -1852,6 +1860,11 @@ gateway: 9842 / 32734
 <td>1.4</td>
 <td>干活配件：护目镜 + 焊枪（镜片跟随眼睛、火花按帧跳），只给 Works 五个 look；修 ColorOS 胶囊小图标回退应用图标（<code>oplus_smallicon_use_app_icon=false</code>）</td>
 </tr>
+<tr>
+<td>2026-10-27</td>
+<td>1.4</td>
+<td>保活开关（<code>keepalive.conf</code>）+ 脱离网关进程树的看门狗 + driver 的 Shizuku 兜底；集成 Shizuku API 13.1.5，应用内可申请授权</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1869,7 +1882,7 @@ gateway: 9842 / 32734
 <blockquote>
 <p>记录时间：2026-10-25–26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>270d7684…b5c1</code>）
+应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>b7296f91…1530</code>）
 宿主：cccodroid 0.4.2（实机）+ 0.4.6（测试网关，PR 分支）</p>
 </blockquote>
 <p>这篇文档把「怎么一步步做出来、踩了哪些坑、在真机上测了什么」全部摊开。代码、截图、测试记录都在仓库里，过程不藏在对话里。</p>
@@ -2572,9 +2585,14 @@ gateway: 9842 / 32734
 <td><code>BOOT_COMPLETED</code> 接收器会拉起服务</td>
 </tr>
 <tr>
+<td>外部看门狗在跑</td>
+<td>能</td>
+<td>跑在网关进程树之外（PPID 1）；driver 挂了 15 秒内重拉</td>
+</tr>
+<tr>
 <td>Shizuku 在跑</td>
 <td>能补一刀</td>
-<td>shell 身份可以 <code>am start-foreground-service</code> 拉起被停的应用</td>
+<td>看门狗可 appops 保活；driver 可用 shell 身份 <code>am</code> 拉起，卡死时 force-stop 后重拉</td>
 </tr>
 </tbody>
 </table>
@@ -2592,22 +2610,21 @@ gateway: 9842 / 32734
 <li>如果开了「应用速冻」/「深度睡眠」，把工作岛加入白名单。</li>
 </ol>
 <p>工作岛应用内已经有「后台保活设置」按钮，会跳到电池优化页；状态行显示「电池：不优化」才算生效。</p>
-<h3 id="25-app">2.5 App 侧看门狗（待实现）</h3>
-<p>计划在应用里加一个 <code>AlarmManager</code> 定时器：</p>
+<h3 id="25-14">2.5 已实现的保活链（1.4）</h3>
+<p>应用里有一个「保活（看门狗 + Shizuku 兜底）」开关，默认开，写在
+<code>Android/media/com.dafeiyu.workisland/keepalive.conf</code>（0/1）。外部看门狗每 15 秒读一次：</p>
 <ul>
-<li>每 15 分钟发一次 <code>PendingIntent</code> 给 <code>WatchdogReceiver</code>；</li>
-<li>接收器检查服务是否在跑，不在就 <code>startForegroundService</code>；</li>
-<li>如果通知已经过期/丢失，重新发一条待机通知。</li>
+<li><strong>看门狗</strong>：<code>watchdog.mjs</code> 用 <code>setsid</code> 跑在网关进程树之外（PPID 1），网关重启不会带走；
+  driver 不在了就重新拉起；关掉开关时停掉 driver 并发 <code>CANCEL</code>，让岛干净收起。</li>
+<li><strong>driver 兜底</strong>：<code>am</code> 失败时用 <code>priv -- /system/bin/am</code> 以 shell 身份再试；再失败就
+  <code>force-stop</code> 工作岛，下一帧重拉。</li>
+<li><strong>Shizuku 保活</strong>：看门狗每 5 分钟复检 <code>deviceidle whitelist</code>、<code>standby bucket active</code>、
+  <code>RUN_ANY_IN_BACKGROUND</code>、<code>WAKE_LOCK</code>。</li>
+<li><strong>应用自己的授权</strong>：工作岛集成 Shizuku API 13.1.5，设置页显示「Shizuku：已授权」，
+  未授权时可点状态行申请；保活开关打开时启动会自动申请一次。</li>
 </ul>
-<p>限制：force-stop 后闹钟会被取消，仍然需要手动打开；Doze 下闹钟可能被延后，不能保证分钟级准时。</p>
-<h3 id="26-driver">2.6 Driver 侧兜底（可选）</h3>
-<p>driver 的 <code>am start-foreground-service</code> 失败时，可以再试一次 <code>priv -- am start-foreground-service ...</code>：</p>
-<ul>
-<li>前提：Shizuku 在运行；</li>
-<li>优点：shell 身份可以拉起被系统停掉的应用；</li>
-<li>缺点：多一个 Shizuku 依赖；<code>priv</code> 命令会进审计日志。</li>
-</ul>
-<p>当前只在个人部署里考虑，没有加进上游 PR 的默认路径。</p>
+<p>限制：整机重启、ccc 被强制停止/更新、Shizuku 掉线时，看门狗会一起消失；
+这些要等正式版探测修复或系统级自启。</p>
 <h3 id="27">2.7 验证方法</h3>
 <ol>
 <li>打开「工作岛」，确认状态行：通知开 / 实时更新允许 / 电池不优化。</li>
