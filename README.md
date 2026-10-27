@@ -46,13 +46,13 @@
 | `source/upstream-pr-review.patch` | 上游 PR #21 的完整 diff |
 | `source/upstream-pr-review-22.patch` | 上游 PR #22（OPEN）的完整 diff |
 | `screenshots/` | 工作态、完成态、收起、后台存活、应用界面截图 |
-| `docs/` | 方案与设计、开发部署、测试报告、提交说明、开发过程与真机测试、状态与保活 |
+| `docs/` | 方案与设计、开发部署、测试报告、提交说明、开发过程与真机测试、状态与保活、厂商适配 |
 
 APK 校验：
 
 ```
-SHA-256  98c6082527f4f349fd45b1f46c8de79e5e3dc82745099a62c47652627ba9bbb2
-大小     338,665 字节
+SHA-256  270d7684ad5ee7d9d70fb4604c3b5135776c53c1d408bd96928f3c2e619eb5c1
+大小     342,761 字节
 ```
 
 ---

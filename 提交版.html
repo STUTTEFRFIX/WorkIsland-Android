@@ -76,13 +76,13 @@
   <p class="sub">把 Claude 的工作状态，放到灵动岛上</p>
   <div class="rule"></div>
   <div class="meta">
-    <div><span>宿主</span>cccodroid 0.4.2</div>
+    <div><span>宿主</span>cccodroid 0.4.2–0.4.10</div>
     <div><span>设备</span>OnePlus PJA110 · ColorOS 16.0.3</div>
     <div><span>应用</span>com.dafeiyu.workisland 1.4</div>
     <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
     <div><span>日期</span>2026-10-26</div>
   </div>
-  <div class="hash">APK SHA-256<br>6484f58e1c298784d765c18c1dc35aabe11004cdff037440774b074140caa8ca</div>
+  <div class="hash">APK SHA-256<br>270d7684ad5ee7d9d70fb4604c3b5135776c53c1d408bd96928f3c2e619eb5c1</div>
 </section>
 
 <section class="toc">
@@ -94,17 +94,19 @@
     <tr><td>项目说明</td><td>一句话、交付物、快速开始、测试环境</td></tr>
     <tr><td>一、方案与设计</td><td>背景与问题、总体架构、状态机、事件文案、收工判定、关键技术、安全与限制</td></tr>
     <tr><td>二、开发与部署</td><td>目录落点、构建链、安装、网关接入、driver 部署、保活、调试、回滚</td></tr>
-    <tr><td>三、测试报告</td><td>12 个用例、关键日志、截图索引、6 个问题与修复</td></tr>
+    <tr><td>三、测试报告</td><td>18 个用例、关键日志、截图索引、6 个问题与修复</td></tr>
     <tr><td>四、提交说明</td><td>验收步骤、设计要点、已知限制、变更记录</td></tr>
     <tr><td>五、开发过程与真机测试</td><td>时间线、踩坑与修法、全部真机测试记录、过程链接</td></tr>
     <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、后台保活与自动恢复</td></tr>
+    <tr><td>七、厂商适配</td><td>vivo / 小米 / 红魔 的上岛条件、私有通道、Shizuku 旁路与我们的策略</td></tr>
   </table>
   <div class="toc-note">
-    <b>三个非显然结论</b>
+    <b>四个非显然结论</b>
     <ol>
       <li>ColorOS 16 的流体云直接接 Android 16 Live Updates，不需要 OPPO 私有白名单。</li>
       <li>ColorOS 会在后台冻结应用（连前台服务也冻），所以定时器必须放在网关 driver 里。</li>
       <li>收工要看 <code>runs</code> 而不是 <code>run</code>，并且要二次复查 + 3 秒宽限，否则会提前报完成。</li>
+      <li>vivo 国行的原子岛是白名单制；小米/红米 HyperOS 3.0.300+ 理论上会自动包标准 Live Updates，但还没真机验证。</li>
     </ol>
   </div>
 </section><article class="doc page-break"><div class="doc-title">测试状态</div><h1 id="_1">测试状态</h1>
@@ -130,7 +132,7 @@
 <h2 id="_3">未验证</h2>
 <ul>
 <li>其他 ColorOS 版本（如 15、17）与其他机型</li>
-<li>其他厂商的“灵动岛 / 实时活动”实现（HyperOS、OriginOS、One UI、MagicOS 等）</li>
+<li>其他厂商的“灵动岛 / 实时活动”实现：vivo 国行原子岛是白名单制，红魔 OS 11 无岛，小米 HyperOS 3 理论可行但未实测；详见 <a href="docs/07-厂商适配.md"><code>docs/07-厂商适配.md</code></a></li>
 <li>开发端网关（8790）与 cccodroid（8791）的差异场景</li>
 <li>重启开机自启（<code>BOOT_COMPLETED</code> 已声明，未做整机重启验证）</li>
 <li>长时间 Doze（30 分钟以上）</li>
@@ -196,13 +198,15 @@
 <th>四态 bot（应用内预览）</th>
 <th>21 个模型 / 14 个 look</th>
 <th>通知里也带上标识</th>
+<th>思考时的胶囊</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><img src="screenshots/09-bot-preview.png" width="230"></td>
-<td><img src="screenshots/10-bot-states.png" width="230"></td>
-<td><img src="screenshots/11-notification-bot.png" width="230"></td>
+<td><img src="screenshots/09-bot-preview.png" width="210"></td>
+<td><img src="screenshots/10-bot-states.png" width="210"></td>
+<td><img src="screenshots/11-notification-bot.png" width="210"></td>
+<td><img src="screenshots/13-island-thinking.png" width="210"></td>
 </tr>
 </tbody>
 </table>
@@ -256,13 +260,13 @@
 </tr>
 <tr>
 <td><code>docs/</code></td>
-<td>方案与设计、开发部署、测试报告、提交说明、开发过程与真机测试、状态与保活</td>
+<td>方案与设计、开发部署、测试报告、提交说明、开发过程与真机测试、状态与保活、厂商适配</td>
 </tr>
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  98c6082527f4f349fd45b1f46c8de79e5e3dc82745099a62c47652627ba9bbb2
-大小     338,665 字节
+<pre><code>SHA-256  270d7684ad5ee7d9d70fb4604c3b5135776c53c1d408bd96928f3c2e619eb5c1
+大小     342,761 字节
 </code></pre>
 <hr>
 <h2 id="_2">快速开始</h2>
@@ -762,13 +766,16 @@ SIGNS  !  ?  ≡  ×  ⧗  …  z
 <li><strong>装饰</strong>：Claude 的手脚（像素块四肢）、DeepSeek 的浅色肚子、Grok 的土星环、
   Cursor 的缺口、OpenCode 的像素块、Pi 的腿、Hermes 的云、OpenClaw 的触须、Qoder 的绿光。</li>
 <li><strong>状态表情</strong>：睁眼 / 眨眼 / 眯眼 / 睁大 / 笑眼 / 叉眼；<code>crossesEyes</code> 的 mark 在出错时叉眼。</li>
+<li><strong>干活配件</strong>：Works 阶段的五个 look（<code>plain</code> / 四种 tool，不含思考、压缩）会戴护目镜、
+  右手握一把焊枪。镜片和眼睛共用 <code>eyePos</code> 坐标，瞟/抬眼时一起走；枪口点在身前，
+  电弧光与五根火花按帧换位置。其他阶段不戴。</li>
 </ul>
 <p><strong>渲染与动效</strong></p>
 <ul>
 <li>归一化坐标：一个 mark 占 1×1，四周留 0.3；通知小图标 160 px，大图标 256 px。</li>
 <li>应用内 <code>BotView</code> 逐帧跑完整动效：0.5 s logo→bot 变形、3 s 呼吸、2.2–4.5 s 随机眨眼、
   请求时 0.45 s 起跳、完成时 0.6 s 弹一下、思考时眼睛向上瞟并转动。</li>
-<li>通知图标是静态帧，不能逐帧动；但每次状态更新都会重画，四态和标识是准的。</li>
+<li>通知图标本身不会自己动；由 driver 推 <code>anim</code> 帧重画（见下面的「动效：通知图标也会动」），四态和标识是准的。</li>
 </ul>
 <p><strong>开关与回退</strong></p>
 <p><code>Prefs.soul</code> 默认开。设置页的「程序化 bot（四态 + 标识 + 体征）」关掉后，通知图标退回
@@ -790,8 +797,12 @@ SIGNS  !  ?  ≡  ×  ⧗  …  z
 <p>通知的小图标本来是静态位图，ColorOS 又会在后台冻结应用，应用内定时器不可靠。
 所以动画帧由 <strong>driver</strong>（跑在网关进程里）推：</p>
 <ul>
-<li>思考时每 800 ms 发一帧 <code>--ei anim 0/1/2</code>：省略号的亮点从左跳到右，眼睛左右瞟，
-  身体上下浮 1.8%；应用只负责按帧重画。上一帧的 <code>am</code> 返回后才发下一帧，避免排队。</li>
+<li>所有状态都由 driver 推帧：默认每 900 ms 一帧，上一帧的 <code>am</code> 返回后才发下一帧，避免排队。</li>
+<li><strong>三档由应用里的「岛上动画」控制</strong>：关闭 / 标准（4 帧：静止·瞟左·闭眼·瞟右）/
+  流畅（8 帧：静止·瞟左·半眨·闭眼·半眨·瞟右·静止·呼吸）。档位写在
+  <code>/sdcard/Android/media/com.dafeiyu.workisland/anim.conf</code>，driver 每 10 秒读一次。</li>
+<li>思考时省略号亮格跟着帧轮转；关掉动画时补一帧静止，不会停在眨眼上。</li>
+<li>应用内 <code>BotView</code> 不受档位影响，始终 60fps（呼吸、眨眼、起跳、笑眼）。</li>
 <li><strong>通知 ID 始终是 1001</strong>：同一个 ID 的更新也会刷新前导图标（thinking / error 两态实测像素不同）；
   不换 ID，胶囊就不会收回再弹出（主人叫它「抽搐」）。</li>
 <li>第一帧直接是最终 bot，不再发 <code>morph 0/45/80</code> 唤醒帧：第一帧是 logo 时会被系统缓存一整轮，
@@ -1284,7 +1295,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <blockquote>
 <p>测试日期：2026-10-26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>98c60825…bbb2</code>）</p>
+应用：com.dafeiyu.workisland 1.4（APK SHA-256 <code>270d7684…b5c1</code>）</p>
 </blockquote>
 <hr>
 <h2 id="1">1. 测试环境</h2>
@@ -1690,7 +1701,7 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.4，338,665 字节，SHA-256 <code>98c60825…bbb2</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.4，342,761 字节，SHA-256 <code>270d7684…b5c1</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
@@ -1730,7 +1741,7 @@ gateway: 9842 / 32734
 <tr>
 <td>测试报告</td>
 <td><code>docs/03-测试报告.md</code></td>
-<td>18 个用例、关键日志、10 个问题修复记录</td>
+<td>22 个用例、关键日志、11 个问题修复记录</td>
 </tr>
 <tr>
 <td>截图</td>
@@ -1831,6 +1842,16 @@ gateway: 9842 / 32734
 <td>1.4</td>
 <td>上游 PR #22（OPEN）：清单接 <code>tasks</code> 事件（TaskCreate/TaskUpdate）、认不出的工具走通用文案、错误正文固定；单测 19/19，<code>source/upstream-pr/</code> 已同步</td>
 </tr>
+<tr>
+<td>2026-10-26</td>
+<td>1.4</td>
+<td>岛上动画三档（关闭 / 标准 4 帧 / 流畅 8 帧）：档位经 <code>Android/media/.../anim.conf</code> 交给 driver，900ms 一帧；应用内预览仍 60fps</td>
+</tr>
+<tr>
+<td>2026-10-26</td>
+<td>1.4</td>
+<td>干活配件：护目镜 + 焊枪（镜片跟随眼睛、火花按帧跳），只给 Works 五个 look；修 ColorOS 胶囊小图标回退应用图标（<code>oplus_smallicon_use_app_icon=false</code>）</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1848,7 +1869,7 @@ gateway: 9842 / 32734
 <blockquote>
 <p>记录时间：2026-10-25–26
 设备：OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）
-应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>98c60825…bbb2</code>）
+应用：工作岛 1.4（versionCode 5，APK SHA-256 <code>270d7684…b5c1</code>）
 宿主：cccodroid 0.4.2（实机）+ 0.4.6（测试网关，PR 分支）</p>
 </blockquote>
 <p>这篇文档把「怎么一步步做出来、踩了哪些坑、在真机上测了什么」全部摊开。代码、截图、测试记录都在仓库里，过程不藏在对话里。</p>
@@ -2313,10 +2334,13 @@ gateway: 9842 / 32734
   <code>等你确认</code>、<code>整理清单 2/4</code>；不再只显示一个动作词。</li>
 <li><strong>展开通知</strong>：标题带进度（<code>整理清单 · 1/4</code>），副标题是细节（<code>正在改 BotPainter · 清单 1/4</code>），
   右上角计时在走；进度条按清单分段，已完成的段亮起。</li>
-<li><strong>动效</strong>：永远同一个通知 ID；driver 每 800 ms 推一帧 <code>anim</code>（省略号亮点跳、眼睛左右瞟、身体轻浮），
-  只换 bitmap，不重建通知——换 ID 会让胶囊收回再弹出（「抽搐」）。</li>
+<li><strong>动效</strong>：永远同一个通知 ID；driver 每 900 ms 推一帧 <code>anim</code>，只换 bitmap，不重建通知——
+  换 ID 会让胶囊收回再弹出（「抽搐」）。</li>
+<li><strong>三档</strong>：应用里的「岛上动画」选关闭 / 标准（4 帧）/ 流畅（8 帧）；档位写在
+  <code>Android/media/com.dafeiyu.workisland/anim.conf</code>，driver 每 10 秒读一次。应用内 <code>BotView</code> 始终 60fps。</li>
 <li><strong>第一帧</strong>：直接是最终 bot，不发 <code>morph</code> 唤醒帧（第一帧是 logo 会被缓存一整轮）。</li>
 <li><strong>尺寸恒定</strong>：图标永远给头顶标识预留位置，<code>!</code> <code>?</code> <code>≡</code> 出现/消失时 bot 不会忽大忽小。</li>
+<li><strong>干活配件</strong>：<code>plain</code> / 四种 tool 戴护目镜、拿焊枪（镜片跟随眼睛，火花按帧跳）；思考、压缩、请求、完成、待机都不戴。</li>
 <li><strong>开关</strong>：「程序化 bot（四态 + 标识 + 体征）」关掉后，小/大图标退回 1.2 的简笔模型形状。</li>
 <li>状态色（通知 color，不是 bot 颜色）：</li>
 </ul>
@@ -2617,6 +2641,112 @@ gateway: 9842 / 32734
 <li>单测：<code>source/upstream-pr/gateway/tests/work-island.test.mjs</code></li>
 <li>上游 PR：#21（已合并）、#22（OPEN，标题/清单/state 与 review 修正）</li>
 <li>应用仓库：https://github.com/STUTTEFRFIX/WorkIsland-Android</li>
+</ul></article><article class="doc page-break"><div class="doc-title">七、厂商适配</div><h1 id="vivo">厂商适配：vivo / 小米 / 红魔 能不能上岛</h1>
+<blockquote>
+<p>2026-10-26 调研。只写公开资料和本机实测；没有真机验证的一律标「未验证」。</p>
+</blockquote>
+<h2 id="71">7.1 结论速览</h2>
+<table>
+<thead>
+<tr>
+<th>系统</th>
+<th>上岛方式</th>
+<th>状态</th>
+<th>结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ColorOS 16</strong>（OPPO / 一加，Android 16）</td>
+<td>标准 Android 16 Live Updates</td>
+<td><strong>本机实测通过</strong></td>
+<td>可用</td>
+</tr>
+<tr>
+<td><strong>HyperOS 3.0.300+</strong>（小米 / 红米，Android 16+）</td>
+<td>系统自动把标准 Live Updates 包成「超级岛」</td>
+<td>未实测（媒体与 HyperBridge 0.5.0 说明）</td>
+<td>理论可行，等真机</td>
+</tr>
+<tr>
+<td><strong>HyperOS 2 及更早</strong></td>
+<td>焦点通知 <code>miui.focus.param</code> + 小米白名单</td>
+<td>需上架、软著、邮件申请、场景评审</td>
+<td>不适用个人工具</td>
+</tr>
+<tr>
+<td><strong>vivo 国行 原子岛</strong>（OriginOS 5 / 6）</td>
+<td><code>notification.superx.*</code> + vivo 白名单</td>
+<td>需上架、软著、邮件申请、场景/UI 评审、定期巡查</td>
+<td>不适配</td>
+</tr>
+<tr>
+<td><strong>红魔 OS 11 及更早</strong></td>
+<td>无岛</td>
+<td>—</td>
+<td>不适配</td>
+</tr>
+<tr>
+<td><strong>红魔 OS 12</strong>（Android 17，AI 魔法岛）</td>
+<td>官方未说明是否接标准 API</td>
+<td>12 Pro+ 首发；旧机 2026-12 起分批</td>
+<td>未验证</td>
+</tr>
+<tr>
+<td>其他 Android 16 设备</td>
+<td>标准 Live Updates</td>
+<td>取决于厂商实现</td>
+<td>未验证</td>
+</tr>
+</tbody>
+</table>
+<h2 id="72-android-16-live-updates">7.2 我们用的路线：标准 Android 16 Live Updates</h2>
+<ul>
+<li>通知用 <code>Notification.ProgressStyle</code> + <code>setRequestPromotedOngoing(true)</code>，系统侧标记是 <code>PROMOTED_ONGOING</code>。</li>
+<li>Google 在 I/O 2025 明确说 Live Updates 会下放给 Samsung、OnePlus、vivo、Xiaomi；具体到机型和系统版本由厂商决定。</li>
+<li>代码位置：<code>Notifier.build()</code>；应用不依赖任何厂商 SDK，也没有私有字段。</li>
+<li>系统不接时退回普通通知：功能不丢，只是不上岛。</li>
+</ul>
+<h2 id="73">7.3 厂商私有通道：字段能写，渲染要白名单</h2>
+<h3 id="_1">小米（焦点通知 / 超级岛）</h3>
+<ul>
+<li>客户端在 <code>Notification.extras</code> 里放 <code>miui.focus.param</code>、<code>miui.focus.pics</code>、<code>miui.focus.actions</code>。</li>
+<li>系统会查焦点通知权限（<code>hasFocusPermission()</code>），没有白名单就不渲染。</li>
+<li>申请：邮件 <code>mipush-permission@xiaomi.com</code>；要求应用上架、场景说明、产品方案、UI 稿；审核后联调、灰度（约 7–15 天全量）。</li>
+</ul>
+<h3 id="vivo_1">vivo（原子通知 / 原子岛）</h3>
+<ul>
+<li>字段在 <code>notification.superx.*</code>：<code>template</code>、<code>infos</code>（左右信息区）、<code>shortInfos</code>（锁屏小卡）、胶囊字段等。</li>
+<li>申请：邮件 <code>oosyztz@vivo.com</code>；要求先上架 vivo 应用商店、有软著，附场景说明、需求文档、UI 稿；7–10 个工作日审核 → 联合评审 → 联调 → 灰度；有定期巡查，不合格收回权限。</li>
+<li>只面向高关注、有时间边界的场景（外卖、打车、导航、票务、录音、通话）；开发者工具类不在其中。</li>
+</ul>
+<p><strong>共同点：</strong> 字段不是权限。没有白名单，写进去也会被系统忽略。</p>
+<h2 id="74-shizuku">7.4 Shizuku 旁路（实验，不默认开）</h2>
+<ul>
+<li>Shizuku 给的是 <strong>shell（uid 2000）</strong>，不是 root：能跑 <code>am</code> / <code>cmd</code> / <code>content</code> / <code>settings</code>，改不了系统签名，也改不了厂商服务里的白名单。</li>
+<li>可以试：用 shell 身份发一条带私有字段的通知，看厂商岛认不认 <code>com.android.shell</code> 这个包名（小米有社区先例 HyperBridge）。</li>
+<li>做不到：给应用「授予」焦点通知 / 原子通知权限；改厂商白名单数据库。</li>
+<li>代价：用户要装 Shizuku、开无线调试、重启后重新激活；ROM 更新容易失效；只能侧载分发。</li>
+<li>结论：即使做，也只是设置里的实验开关，默认关闭，失败自动退回标准通知。</li>
+</ul>
+<h2 id="75">7.5 我们的策略</h2>
+<ol>
+<li>主线只走标准 Live Updates，失败退回普通通知；</li>
+<li>不为没有真机验证的设备写厂商私有代码；</li>
+<li>代码里预留 <code>IslandAdapter</code> 扩展位，将来拿到权限或真机再加；</li>
+<li>文档只写验证过的结论，未验证的标「未验证」，不画饼。</li>
+</ol>
+<h2 id="76">7.6 参考</h2>
+<ul>
+<li>vivo 原子通知接入指导：<a href="https://dev.vivo.com.cn/documentCenter/doc/894">https://dev.vivo.com.cn/documentCenter/doc/894</a></li>
+<li>vivo 原子通知技术规范：<a href="https://dev.vivo.com.cn/documentCenter/doc/896">https://dev.vivo.com.cn/documentCenter/doc/896</a></li>
+<li>vivo HIG：<a href="https://developers.vivo.com/hig/cb551badb01c4811be7e330888c6f32a">https://developers.vivo.com/hig/cb551badb01c4811be7e330888c6f32a</a></li>
+<li>小米超级岛开发指南：<a href="https://dev.mi.com/xiaomihyperos/documentation/detail?pId=2131">https://dev.mi.com/xiaomihyperos/documentation/detail?pId=2131</a></li>
+<li>小米超级岛方案提报：<a href="https://dev.mi.com/xiaomihyperos/documentation/detail?pId=2144">https://dev.mi.com/xiaomihyperos/documentation/detail?pId=2144</a></li>
+<li>小米焦点通知 Q&amp;A：<a href="https://dev.mi.com/xiaomihyperos/documentation/detail?pId=2146">https://dev.mi.com/xiaomihyperos/documentation/detail?pId=2146</a></li>
+<li>Android Authority：Live Updates 将登陆 Samsung / OnePlus / vivo / Xiaomi：<a href="https://www.androidauthority.com/android-16-live-updates-supported-devices-list-3560227/">https://www.androidauthority.com/android-16-live-updates-supported-devices-list-3560227/</a></li>
+<li>HyperBridge 0.5.0（HyperOS 3.0.3xx+ 原生 Live Updates）：<a href="https://github.com/D4vidDf/HyperBridge/releases/tag/v0.5.0">https://github.com/D4vidDf/HyperBridge/releases/tag/v0.5.0</a></li>
+<li>RedMagic OS 12（Android 17）推送时间表：<a href="https://www.gsmarena.com/redmagic_reveals_when_its_phones_are_getting_redmagic_os_12_based_on_android_17-news-75194.php">https://www.gsmarena.com/redmagic_reveals_when_its_phones_are_getting_redmagic_os_12_based_on_android_17-news-75194.php</a></li>
 </ul></article>
 <section class="gallery page-break"><h2>界面截图</h2><div class="grid"><figure><img src="screenshots/01-working.png" alt="工作态：鱼图标 +「正在干活」"><figcaption>工作态：鱼图标 +「正在干活」</figcaption></figure><figure><img src="screenshots/02-done.png" alt="完成态：「任务完成」+ 用时"><figcaption>完成态：「任务完成」+ 用时</figcaption></figure><figure><img src="screenshots/03-idle.png" alt="8 秒后：岛上收起"><figcaption>8 秒后：岛上收起</figcaption></figure><figure><img src="screenshots/04-background.png" alt="后台：两个应用都退到桌面，岛仍在"><figcaption>后台：两个应用都退到桌面，岛仍在</figcaption></figure><figure><img src="screenshots/05-app.png" alt="应用界面：通知开 / 实时更新允许 / 电池不优化"><figcaption>应用界面：通知开 / 实时更新允许 / 电池不优化</figcaption></figure><figure><img src="screenshots/06-final.png" alt="聊天界面 + 胶囊"><figcaption>聊天界面 + 胶囊</figcaption></figure><figure><img src="screenshots/09-bot-preview.png" alt="四态 bot：应用内预览（干活 · 执行命令）"><figcaption>四态 bot：应用内预览（干活 · 执行命令）</figcaption></figure><figure><img src="screenshots/10-bot-states.png" alt="21 个模型 + 14 个 look 的对照表"><figcaption>21 个模型 + 14 个 look 的对照表</figcaption></figure><figure><img src="screenshots/11-notification-bot.png" alt="通知面板：bot 大图标 + 头顶 !"><figcaption>通知面板：bot 大图标 + 头顶 !</figcaption></figure><figure><img src="screenshots/12-island-ask.png" alt="岛上「等你确认」+ !"><figcaption>岛上「等你确认」+ !</figcaption></figure><figure><img src="screenshots/13-island-thinking.png" alt="思考三帧：胶囊「思考中 1/4」，省略号亮点在动"><figcaption>思考三帧：胶囊「思考中 1/4」，省略号亮点在动</figcaption></figure></div></section>
 </body>

@@ -114,6 +114,8 @@ public final class Notifier {
 
         Bundle extras = new Bundle();
         extras.putBoolean(EXTRA_PROMOTED, true);
+        // ColorOS 默认可能拿应用图标当小图标；关掉它，胶囊才会用我们画的 bot 位图。
+        extras.putBoolean("oplus_smallicon_use_app_icon", false);
         b.addExtras(extras);
         try {
             Notification.Builder.class.getMethod("setRequestPromotedOngoing", boolean.class).invoke(b, true);

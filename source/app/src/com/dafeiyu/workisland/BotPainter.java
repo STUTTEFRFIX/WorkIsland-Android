@@ -21,6 +21,8 @@ final class BotPainter {
 
     static final class Face {
         float open = 1, look = 0, lookY = 0, wide = 1, happy = 0, lean = 0, crossed = 0;
+        boolean goggles = false;   // 干活时戴护目镜（只改造型，不改体型/配色）
+        int frame = 0;             // 焊枪火花用的帧号（0..7）
     }
 
     /** 与 BotMotion 的 pose 同义：归一化 mark 坐标里的位移、旋转和缩放。 */
@@ -34,8 +36,20 @@ final class BotPainter {
 
     private BotPainter() {}
 
+    /** 只有真在干活的时候戴护目镜；思考、压缩、请求、完成、待机都不戴。 */
+    private static boolean wearsGoggles(BotState.Look look) {
+        switch (look) {
+            case PLAIN: case TOOL_COMMAND: case TOOL_READ:
+            case TOOL_EDIT: case TOOL_LONG_COMMAND:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     static Face faceFor(BotState.Look look, boolean failed) {
         Face face = new Face();
+        face.goggles = !failed && wearsGoggles(look);
         if (failed) {
             face.crossed = 1;
         } else if (look == BotState.Look.DONE) {
@@ -92,14 +106,24 @@ final class BotPainter {
         // 待命就是「刚醒来」：只显示 logo；一干活才变成 bot。
         float morph = look == BotState.Look.IDLE ? 0f
                 : morphPercent >= 0 ? Math.max(0, Math.min(1, morphPercent / 100f)) : 1f;
-        int lit = look == BotState.Look.THINKING ? Math.abs(anim) % 3 : 0;
+        // 岛上的慢速帧：0 静止、1 瞟左、2 半眨眼、3 闭眼、4 半眨眼、5 瞟右、6 静止、7 呼吸。
+        // 标准档只发 0/1/3/5，流畅档发全 8 帧；应用内 BotView 不读这里，自己跑 60fps。
+        int frame = Math.abs(anim) % 8;
+        int lit = look == BotState.Look.THINKING ? frame % 3 : 0;
         Face face = faceFor(look, failed);
-        Pose pose = null;
+        face.frame = frame;
+        Pose pose = new Pose();
         if (look == BotState.Look.THINKING) {
-            // 小图标也要看得出在动：眼睛左右瞟 + 整个身体轻轻上下浮。
             face.look = -0.55f + (lit - 1) * 0.22f;
-            pose = new Pose();
             pose.y = lit == 1 ? -0.018f : lit == 2 ? 0.018f : 0;
+            if (frame == 3) face.open = 0f;
+            else if (frame == 2 || frame == 4) face.open = 0.45f;
+        } else {
+            if (frame == 1) { face.look = 0.16f; pose.y = -0.010f; }
+            else if (frame == 2 || frame == 4) { face.open = 0.45f; }
+            else if (frame == 3) { face.open = 0f; }
+            else if (frame == 5) { face.look = -0.16f; pose.y = 0.010f; }
+            else if (frame == 7) { pose.y = -0.008f; }
         }
         draw(canvas, form, px, face, morph, 0f, sign, lit, 1f, pose);
         ICONS.put(cacheKey, bitmap);
@@ -294,6 +318,10 @@ final class BotPainter {
 
         if (dressed > 0 && s.limbs != null) limbs(c, form, dressed);
         if (dressed > 0) eyes(c, s, face, form.ink);
+        if (dressed > 0 && face.goggles) {
+            goggles(c, s, face);
+            torch(c, form, s, face);
+        }
         c.restore();
     }
 
@@ -509,6 +537,24 @@ final class BotPainter {
 
     // ---- 眼睛 ----
 
+    /** 单只眼睛的中心（含转头/抬眼的位移）；护目镜要跟着它走，才不会眼睛动了镜子没动。 */
+    private static float[] eyePos(BotSpecs.Spec s, Face face, int side) {
+        float r = s.radius;
+        boolean flat = !Float.isNaN(s.eyeAcross);
+        float turn = s.reach * 0.72f;
+        float yaw = Math.max(-1.15f, Math.min(1.15f, face.look)) * turn;
+        float pitch = Math.max(-1.15f, Math.min(1.15f, face.lookY)) * turn;
+        float grain = s.limbs != null ? s.limbs.pixel / 2 : 0;
+        float angle = flat ? 0 : yaw + side * s.eyeSpread;
+        float x = s.center[0] + s.face[0] * r
+                + (flat ? side * s.eyeAcross * r + snap((float) Math.sin(yaw) * 0.76f, grain) * r
+                : (float) Math.sin(angle) * r * 0.76f);
+        float y = s.center[1] + s.face[1] * r
+                + (flat ? snap((float) Math.sin(pitch) * 0.62f, grain)
+                : (float) Math.sin(pitch) * 0.62f) * r;
+        return new float[]{x, y};
+    }
+
     private static void eyes(Canvas c, BotSpecs.Spec s, Face face, int ink) {
         float r = s.radius, size = 0.78f, spread = s.eyeSpread;
         boolean flat = !Float.isNaN(s.eyeAcross);
@@ -521,12 +567,8 @@ final class BotPainter {
         int color = s.eyeColor != null ? Color.parseColor(s.eyeColor) : INK;
         for (int side = -1; side <= 1; side += 2) {
             float angle = flat ? 0 : yaw + side * spread;
-            float x = s.center[0] + s.face[0] * r
-                    + (flat ? side * s.eyeAcross * r + snap((float) Math.sin(yaw) * 0.76f, grain) * r
-                    : (float) Math.sin(angle) * r * 0.76f);
-            float y = s.center[1] + s.face[1] * r
-                    + (flat ? snap((float) Math.sin(pitch) * 0.62f, grain)
-                    : (float) Math.sin(pitch) * 0.62f) * r;
+            float[] at = eyePos(s, face, side);
+            float x = at[0], y = at[1];
             float narrow = (float) Math.pow(Math.max(0.25f, (float) Math.cos(angle)), 1.4);
             float tall = (0.72f + 0.28f * (float) Math.cos(angle))
                     * (float) Math.sqrt(Math.max(0, Math.cos(pitch)));
@@ -633,6 +675,129 @@ final class BotPainter {
 
     private static float center(float[] b) {
         return (b[0] + b[2]) / 2;
+    }
+
+    // ---- 干活配件 ----
+
+    /** 护目镜：镜片跟着两只眼睛走（含瞟/抬眼的位移），头带和鼻梁随镜片重新连。 */
+    private static void goggles(Canvas c, BotSpecs.Spec s, Face face) {
+        float r = s.radius;
+        float[] left = eyePos(s, face, -1), right = eyePos(s, face, 1);
+        float gap = Math.max(Math.abs(right[0] - left[0]), r * 0.20f);
+        float w = Math.max(r * 0.46f, gap * 0.92f);
+        float h = w * 0.80f;
+        float rim = Math.max(0.008f, w * 0.09f);
+        float bandH = h * 0.46f;
+
+        Paint strap = new Paint(Paint.ANTI_ALIAS_FLAG);
+        strap.setColor(INK);
+        strap.setAlpha(220);
+        c.drawRoundRect(new RectF(left[0] - w * 0.95f, left[1] - bandH / 2,
+                left[0] - w * 0.38f, left[1] + bandH / 2), bandH / 2, bandH / 2, strap);
+        c.drawRoundRect(new RectF(right[0] + w * 0.38f, right[1] - bandH / 2,
+                right[0] + w * 0.95f, right[1] + bandH / 2), bandH / 2, bandH / 2, strap);
+
+        for (int side = -1; side <= 1; side += 2) {
+            float lx = side < 0 ? left[0] : right[0];
+            float ly = side < 0 ? left[1] : right[1];
+            RectF lens = new RectF(lx - w / 2, ly - h / 2, lx + w / 2, ly + h / 2);
+            float corner = h * 0.34f;
+            Paint glass = new Paint(Paint.ANTI_ALIAS_FLAG);
+            glass.setColor(0xFF15303C);
+            glass.setAlpha(135);
+            c.drawRoundRect(lens, corner, corner, glass);
+            Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(rim);
+            p.setColor(0xFFE8E4DA);
+            c.drawRoundRect(lens, corner, corner, p);
+            Paint glint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            glint.setColor(0xFFFFFFFF);
+            glint.setAlpha(150);
+            glint.setStrokeWidth(rim * 0.9f);
+            glint.setStrokeCap(Paint.Cap.ROUND);
+            c.drawLine(lx - w * 0.24f, ly - h * 0.22f, lx + w * 0.02f, ly + h * 0.04f, glint);
+        }
+
+        Paint bridge = new Paint(Paint.ANTI_ALIAS_FLAG);
+        bridge.setColor(0xFFE8E4DA);
+        bridge.setStrokeWidth(rim);
+        bridge.setStrokeCap(Paint.Cap.ROUND);
+        c.drawLine(left[0] + w * 0.5f, (left[1] + right[1]) / 2,
+                right[0] - w * 0.5f, (left[1] + right[1]) / 2, bridge);
+    }
+
+    /** 焊枪：简笔手臂握在身前，枪口点在工作点上，火花按帧跳动。 */
+    private static void torch(Canvas c, BotForm form, BotSpecs.Spec s, Face face) {
+        float r = s.radius;
+        float cx = s.center[0], cy = s.center[1];
+        int frame = face.frame & 7;
+        float tipX = cx - 0.10f * r;
+        float tipY = cy + 0.34f * r + (frame % 2 == 0 ? -0.008f : 0.008f) * r;
+        float dx = 0.86f, dy = 0.51f;
+        float len = (float) Math.hypot(dx, dy);
+        dx /= len; dy /= len;
+        float hx0 = tipX + dx * 0.14f * r, hy0 = tipY + dy * 0.14f * r;
+        float hx1 = tipX + dx * 0.86f * r, hy1 = tipY + dy * 0.86f * r;
+        float hw = 0.085f * r;
+
+        Paint ink = new Paint(Paint.ANTI_ALIAS_FLAG);
+        ink.setStyle(Paint.Style.STROKE);
+        ink.setStrokeCap(Paint.Cap.ROUND);
+        ink.setColor(INK);
+        ink.setStrokeWidth(0.22f * r);
+        c.drawLine(cx + 0.46f * r, cy + 0.46f * r,
+                hx0 + dx * 0.30f * r, hy0 + dy * 0.30f * r, ink);
+        Paint arm = new Paint(Paint.ANTI_ALIAS_FLAG);
+        arm.setStyle(Paint.Style.STROKE);
+        arm.setStrokeCap(Paint.Cap.ROUND);
+        arm.setColor(form.bodyColor());
+        arm.setStrokeWidth(0.17f * r);
+        c.drawLine(cx + 0.46f * r, cy + 0.46f * r,
+                hx0 + dx * 0.30f * r, hy0 + dy * 0.30f * r, arm);
+
+        Paint grip = new Paint(Paint.ANTI_ALIAS_FLAG);
+        grip.setStyle(Paint.Style.STROKE);
+        grip.setStrokeCap(Paint.Cap.ROUND);
+        grip.setColor(0xFF6E6A63);
+        grip.setStrokeWidth(hw * 1.35f);
+        c.drawLine(hx0 + dx * 0.08f * r, hy0 + dy * 0.08f * r,
+                hx0 + dx * 0.34f * r, hy0 + dy * 0.34f * r, grip);
+        Paint body = new Paint(Paint.ANTI_ALIAS_FLAG);
+        body.setStyle(Paint.Style.STROKE);
+        body.setStrokeCap(Paint.Cap.ROUND);
+        body.setColor(0xFF24242A);
+        body.setStrokeWidth(hw * 2f);
+        c.drawLine(hx0, hy0, hx1, hy1, body);
+        Paint nozzle = new Paint(Paint.ANTI_ALIAS_FLAG);
+        nozzle.setStyle(Paint.Style.STROKE);
+        nozzle.setStrokeCap(Paint.Cap.ROUND);
+        nozzle.setColor(0xFFC9A26B);
+        nozzle.setStrokeWidth(hw * 1.1f);
+        c.drawLine(tipX + dx * 0.10f * r, tipY + dy * 0.10f * r,
+                tipX + dx * 0.02f * r, tipY + dy * 0.02f * r, nozzle);
+
+        Paint glow = new Paint(Paint.ANTI_ALIAS_FLAG);
+        glow.setShader(new RadialGradient(tipX, tipY, r * 0.40f,
+                new int[]{0xCCFFFFFF, 0x55FFD98A, 0x00FFD98A}, null, Shader.TileMode.CLAMP));
+        c.drawCircle(tipX, tipY, r * 0.40f, glow);
+
+        float[] angles = {-2.35f, -1.72f, -1.12f, -0.52f, 0.08f};
+        Paint spark = new Paint(Paint.ANTI_ALIAS_FLAG);
+        spark.setStrokeCap(Paint.Cap.ROUND);
+        spark.setStrokeWidth(0.018f * r);
+        spark.setAlpha(230);
+        for (int i = 0; i < angles.length; i++) {
+            float a = angles[i] + (frame - 3) * 0.06f;
+            float sparkLen = (0.05f + 0.055f * ((frame + i) % 3)) * r;
+            float sx = tipX + (float) Math.cos(a) * sparkLen;
+            float sy = tipY + (float) Math.sin(a) * sparkLen;
+            spark.setColor(i % 3 == 0 ? 0xFFFFF3C4 : i % 3 == 1 ? 0xFFFFC857 : 0xFF8FE3FF);
+            c.drawLine(tipX, tipY, sx, sy, spark);
+            spark.setStyle(Paint.Style.FILL);
+            c.drawCircle(sx, sy, 0.016f * r, spark);
+            spark.setStyle(Paint.Style.STROKE);
+        }
     }
 
     // ---- 头顶标识 ----
