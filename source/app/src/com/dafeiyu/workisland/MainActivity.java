@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.util.Log;
 import android.graphics.Bitmap;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -22,7 +23,10 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import rikka.shizuku.Shizuku;
+
 public class MainActivity extends Activity {
+    private static final int SHIZUKU_REQUEST = 42;
     private static final int BG = 0xFF1F1E1D;
     private static final int CARD = 0xFF282725;
     private static final int STROKE = 0xFF3B3936;
@@ -48,7 +52,13 @@ public class MainActivity extends Activity {
     };
 
     private TextView status;
+    private TextView shizukuStatus;
     private TextView botLabel;
+    private boolean askedShizuku = false;
+    private final Shizuku.OnRequestPermissionResultListener shizukuListener =
+            (requestCode, grantResult) -> {
+                if (requestCode == SHIZUKU_REQUEST) refreshShizukuStatus();
+            };
     private BotView botView;
     private String botKey = "hud";
     private BotState.Look botLook = BotState.Look.TOOL_COMMAND;
@@ -186,6 +196,23 @@ public class MainActivity extends Activity {
         anlp.setMargins(dp(12), 0, dp(12), dp(6));
         root.addView(animSpinner, anlp);
 
+        Switch keepAlive = new Switch(this);
+        keepAlive.setText("保活（看门狗 + Shizuku 兜底）");
+        keepAlive.setTextColor(FG);
+        keepAlive.setTextSize(14);
+        keepAlive.setChecked(Prefs.keepAlive(this));
+        keepAlive.setOnCheckedChangeListener((buttonView, checked) -> Prefs.setKeepAlive(MainActivity.this, checked));
+        LinearLayout.LayoutParams kalp = new LinearLayout.LayoutParams(-1, -2);
+        kalp.setMargins(dp(8), 0, dp(8), dp(4));
+        root.addView(keepAlive, kalp);
+
+        shizukuStatus = new TextView(this);
+        shizukuStatus.setTextSize(12);
+        shizukuStatus.setGravity(Gravity.CENTER);
+        shizukuStatus.setPadding(0, dp(4), 0, dp(6));
+        shizukuStatus.setOnClickListener(v -> requestShizuku());
+        root.addView(shizukuStatus, new LinearLayout.LayoutParams(-1, -2));
+
         TextView soulNote = new TextView(this);
         soulNote.setText("关掉就退回旧的简笔图标。标识：! 请求　? 提问　≡ 清单　× 出错　⧗ 限额　… 思考　z 睡着");
         soulNote.setTextColor(0xFF6F6B64);
@@ -274,8 +301,16 @@ public class MainActivity extends Activity {
         botKey = Prefs.icon(this);
         botView.setBot(botKey, botLook, botFailed);
         Prefs.writeAnimTier(this);   // 让外面读的 driver 一开始就有档位文件
+        Prefs.writeKeepAlive(this);  // 看门狗读这个决定要不要保持 driver
         refreshLabels();
         refresh();
+
+        try { Shizuku.addRequestPermissionResultListener(shizukuListener); } catch (Throwable ignored) {}
+        refreshShizukuStatus();
+        if (Prefs.keepAlive(this) && !shizukuGranted() && !askedShizuku) {
+            askedShizuku = true;
+            shizukuStatus.post(this::requestShizuku);
+        }
 
     }
 
@@ -299,7 +334,42 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!sheetMode) refresh();
+        if (!sheetMode) { refresh(); refreshShizukuStatus(); }
+    }
+
+    @Override
+    protected void onDestroy() {
+        try { Shizuku.removeRequestPermissionResultListener(shizukuListener); } catch (Throwable ignored) {}
+        super.onDestroy();
+    }
+
+    private boolean shizukuGranted() {
+        try { return Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED; }
+        catch (Throwable t) { return false; }
+    }
+
+    private void refreshShizukuStatus() {
+        if (shizukuStatus == null) return;
+        boolean ok = shizukuGranted();
+        shizukuStatus.setText(ok ? "Shizuku：已授权" : "Shizuku：未授权 · 点这里申请");
+        shizukuStatus.setTextColor(ok ? 0xFF4CAF50 : ACCENT);
+    }
+
+    private void requestShizuku() {
+        try {
+            if (Shizuku.isPreV11()) {
+                shizukuStatus.setText("Shizuku：版本太旧，请升级");
+                return;
+            }
+            if (shizukuGranted()) {
+                refreshShizukuStatus();
+                return;
+            }
+            Shizuku.requestPermission(SHIZUKU_REQUEST);
+        } catch (Throwable t) {
+            Log.w("WorkIsland", "request shizuku failed", t);
+            shizukuStatus.setText("Shizuku：申请失败（" + t.getClass().getSimpleName() + "）");
+        }
     }
 
     private View phaseChip(String text, BotState.Look look, boolean failed) {
