@@ -1,20 +1,30 @@
 package com.dafeiyu.workisland;
 
+import android.app.AppOpsManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
+import android.content.res.Configuration;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 
 /**
  * 工作岛的前台服务：只负责画。状态由外面的 driver（跑在 cccodroid 网关里）通过
  * am start-foreground-service 送进来。服务自己不做定时器、不订阅网络 ——
  * ColorOS 会在后台把本应用冻住，任何进程内定时器都不可靠。
+ *
+ * <p>除了系统实时更新通知，服务还会在没有流体云 / 灵动岛的设备上维护一条
+ * {@link IslandOverlay} 悬浮胶囊；两条显示路径共用同一份状态。
  */
 public class IslandService extends Service {
     public static final String ACTION_IDLE = "com.dafeiyu.workisland.IDLE";
+    /** 设置变化 / 权限恢复后，让服务按当前状态重新评估悬浮胶囊。 */
+    public static final String ACTION_REFRESH = "com.dafeiyu.workisland.REFRESH";
     private static final int ID = Notifier.ID;
     private static final int IDLE_ID = 1002;
 
@@ -22,17 +32,53 @@ public class IslandService extends Service {
     private long startedAt = 0;
     private String lastKey = "";
 
+    private IslandOverlay overlay;
+    private AppOpsManager appOps;
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private final AppOpsManager.OnOpChangedListener overlayPermission = (op, pkg) -> {
+        if (getPackageName().equals(pkg)) main.post(this::refreshOverlay);
+    };
+
+    private boolean hasOverlayState = false;
+    private String overlayTitle;
+    private String overlayText;
+    private String overlayState;
+    private String overlayFace;
+    private long overlaySince;
+    private boolean overlayDone;
+    private int overlayStep;
+    private int overlayDoneCount;
+    private int overlayTotal;
+    private int overlayMorph;
+    private int overlayAnim;
+
     @Override
     public void onCreate() {
         super.onCreate();
-        // 只在服务创建时写一次档位/保活文件；别在每条 UPDATE 上重写，否则会盖掉调试时手改的值
+        // 只在服务创建时写一次动画档位；别在每条 UPDATE 上重写，否则会盖掉调试时手改的值。
+        // 保活文件不在这里写：它由设置开关同步落盘，服务重建时重写会把旧 driver 又拉起来。
         Prefs.writeAnimTier(this);
-        Prefs.writeKeepAlive(this);
+        overlay = new IslandOverlay(this);
+        appOps = getSystemService(AppOpsManager.class);
+        if (appOps != null) {
+            try {
+                appOps.startWatchingMode(AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW,
+                        getPackageName(), overlayPermission);
+            } catch (RuntimeException failure) {
+                Log.w("WorkIsland", "cannot watch overlay permission", failure);
+            }
+        }
     }
 
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (overlay != null) overlay.refreshLayout();
     }
 
     @Override
@@ -45,10 +91,16 @@ public class IslandService extends Service {
         String action = intent.getAction();
         if (action == null) action = Notifier.ACTION_UPDATE;
 
+        if (ACTION_REFRESH.equals(action)) {
+            refreshOverlay();
+            return START_STICKY;
+        }
         if (Notifier.ACTION_CANCEL.equals(action)) {
             working = false;
+            hasOverlayState = false;
             getSystemService(NotificationManager.class).cancel(ID);
             getSystemService(NotificationManager.class).cancel(IDLE_ID);
+            if (overlay != null) overlay.hide();
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -91,7 +143,9 @@ public class IslandService extends Service {
         post(n);
         // 先让新通知上岛，再撤掉待机的旧通知：反过来会空一小段，胶囊就先收回去再弹出来。
         getSystemService(NotificationManager.class).cancel(IDLE_ID);
-        lastKey = t + "|" + x + "|" + st + "|" + f + "|" + step + "|" + todoDone + "/" + todoTotal + "|" + morph + "|" + anim;
+        // step 只用于通知里的细节，不参与去重：同一动作重复上报时不要重建胶囊。
+        lastKey = t + "|" + x + "|" + st + "|" + f + "|" + todoDone + "/" + todoTotal + "|" + morph + "|" + anim;
+        updateOverlay(t, x, startedAt, false, st, f, step, todoDone, todoTotal, morph, anim);
         Log.d("WorkIsland", "work start " + lastKey);
     }
 
@@ -105,11 +159,12 @@ public class IslandService extends Service {
         String x = text == null ? "" : text;
         String st = state == null || state.isEmpty() ? "working" : state;
         String f = face == null || face.isEmpty() ? "open" : face;
-        String key = t + "|" + x + "|" + st + "|" + f + "|" + step + "|" + todoDone + "/" + todoTotal + "|" + morph + "|" + anim;
+        String key = t + "|" + x + "|" + st + "|" + f + "|" + todoDone + "/" + todoTotal + "|" + morph + "|" + anim;
         if (key.equals(lastKey)) return;
         lastKey = key;
         Notification n = Notifier.build(this, t, x, startedAt, false, st, f, step, todoDone, todoTotal, morph, anim);
         post(n);
+        updateOverlay(t, x, startedAt, false, st, f, step, todoDone, todoTotal, morph, anim);
         Log.d("WorkIsland", "work update " + key);
     }
 
@@ -135,6 +190,8 @@ public class IslandService extends Service {
         Notification n = Notifier.build(this, t, x, System.currentTimeMillis(), true, "done", "happy",
                 step, todoTotal > 0 ? todoTotal : todoDone, todoTotal);
         post(n);
+        updateOverlay(t, x, System.currentTimeMillis(), true, "done", "happy",
+                step, todoTotal > 0 ? todoTotal : todoDone, todoTotal, -1, 0);
         Log.d("WorkIsland", "work done " + t + " / " + x);
     }
 
@@ -144,7 +201,76 @@ public class IslandService extends Service {
         Notification n = Notifier.buildIdle(this, title, text);
         startForeground(IDLE_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         getSystemService(NotificationManager.class).cancel(ID);
+        if (overlay != null) overlay.hide();
+        hasOverlayState = false;
         lastKey = "";
         Log.d("WorkIsland", "work idle");
+    }
+
+    /**
+     * 保存最后一份状态并交给悬浮胶囊。是否真的显示由显示方式和权限共同决定：
+     * 状态一直留着，用户从设置里打开权限或切换模式后能立刻补画出来。
+     */
+    private void updateOverlay(String title, String text, long since, boolean done, String state,
+                               String face, int step, int todoDone, int todoTotal, int morph, int anim) {
+        overlayTitle = title;
+        overlayText = text;
+        overlaySince = since;
+        overlayDone = done;
+        overlayState = state;
+        overlayFace = face;
+        overlayStep = step;
+        overlayDoneCount = todoDone;
+        overlayTotal = todoTotal;
+        overlayMorph = morph;
+        overlayAnim = anim;
+        hasOverlayState = true;
+        if (overlay == null) return;
+        if (!useOverlay() || !Settings.canDrawOverlays(this)) {
+            overlay.hide();
+            return;
+        }
+        overlay.show(title, text, since, done, state, face, todoDone, todoTotal, anim);
+    }
+
+    /**
+     * 设置开关或悬浮窗权限变化后，按同一份状态重画两条显示路径：
+     * 重发通知（让系统岛开关立即生效），并重新评估悬浮胶囊。
+     */
+    private void refreshOverlay() {
+        if (hasOverlayState) {
+            Notification n = Notifier.build(this, overlayTitle, overlayText, overlaySince, overlayDone,
+                    overlayState, overlayFace, overlayStep, overlayDoneCount, overlayTotal,
+                    overlayMorph, overlayAnim);
+            post(n);
+        }
+        if (overlay == null) return;
+        if (!hasOverlayState || !useOverlay() || !Settings.canDrawOverlays(this)) {
+            overlay.hide();
+            return;
+        }
+        overlay.show(overlayTitle, overlayText, overlaySince, overlayDone, overlayState,
+                overlayFace, overlayDoneCount, overlayTotal, overlayAnim);
+    }
+
+    /** 两个开关相互独立；悬浮胶囊第一次的默认值见 {@link Prefs#capsuleEnabled}。 */
+    private boolean useOverlay() {
+        return Prefs.capsuleEnabled(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        if (appOps != null) {
+            try {
+                appOps.stopWatchingMode(overlayPermission);
+            } catch (RuntimeException ignored) {
+                // 权限监听已经随进程消失。
+            }
+        }
+        if (overlay != null) {
+            overlay.remove();
+            overlay = null;
+        }
+        super.onDestroy();
     }
 }

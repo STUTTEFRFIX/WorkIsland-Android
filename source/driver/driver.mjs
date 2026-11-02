@@ -67,6 +67,12 @@ function todoProgress(ev) {
 let active = null;          // { id, startedAt, last, step, done, total, title, text, state, anim }
 let animTimer = null;
 let animInFlight = false;
+// 断线重连时带上 Last-Event-ID，让网关从环形缓冲续传；续不上时才会整轮重放。
+let lastEventId = "";
+// 一次工具事件可能连着来好几条（phase + tool_use + tasks），150ms 内只送最后一条，
+// 避免岛上在「读文件 → 改文件 → 思考中」之间毫秒级抽搐。
+let updateTimer = null;
+let pendingUpdate = null;
 // 档位由工作岛写在 Android/media 下（本应用可写、driver 有读存储权限）：
 // 0 关闭 / 1 标准 4 帧 / 2 流畅 8 帧。应用内预览不受影响，始终 60fps。
 const ANIM_CONF = "/storage/emulated/0/Android/media/com.dafeiyu.workisland/anim.conf";
@@ -101,6 +107,8 @@ function tickAnim() {
     if (!active || animTier === 0) stopAnim();
     return;
   }
+  // 先落地还没发出去的状态，再发动画帧，避免旧状态盖掉新状态。
+  if (updateTimer) { clearTimeout(updateTimer); updateTimer = null; flushUpdate(); }
   animPos = (animPos + 1) % animFrames.length;
   active.anim = animFrames[animPos];
   animInFlight = true;
@@ -168,6 +176,8 @@ function start(run, text) {
     if (run && run.id) active.id = run.id;
     return update(text);
   }
+  if (updateTimer) { clearTimeout(updateTimer); updateTimer = null; }
+  pendingUpdate = null;
   if (doneTimer) { clearTimeout(doneTimer); doneTimer = null; }
   if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
   verifying = false;
@@ -180,23 +190,41 @@ function start(run, text) {
   update(text || '正在处理…', '正在干活', 'working');
 }
 
+function flushUpdate() {
+  const p = pendingUpdate;
+  pendingUpdate = null;
+  if (!p || !active) return;
+  const key = p.title + '|' + p.text + '|' + p.state + '|' + active.done + '/' + active.total;
+  if (key === active.last) return;
+  active.last = key;
+  send(A.update, p.title, p.text, active.startedAt, p.state,
+    active.step, active.done, active.total);
+  startAnim();   // 两档动画：岛上四帧慢速，应用内 BotView 自己跑 60fps
+}
+
 function update(text, title, state) {
   if (!active) return;
   const t = title || '正在干活';
+  const x = text || '';
   const st = state || 'working';
-  const key = t + '|' + text + '|' + st + '|' + active.step + '|' + active.done + '/' + active.total;
-  if (key === active.last) return;
-  active.last = key;
+  const key = t + '|' + x + '|' + st + '|' + active.done + '/' + active.total;
+  if (key === active.last && !pendingUpdate) return;
   active.title = t;
-  active.text = text;
+  active.text = x;
   active.state = st;
   active.anim = 0;
-  send(A.update, t, text, active.startedAt, st, active.step, active.done, active.total);
-  startAnim();   // 两档动画：岛上四帧慢速，应用内 BotView 自己跑 60fps
+  pendingUpdate = { title: t, text: x, state: st };
+  if (updateTimer) return;
+  updateTimer = setTimeout(() => {
+    updateTimer = null;
+    flushUpdate();
+  }, 150);
 }
 
 function finish(reason) {
   if (!active) return;
+  if (updateTimer) { clearTimeout(updateTimer); updateTimer = null; }
+  pendingUpdate = null;
   const ms = Math.max(0, Date.now() - active.startedAt);
   const step = active.step, done = active.total ? active.total : active.done, total = active.total;
   active = null;
@@ -300,9 +328,12 @@ function handleEvent(ev) {
 }
 
 function connect() {
+  const headers = { 'X-CC-Token': TOKEN, Accept: 'text/event-stream' };
+  // 网关按 Last-Event-ID 从环形缓冲续传；不带这个头，续不上或首次连都会整轮重放。
+  if (lastEventId) headers['Last-Event-ID'] = lastEventId;
   const req = http.get({
     host: '127.0.0.1', port: PORT, path: '/api/events',
-    headers: { 'X-CC-Token': TOKEN, Accept: 'text/event-stream' },
+    headers,
   }, (res) => {
     if (res.statusCode !== 200) {
       res.resume();
@@ -317,12 +348,15 @@ function connect() {
       while ((i = buf.indexOf('\n\n')) >= 0) {
         const block = buf.slice(0, i);
         buf = buf.slice(i + 2);
+        let eventId = '';
         for (const line of block.split('\n')) {
+          if (line.startsWith('id:')) { eventId = line.slice(3).trim(); continue; }
           if (!line.startsWith('data:')) continue;
           const raw = line.slice(5).trim();
           if (!raw) continue;
           try { handleEvent(JSON.parse(raw)); } catch {}
         }
+        if (eventId) lastEventId = eventId;
       }
       if (buf.length > 2_000_000) buf = '';
     });

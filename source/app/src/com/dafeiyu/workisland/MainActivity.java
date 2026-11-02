@@ -18,10 +18,14 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+
+import java.util.Locale;
 
 import rikka.shizuku.Shizuku;
 
@@ -51,9 +55,20 @@ public class MainActivity extends Activity {
             false, false, false, false, false, true
     };
 
+    private static final int PREVIEW_HEIGHT_DP = 180;
+
     private TextView status;
     private TextView shizukuStatus;
+    private TextView capsuleStatus;
     private TextView botLabel;
+
+    private CapsuleStyle editCapsuleStyle;
+    private CapsuleView capsulePreview;
+    private FrameLayout capsulePreviewScreen;
+    private SeekBar capsuleTextBar;
+    private SeekBar capsuleHeightBar;
+    private SeekBar capsuleYBar;
+    private SeekBar capsuleOpacityBar;
     private boolean askedShizuku = false;
     private final Shizuku.OnRequestPermissionResultListener shizukuListener =
             (requestCode, grantResult) -> {
@@ -159,6 +174,7 @@ public class MainActivity extends Activity {
             public void onCheckedChanged(CompoundButton buttonView, boolean checked) {
                 Prefs.setSoul(MainActivity.this, checked);
                 refreshLabels();
+                updateCapsulePreview();
                 try {
                     startForegroundService(new Intent(MainActivity.this, IslandService.class)
                             .setAction(IslandService.ACTION_IDLE));
@@ -195,6 +211,59 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams anlp = new LinearLayout.LayoutParams(-1, -2);
         anlp.setMargins(dp(12), 0, dp(12), dp(6));
         root.addView(animSpinner, anlp);
+
+        // ---- 两个独立开关：系统岛 / 应用自己画的悬浮胶囊 ----
+        TextView modeLabel = new TextView(this);
+        modeLabel.setText("显示方式（两个都关就只留普通通知）");
+        modeLabel.setTextColor(FG);
+        modeLabel.setTextSize(14);
+        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(-1, -2);
+        mlp.setMargins(dp(8), dp(6), dp(8), 0);
+        root.addView(modeLabel, mlp);
+
+        Switch systemIsland = new Switch(this);
+        systemIsland.setText("系统流体云 / 灵动岛（实时更新）");
+        systemIsland.setTextColor(FG);
+        systemIsland.setTextSize(14);
+        systemIsland.setChecked(Prefs.systemIsland(this));
+        systemIsland.setOnCheckedChangeListener((buttonView, checked) -> {
+            Prefs.setSystemIsland(MainActivity.this, checked);
+            notifyServiceModeChanged();
+        });
+        LinearLayout.LayoutParams silp = new LinearLayout.LayoutParams(-1, -2);
+        silp.setMargins(dp(8), dp(4), dp(8), dp(2));
+        root.addView(systemIsland, silp);
+
+        Switch capsule = new Switch(this);
+        capsule.setText("悬浮胶囊（无岛兜底，触摸穿透）");
+        capsule.setTextColor(FG);
+        capsule.setTextSize(14);
+        capsule.setChecked(Prefs.capsuleEnabled(this));
+        capsule.setOnCheckedChangeListener((buttonView, checked) -> {
+            Prefs.setCapsuleEnabled(MainActivity.this, checked);
+            refreshCapsuleStatus();
+            notifyServiceModeChanged();
+        });
+        LinearLayout.LayoutParams cilp = new LinearLayout.LayoutParams(-1, -2);
+        cilp.setMargins(dp(8), 0, dp(8), dp(2));
+        root.addView(capsule, cilp);
+
+        capsuleStatus = new TextView(this);
+        capsuleStatus.setTextSize(12);
+        capsuleStatus.setGravity(Gravity.CENTER);
+        capsuleStatus.setPadding(0, dp(4), 0, dp(6));
+        capsuleStatus.setOnClickListener(v -> requestOverlayPermission());
+        root.addView(capsuleStatus, new LinearLayout.LayoutParams(-1, -2));
+
+        TextView capsuleNote = new TextView(this);
+        capsuleNote.setText("悬浮胶囊由应用自己绘制：半透明、触摸穿透，不挡操作；"
+                + "需要「显示在其他应用上层」权限。系统岛正常时建议关掉它，避免两条都显示。");
+        capsuleNote.setTextColor(0xFF6F6B64);
+        capsuleNote.setTextSize(11);
+        capsuleNote.setGravity(Gravity.CENTER);
+        root.addView(capsuleNote, lp(0, 0, 0, 8));
+
+        addCapsuleStyleSection(root);
 
         Switch keepAlive = new Switch(this);
         keepAlive.setText("保活（看门狗 + Shizuku 兜底）");
@@ -259,6 +328,7 @@ public class MainActivity extends Activity {
                 Prefs.setIcon(MainActivity.this, iconKeys[position]);
                 botKey = iconKeys[position];
                 botView.setBot(botKey, botLook, botFailed);
+                updateCapsulePreview();
                 try {
                     startForegroundService(new Intent(MainActivity.this, IslandService.class)
                             .setAction(IslandService.ACTION_IDLE));
@@ -280,7 +350,8 @@ public class MainActivity extends Activity {
         root.addView(iconNote, lp(0, 0, 0, 8));
 
         TextView hint = new TextView(this);
-        hint.setText("如果岛上没出现：系统设置 → 通知 → 工作岛 → 允许实时更新");
+        hint.setText("如果岛上没出现：系统设置 → 通知 → 工作岛 → 允许实时更新；"
+                + "没有该开关的设备请选「总是悬浮胶囊」并授权悬浮窗。");
         hint.setTextColor(0xFF6F6B64);
         hint.setTextSize(12);
         hint.setGravity(Gravity.CENTER);
@@ -334,7 +405,14 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!sheetMode) { refresh(); refreshShizukuStatus(); }
+        IslandOverlay.onAppVisibilityChanged(true);
+        if (!sheetMode) { refresh(); refreshShizukuStatus(); updateCapsulePreview(); }
+    }
+
+    @Override
+    protected void onPause() {
+        IslandOverlay.onAppVisibilityChanged(false);
+        super.onPause();
     }
 
     @Override
@@ -425,6 +503,205 @@ public class MainActivity extends Activity {
         status.setText("通知：" + (post ? "开" : "关")
                 + "　实时更新：" + (promoted ? "允许" : "未允许")
                 + "\n电池：" + (battery ? "不优化" : "还在优化"));
+        refreshCapsuleStatus();
+    }
+
+    /** 预览 + 四个滑块：字号 / 高度 / 垂直位置 / 不透明度。 */
+    private void addCapsuleStyleSection(LinearLayout root) {
+        editCapsuleStyle = Prefs.capsuleStyle(this);
+
+        TextView styleLabel = new TextView(this);
+        styleLabel.setText("悬浮胶囊大小与位置");
+        styleLabel.setTextColor(FG);
+        styleLabel.setTextSize(14);
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-1, -2);
+        slp.setMargins(dp(8), dp(10), dp(8), 0);
+        root.addView(styleLabel, slp);
+
+        TextView previewLabel = new TextView(this);
+        previewLabel.setText("实时预览（设置页内，不需要悬浮窗权限）");
+        previewLabel.setTextColor(MUTED);
+        previewLabel.setTextSize(12);
+        previewLabel.setGravity(Gravity.CENTER);
+        root.addView(previewLabel, lp(0, 2, 0, 6));
+
+        capsulePreviewScreen = new FrameLayout(this);
+        GradientDrawable previewBg = new GradientDrawable(
+                GradientDrawable.Orientation.TL_BR, new int[]{0xFF2B3550, 0xFF10131C});
+        previewBg.setCornerRadius(dp(16));
+        previewBg.setStroke(dp(1), 0x33FFFFFF);
+        capsulePreviewScreen.setBackground(previewBg);
+        root.addView(capsulePreviewScreen,
+                new LinearLayout.LayoutParams(-1, dp(PREVIEW_HEIGHT_DP)));
+
+        TextView clock = new TextView(this);
+        clock.setText("22:19");
+        clock.setTextColor(0x99FAF9F5);
+        clock.setTextSize(10);
+        clock.setPadding(dp(12), dp(6), 0, 0);
+        capsulePreviewScreen.addView(clock, new FrameLayout.LayoutParams(-2, -2));
+
+        capsulePreview = new CapsuleView(this);
+        FrameLayout.LayoutParams previewParams =
+                new FrameLayout.LayoutParams(-1, dp(editCapsuleStyle.heightDp));
+        previewParams.topMargin = previewTop(editCapsuleStyle);
+        capsulePreviewScreen.addView(capsulePreview, previewParams);
+
+        capsuleTextBar = addCapsuleSlider(root, 9f, 16f, .5f, editCapsuleStyle.textSp,
+                value -> editCapsuleStyle = new CapsuleStyle(value, editCapsuleStyle.heightDp,
+                        editCapsuleStyle.y, editCapsuleStyle.opacity),
+                value -> String.format(Locale.US, "大小（字号）：%.1f sp", value));
+
+        capsuleHeightBar = addCapsuleSlider(root, 32f, 64f, 1f, editCapsuleStyle.heightDp,
+                value -> editCapsuleStyle = new CapsuleStyle(editCapsuleStyle.textSp, value,
+                        editCapsuleStyle.y, editCapsuleStyle.opacity),
+                value -> String.format(Locale.US, "高度：%d dp", Math.round(value)));
+
+        capsuleYBar = addCapsuleSlider(root, 0f, 80f, 1f, editCapsuleStyle.y * 100f,
+                value -> editCapsuleStyle = new CapsuleStyle(editCapsuleStyle.textSp,
+                        editCapsuleStyle.heightDp, value / 100f, editCapsuleStyle.opacity),
+                value -> String.format(Locale.US, "垂直位置：%d%%（状态栏下方）", Math.round(value)));
+
+        capsuleOpacityBar = addCapsuleSlider(root, 35f, 80f, 1f, editCapsuleStyle.opacity * 100f,
+                value -> editCapsuleStyle = new CapsuleStyle(editCapsuleStyle.textSp,
+                        editCapsuleStyle.heightDp, editCapsuleStyle.y, value / 100f),
+                value -> String.format(Locale.US, "不透明度：%d%%", Math.round(value)));
+
+        TextView hint = new TextView(this);
+        hint.setText("拖动即时预览；松手后保存并应用到悬浮窗。触摸穿透要求不透明度不超过 80%。");
+        hint.setTextColor(0xFF6F6B64);
+        hint.setTextSize(11);
+        hint.setGravity(Gravity.CENTER);
+        root.addView(hint, lp(0, 2, 0, 4));
+
+        Button reset = button("恢复默认大小与位置", CARD, FG, v -> resetCapsuleStyle());
+        root.addView(reset);
+
+        updateCapsulePreview();
+    }
+
+    private SeekBar addCapsuleSlider(LinearLayout root, float min, float max, float step,
+                                     float initial, java.util.function.Consumer<Float> apply,
+                                     java.util.function.Function<Float, String> label) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(8), dp(2), dp(8), 0);
+
+        TextView valueLabel = new TextView(this);
+        valueLabel.setTextColor(FG);
+        valueLabel.setTextSize(13);
+        valueLabel.setText(label.apply(initial));
+        box.addView(valueLabel, new LinearLayout.LayoutParams(-1, -2));
+
+        SeekBar bar = new SeekBar(this);
+        bar.setMax(Math.max(1, Math.round((max - min) / step)));
+        bar.setProgress(Math.round((initial - min) / step));
+        bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float value = min + progress * step;
+                valueLabel.setText(label.apply(value));
+                apply.accept(value);
+                updateCapsulePreview();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                Prefs.setCapsuleStyle(MainActivity.this, editCapsuleStyle);
+                notifyServiceModeChanged();
+            }
+        });
+        box.addView(bar, new LinearLayout.LayoutParams(-1, -2));
+        root.addView(box, new LinearLayout.LayoutParams(-1, -2));
+        return bar;
+    }
+
+    private int previewTop(CapsuleStyle style) {
+        float available = Math.max(0f, PREVIEW_HEIGHT_DP - 22f - style.heightDp);
+        return dp(22f + available * style.y);
+    }
+
+    private void updateCapsulePreview() {
+        if (capsulePreview == null || editCapsuleStyle == null) return;
+        CapsuleStyle style = editCapsuleStyle;
+        capsulePreview.setStyle(style);
+        FrameLayout.LayoutParams params =
+                (FrameLayout.LayoutParams) capsulePreview.getLayoutParams();
+        if (params != null) {
+            params.height = dp(style.heightDp);
+            params.topMargin = previewTop(style);
+            capsulePreview.setLayoutParams(params);
+        }
+        capsulePreview.setAlpha(style.opacity);
+        capsulePreview.setContent("执行命令", "用 执行命令…",
+                System.currentTimeMillis() - 42_000, false, "tool-command", "open", 2, 4, 0);
+    }
+
+    private void resetCapsuleStyle() {
+        editCapsuleStyle = CapsuleStyle.defaults();
+        if (capsuleTextBar != null) {
+            capsuleTextBar.setProgress(Math.round(
+                    (CapsuleStyle.DEFAULT_TEXT_SP - 9f) / .5f));
+        }
+        if (capsuleHeightBar != null) {
+            capsuleHeightBar.setProgress(Math.round(CapsuleStyle.DEFAULT_HEIGHT_DP - 32f));
+        }
+        if (capsuleYBar != null) capsuleYBar.setProgress(0);
+        if (capsuleOpacityBar != null) {
+            capsuleOpacityBar.setProgress(Math.round(
+                    (CapsuleStyle.DEFAULT_OPACITY - .35f) / .01f));
+        }
+        updateCapsulePreview();
+        Prefs.setCapsuleStyle(this, editCapsuleStyle);
+        notifyServiceModeChanged();
+    }
+
+    private void refreshCapsuleStatus() {
+        if (capsuleStatus == null) return;
+        boolean allowed = Settings.canDrawOverlays(this);
+        boolean enabled = Prefs.capsuleEnabled(this);
+        capsuleStatus.setText("悬浮胶囊：" + (enabled ? "已开启" : "已关闭")
+                + "　悬浮窗权限：" + (allowed ? "已授权" : "未授权 · 点这里开启"));
+        capsuleStatus.setTextColor(allowed ? 0xFF4CAF50 : ACCENT);
+    }
+
+    private void requestOverlayPermission() {
+        try {
+            startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName())));
+        } catch (Throwable failure) {
+            try {
+                startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
+            } catch (Throwable ignored) {
+                // 个别 ROM 连这个入口都没有，只能去系统设置里手动找。
+            }
+        }
+    }
+
+    /** 设置页改开关时，让正在跑的服务立即重发通知、重画胶囊；服务没跑就别把它拉起来。 */
+    private void notifyServiceModeChanged() {
+        if (!serviceRunning()) return;
+        try {
+            startService(new Intent(this, IslandService.class)
+                    .setAction(IslandService.ACTION_REFRESH));
+        } catch (Throwable ignored) {
+            // 服务刚好被系统收走，下一条状态更新会自然走新模式。
+        }
+    }
+
+    private boolean serviceRunning() {
+        try {
+            NotificationManager nm = getSystemService(NotificationManager.class);
+            for (android.service.notification.StatusBarNotification n : nm.getActiveNotifications()) {
+                if (n.getId() == Notifier.ID || n.getId() == 1002) return true;
+            }
+        } catch (Throwable ignored) {
+            // getActiveNotifications 在个别 ROM 上可能受限。
+        }
+        return false;
     }
 
     private void ensureService() {
@@ -445,19 +722,26 @@ public class MainActivity extends Activity {
                 Uri.parse("package:" + getPackageName())));
     }
 
+    /**
+     * 测试按钮直接走服务，而不是旧的广播接收器：这样通知和悬浮胶囊看到的是同一份状态。
+     * 应用在前台时胶囊会主动隐藏，按 Home 回桌面就能看到。
+     */
     private void demo(String action) {
-        Intent i = new Intent(action);
-        i.setClass(this, IslandReceiver.class);
+        Intent i = new Intent(this, IslandService.class).setAction(action);
         boolean done = Notifier.ACTION_DONE.equals(action);
         i.putExtra("title", done ? "任务完成" : "Claude 正在干活");
         i.putExtra("text", done ? "测试完成" : "正在用 Bash…");
         i.putExtra("state", done ? "done" : "running");
         i.putExtra("face", done ? "happy" : "open");
         i.putExtra("since", System.currentTimeMillis());
-        sendBroadcast(i);
+        try {
+            startService(i);
+        } catch (Throwable failure) {
+            Log.w("WorkIsland", "cannot start demo run", failure);
+        }
     }
 
-    private View button(String text, int bg, int fg, View.OnClickListener click) {
+    private Button button(String text, int bg, int fg, View.OnClickListener click) {
         Button b = new Button(this);
         b.setText(text);
         b.setAllCaps(false);
@@ -487,6 +771,10 @@ public class MainActivity extends Activity {
     }
 
     private int dp(int v) {
+        return Math.round(getResources().getDisplayMetrics().density * v);
+    }
+
+    private int dp(float v) {
         return Math.round(getResources().getDisplayMetrics().density * v);
     }
 }

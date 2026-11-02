@@ -70,19 +70,19 @@
 <body>
 
 <section class="cover">
-  <div class="kicker">ANDROID 16 · COLOROS 16 · LIVE UPDATES</div>
+  <div class="kicker">ANDROID 16 · COLOROS 16 · LIVE UPDATES · FALLBACK CAPSULE</div>
   <img class="logo" src="source/app/res/mipmap-xxxhdpi/ic_launcher.png" alt="工作岛图标">
   <h1>工作岛</h1>
-  <p class="sub">把 Claude 的工作状态，放到灵动岛上</p>
+  <p class="sub">把 Claude 的工作状态，放到灵动岛 / 悬浮胶囊上</p>
   <div class="rule"></div>
   <div class="meta">
     <div><span>宿主</span>cccodroid 0.4.2–0.4.10</div>
     <div><span>设备</span>OnePlus PJA110 · ColorOS 16.0.3</div>
-    <div><span>应用</span>com.dafeiyu.workisland 1.4</div>
-    <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
-    <div><span>日期</span>2026-10-26</div>
+    <div><span>应用</span>com.dafeiyu.workisland 1.5</div>
+    <div><span>状态</span>测试阶段 · ColorOS 16 系统岛已验；悬浮胶囊可调版待覆盖安装复测</div>
+    <div><span>日期</span>2026-11-02</div>
   </div>
-  <div class="hash">APK SHA-256<br>b7296f917ac3b990fce5162a9854cc72651568dca60d53dc62cdc8b79cf31530</div>
+  <div class="hash">APK SHA-256<br>25623db61a8f156e7b50a66649a55af63f11fd574f66a630c1a06e6e2270ef50</div>
 </section>
 
 <section class="toc">
@@ -94,19 +94,20 @@
     <tr><td>项目说明</td><td>一句话、交付物、快速开始、测试环境</td></tr>
     <tr><td>一、方案与设计</td><td>背景与问题、总体架构、状态机、事件文案、收工判定、关键技术、安全与限制</td></tr>
     <tr><td>二、开发与部署</td><td>目录落点、构建链、安装、网关接入、driver 部署、保活、调试、回滚</td></tr>
-    <tr><td>三、测试报告</td><td>18 个用例、关键日志、截图索引、6 个问题与修复</td></tr>
+    <tr><td>三、测试报告</td><td>33 个用例、关键日志、截图索引、12 个问题与修复</td></tr>
     <tr><td>四、提交说明</td><td>验收步骤、设计要点、已知限制、变更记录</td></tr>
     <tr><td>五、开发过程与真机测试</td><td>时间线、踩坑与修法、全部真机测试记录、过程链接</td></tr>
-    <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、后台保活与自动恢复</td></tr>
-    <tr><td>七、厂商适配</td><td>vivo / 小米 / 红魔 的上岛条件、私有通道、Shizuku 旁路与我们的策略</td></tr>
+    <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、悬浮胶囊可调与预览、后台保活</td></tr>
+    <tr><td>七、厂商适配</td><td>vivo / 小米 / 红魔 的上岛条件、私有通道、Shizuku 旁路与无岛兜底</td></tr>
   </table>
   <div class="toc-note">
-    <b>四个非显然结论</b>
+    <b>五个非显然结论</b>
     <ol>
       <li>ColorOS 16 的流体云直接接 Android 16 Live Updates，不需要 OPPO 私有白名单。</li>
       <li>ColorOS 会在后台冻结应用（连前台服务也冻），所以定时器必须放在网关 driver 里。</li>
       <li>收工要看 <code>runs</code> 而不是 <code>run</code>，并且要二次复查 + 3 秒宽限，否则会提前报完成。</li>
       <li>vivo 国行的原子岛是白名单制；小米/红米 HyperOS 3.0.300+ 理论上会自动包标准 Live Updates，但还没真机验证。</li>
+      <li>没有岛的设备用应用自绘悬浮胶囊兜底；<code>FLAG_NOT_TOUCHABLE</code> 还要把窗口 alpha 压到系统上限（通常 0.8）以内，触摸才真正穿透。</li>
     </ol>
   </div>
 </section><article class="doc page-break"><div class="doc-title">测试状态</div><h1 id="_1">测试状态</h1>
@@ -128,28 +129,55 @@
 <li>四态 bot（Wakes/Works/Asks/Done）、14 look、7 个标识在真机上目视通过</li>
 <li>21 个模型的轮廓/配色/眼睛/装饰全部渲染通过（对照表 <code>screenshots/10-bot-states.png</code>）</li>
 <li>通知大/小图标与岛上胶囊显示同一只 bot；<code>!</code> / <code>?</code> / <code>≡</code> / <code>×</code> / <code>z</code> 实测可见</li>
+<li>悬浮胶囊 1.5 初版已在 OnePlus PJA110 上出现（系统岛之外的兜底路径）</li>
+<li>系统岛 / 悬浮胶囊两个开关可独立保存，切换后服务会重发通知并按新开关重画</li>
+<li>悬浮胶囊字号 / 高度 / 垂直位置 / 不透明度可调，设置页内用同一个 <code>CapsuleView</code> 做实时预览（代码已编译，待覆盖安装复测）</li>
 </ul>
-<h2 id="_3">未验证</h2>
+<h2 id="_3">未完成复测</h2>
+<ul>
+<li>1.5 的<strong>可调版</strong>：设置页实时预览已真机目视通过（小胶囊 + 标题/动作/计时/清单 2/4）；
+  四个滑块应用到<strong>实际悬浮窗</strong>、半透明和触摸穿透仍待复测</li>
+<li>悬浮胶囊在锁屏、息屏、横屏、分屏下的可见性</li>
+<li>两个开关同时开启时的重复显示（预期会重复，文档建议只开一个）</li>
+</ul>
+<h2 id="_4">已定位的“抽搐”问题</h2>
+<ul>
+<li>现象：岛上在「读文件 → 改文件 → 思考中 → 执行命令」之间毫秒级来回跳。</li>
+<li>根因：设备上同时跑着 <strong>0.4.x 遗留的独立 driver</strong> 和 <strong>0.5.14 的进程内订阅模块</strong>。
+  旧 driver 重连 <code>/api/events</code> 时不带 <code>Last-Event-ID</code>，网关续不上就把当前这一轮从头重放，
+  于是每来一次工具事件就推一条状态。</li>
+<li>处理：关闭 0.4.x 的保活开关（<code>keepalive.conf=0</code>），停掉旧 driver；0.5.14 只用进程内模块。
+  同时给仓库里的独立 driver 补了 <code>Last-Event-ID</code> 续传和 150ms 去抖，服务端状态去重也不再计 <code>step</code>。</li>
+<li>追加修复：ColorOS 冻结会让 <code>apply()</code> 的异步落盘丢失，服务重建时读到旧 <code>true</code> 又把 driver 拉起来。
+  保活偏好改成 <code>commit()</code> 同步写；<code>IslandService</code> 不再重写 <code>keepalive.conf</code>；升级后强制关一次。</li>
+</ul>
+<h2 id="_5">未验证</h2>
 <ul>
 <li>其他 ColorOS 版本（如 15、17）与其他机型</li>
 <li>其他厂商的“灵动岛 / 实时活动”实现：vivo 国行原子岛是白名单制，红魔 OS 11 无岛，小米 HyperOS 3 理论可行但未实测；详见 <a href="docs/07-厂商适配.md"><code>docs/07-厂商适配.md</code></a></li>
+<li>悬浮胶囊在其他品牌 / 其他 ColorOS 版本上的悬浮窗权限、状态栏避让和触摸穿透行为</li>
 <li>开发端网关（8790）与 cccodroid（8791）的差异场景</li>
 <li>重启开机自启（<code>BOOT_COMPLETED</code> 已声明，未做整机重启验证）</li>
 <li>长时间 Doze（30 分钟以上）</li>
 <li>force-stop 后的自动恢复</li>
 <li>多轮并行时的文案归属（收工判定已按 <code>runs</code> 处理，文案可能跟随最后事件）</li>
 </ul>
-<h2 id="_4">已知限制</h2>
+<h2 id="_6">已知限制</h2>
 <ul>
 <li>cccodroid 被强行停止后，网关与 driver 都会消失，岛上会停在最后状态；重开 cccodroid 恢复。</li>
 <li>ColorOS 会在后台冻结应用（<code>do_freezer_trap</code>，前台服务也冻），所以定时器放在网关 driver，而不是应用里。</li>
 <li>cccodroid 升级可能覆盖 <code>files/app</code> 下的网关文件，需要重新接入。</li>
 <li>工作岛的服务是 exported 的，同机应用可以伪造显示状态（仅影响显示）；生产化需加签名级权限。</li>
-<li>胶囊外观由系统绘制，未使用 OPPO UPK 自定义卡片。</li>
+<li>系统岛路径的外观由系统绘制，未使用 OPPO UPK 自定义卡片。</li>
+<li>悬浮胶囊路径由<strong>本应用进程</strong>绘制：ColorOS 冻结应用时动画会停在最后一帧，
+  下一次 <code>am start-foreground-service</code> 状态更新会把它唤醒；它不是系统级常驻图层。</li>
+<li>悬浮胶囊完全不接收触摸（<code>FLAG_NOT_TOUCHABLE</code>），点它不会打开应用；
+  要打开应用请点通知。这是为了不挡下面任何操作。</li>
+<li>系统岛和悬浮胶囊同时开启会重复显示；建议有岛设备只开系统岛，无岛设备只开悬浮胶囊。</li>
 <li>通知图标是静态帧：四态和标识准确，但呼吸/眨眼/起跳只在应用内预览里动。</li>
 <li>21 个模型图标是 LobeHub 的品牌标识，公开发布前请自行确认商标使用。</li>
 </ul>
-<h2 id="_5">反馈</h2>
+<h2 id="_7">反馈</h2>
 <p>如果你在别的 ColorOS 版本或机型上试了，欢迎带上：</p>
 <ul>
 <li>机型、ColorOS 版本、Android 版本</li>
@@ -163,12 +191,16 @@
 其他 ColorOS 版本、其他品牌机型均未验证；接口与文件布局可能继续变动，不建议用于生产或关键任务。
 详细边界见 <a href="STATUS.md"><code>STATUS.md</code></a>。</p>
 </blockquote>
-<p>把 <strong>cccodroid 里 Claude 的实时工作状态</strong>，投到 <strong>ColorOS 16 的流体云 / 灵动岛</strong>上。</p>
+<p>把 <strong>cccodroid 里 Claude 的实时工作状态</strong>，投到 <strong>系统流体云 / 灵动岛</strong>上；
+没有这些系统能力的设备，用应用自己画的 <strong>悬浮胶囊</strong> 兜底。</p>
 <ul>
 <li>干活时：胶囊标题跟着动作走——读文件 / 执行命令 / 思考中 / 等你确认；下面跟着更细的描述</li>
 <li><code>TodoWrite</code> 任务清单会显示「清单 x/y」</li>
 <li>收工：写「任务完成」+ 用时</li>
 <li>8 秒后：岛上收起，通知栏只留一条安静的「工作岛 · 在后台等下一轮」</li>
+<li><strong>无岛也能看</strong>：悬浮胶囊半透明、按内容伸缩、触摸完全穿透，不挡下面任何操作</li>
+<li><strong>大小可调</strong>：字号、高度、垂直位置、不透明度都能拖；设置页里有实时预览</li>
+<li><strong>两个开关</strong>：系统岛、悬浮胶囊各自决定是否开启；两个都关就只留普通通知</li>
 <li><strong>四态 bot</strong>：Wakes / Works / Asks / Done；14 种 look、7 个头顶标识（<code>! ? ≡ × ⧗ … z</code>）</li>
 <li><strong>21 个模型</strong>：每个 agent 有自己的形状、配色、眼睛，Claude 有手脚、DeepSeek 有肚子、Grok 有环、Cursor 缺一角、OpenClaw 有触须</li>
 <li><strong>可关</strong>：设置里的「程序化 bot」开关关掉就退回旧的简笔图标</li>
@@ -211,7 +243,7 @@
 </tbody>
 </table>
 <p>更多截图见 <code>screenshots/</code>（含四态 bot、模型对照、岛上 <code>!</code> 标识、图标选择器），完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
-<p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases">Release 页面</a> · 1.4 的 APK 与 PDF 也在本仓库 <code>apk/</code>、<code>pdf/</code> 里。</p>
+<p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases">Release 页面</a> · 1.5 的 APK 与 PDF 也在本仓库 <code>apk/</code>、<code>pdf/</code> 里。</p>
 <hr>
 <h2 id="_1">交付物</h2>
 <table>
@@ -224,11 +256,23 @@
 <tbody>
 <tr>
 <td><code>apk/WorkIsland.apk</code></td>
-<td>可直接安装的 APK（<code>com.dafeiyu.workisland</code>，versionName 1.4）</td>
+<td>可直接安装的 APK（<code>com.dafeiyu.workisland</code>，versionName 1.5）</td>
 </tr>
 <tr>
 <td><code>source/app/</code></td>
-<td>Android 16 Live Update 应用源码（Java + 资源 + 构建脚本）</td>
+<td>Android 16 应用源码（Java + 资源 + 构建脚本；系统岛 + 悬浮胶囊）</td>
+</tr>
+<tr>
+<td><code>source/app/src/com/dafeiyu/workisland/IslandOverlay.java</code></td>
+<td>无岛兜底悬浮窗（半透明、触摸穿透、可调位置）</td>
+</tr>
+<tr>
+<td><code>source/app/src/com/dafeiyu/workisland/CapsuleView.java</code></td>
+<td>胶囊绘制（悬浮窗与设置页预览共用）</td>
+</tr>
+<tr>
+<td><code>source/app/src/com/dafeiyu/workisland/CapsuleStyle.java</code></td>
+<td>字号 / 高度 / 位置 / 不透明度模型</td>
 </tr>
 <tr>
 <td><code>source/app/libs/</code></td>
@@ -273,17 +317,20 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  b7296f917ac3b990fce5162a9854cc72651568dca60d53dc62cdc8b79cf31530
-大小     363,241 字节
+<pre><code>SHA-256  25623db61a8f156e7b50a66649a55af63f11fd574f66a630c1a06e6e2270ef50
+大小     375,529 字节
 </code></pre>
 <hr>
 <h2 id="_2">快速开始</h2>
 <ol>
 <li>安装 <code>apk/WorkIsland.apk</code>。</li>
-<li>打开「工作岛」，确认三行状态：
+<li>打开「工作岛」，确认状态：
    - 通知：开
-   - 实时更新：允许
-   - 电池：不优化</li>
+   - 实时更新：允许（有流体云 / 灵动岛的设备）
+   - 电池：不优化
+   - <strong>显示方式</strong>：按设备打开「系统流体云 / 灵动岛」或「悬浮胶囊」；悬浮胶囊需要「显示在其他应用上层」权限
+   - <strong>大小与位置</strong>：在设置页的「悬浮胶囊大小与位置」里拖字号、高度、垂直位置、不透明度；上面的预览会实时变化
+   - 两个开关都关时只保留普通通知，不会上岛也不会画胶囊</li>
 <li>接入网关：
    - <strong>ccc odroid 0.4.7+</strong>：设置 → 工作岛（ColorOS 灵动岛）→ 打开，重启一次网关。
    - <strong>0.4.2–0.4.6</strong>：按 <code>docs/02-开发与部署.md</code> 第 4 节接入独立 driver。</li>
@@ -317,7 +364,7 @@
 </tr>
 <tr>
 <td>应用</td>
-<td>com.dafeiyu.workisland 1.4</td>
+<td>com.dafeiyu.workisland 1.5</td>
 </tr>
 <tr>
 <td>构建</td>
@@ -343,14 +390,29 @@
 <li><a href="https://github.com/jazzenchen/agent-hud-open">jazzenchen/agent-hud-open</a>
   （Apache-2.0）：四态 bot、14 look、7 个标识、BotSpec 与渲染几何的移植来源。</li>
 <li><a href="https://github.com/greyoak111/cccodroid">cccodroid</a>：网关事件流、终端与宿主能力。</li>
+<li><a href="https://github.com/bileizhen/CurrentMusicX">CurrentMusicX</a>（GPL-3.0）：
+  悬浮胶囊的窗口分层、可见性策略、「视觉窗口 + 独立触摸层」思路，
+  以及字号 / 垂直位置 / 不透明度和实时预览的设置模型参考。
+  <strong>没有复制其 Kotlin / Compose 代码</strong>；本项目的 Java + Canvas 实现是独立重写的，
+  因此仍按 Apache-2.0 分发。</li>
 <li><a href="https://github.com/lobehub/lobe-icons">LobeHub Icons</a>（MIT）：21 个模型图标；
   商标归各自所有者，非官方关联。</li>
 </ul>
 <hr>
 <h2 id="_6">许可与第三方说明</h2>
 <p>本项目使用 <strong>Apache-2.0</strong>，见 <a href="LICENSE"><code>LICENSE</code></a>。</p>
-<p>第三方图标与许可：Agent HUD 图标（Apache-2.0）、LobeHub 模型图标（MIT），
-详见 <a href="THIRD_PARTY.md"><code>THIRD_PARTY.md</code></a> 与 <a href="LICENSES/"><code>LICENSES/</code></a>。</p>
+<p>第三方素材与许可：</p>
+<ul>
+<li>Agent HUD 图标与 bot 模型：Apache-2.0</li>
+<li>LobeHub 模型图标：MIT（商标归各自所有者）</li>
+<li>Shizuku API：Apache-2.0</li>
+<li>CurrentMusicX：GPL-3.0，仅作悬浮胶囊的<strong>设计参考</strong>，没有复制其代码；
+  许可全文见 <a href="LICENSES/CurrentMusicX-GPL-3.0.txt"><code>LICENSES/CurrentMusicX-GPL-3.0.txt</code></a></li>
+</ul>
+<p>详见 <a href="THIRD_PARTY.md"><code>THIRD_PARTY.md</code></a> 与 <a href="LICENSES/"><code>LICENSES/</code></a>。</p>
+<p><strong>项目声明</strong>：工作岛是独立的第三方项目，与 Anthropic、OPPO / 一加、
+CurrentMusicX、LobeHub、cccodroid 官方均无隶属、赞助或背书关系；
+其他产品名、模型名与图标归各自所有者。</p>
 <blockquote>
 <p>工作岛是<strong>第三方应用的可选集成</strong>：cccodroid 只负责把状态送出来，不包含也不负责本应用的功能。</p>
 </blockquote></article><article class="doc page-break"><div class="doc-title">一、方案与设计</div><h1 id="_1">工作岛 · 方案与设计</h1>
@@ -424,8 +486,9 @@
 <ul>
 <li>不接管 cccodroid 的聊天 UI、不修改它的 Java/ dex。</li>
 <li>不做到「ccc odroid 被强行停止后仍然工作」——没有宿主就没有任务可显示。</li>
-<li>不自定义胶囊的像素级外观（胶囊由系统绘制，第三方只能控制图标、标题、文本、进度）。</li>
-<li>不承诺跨设备通用：当前实现针对 Android 16 / ColorOS 16。</li>
+<li>系统岛路径不自定义系统胶囊的像素级外观（胶囊由系统绘制，第三方只能控制图标、标题、文本、进度）。
+  没有流体云 / 灵动岛的设备由应用自己绘制悬浮胶囊兜底（见 7.10）。</li>
+<li>不承诺跨设备通用：系统岛路径当前只验证 Android 16 / ColorOS 16；悬浮胶囊是通用兜底，但尚未全机型验证。</li>
 </ul>
 <hr>
 <h2 id="3">3. 总体架构</h2>
@@ -823,6 +886,85 @@ SIGNS  !  ?  ≡  ×  ⧗  …  z
 <p><strong>许可</strong></p>
 <p>移植自 <code>agent-hud-open</code>（Apache-2.0），bot 素材来自 LobeHub（MIT），商标归各自所有者；
 未使用 Anthropic 的 Clawd sprites。许可全文见 <code>LICENSES/agent-hud-open-LICENSE.txt</code>。</p>
+<h3 id="710">7.10 无岛兜底：悬浮胶囊</h3>
+<p><strong>问题</strong>：标准 Live Updates 需要厂商在系统里实现“流体云 / 灵动岛”。ColorOS 16 实测可用；
+其他厂商不一定接，甚至 Android 16 上 <code>canPostPromotedNotifications()</code> 也可能是 false。
+这时通知还能发，但不会变成岛。</p>
+<p><strong>做法</strong>：应用自己画一条悬浮胶囊（<code>IslandOverlay</code>）：</p>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>实现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>窗口</td>
+<td><code>TYPE_APPLICATION_OVERLAY</code>；<code>createWindowContext</code> 取窗口上下文，保证密度/主题正确</td>
+</tr>
+<tr>
+<td>触摸</td>
+<td><code>FLAG_NOT_TOUCHABLE</code> —— 完全穿透，不挡下面任何点击、滑动</td>
+</tr>
+<tr>
+<td>外观</td>
+<td>半透明深色胶囊，白色标题 + 弱化副标题 + 状态点；不透明度 35–80% 可调</td>
+</tr>
+<tr>
+<td>大小</td>
+<td>字号 9–16sp 决定整体大小；高度 32–64dp 独立可调；宽度按内容测量并在约 200–280dp 内收束</td>
+</tr>
+<tr>
+<td>位置</td>
+<td>状态栏 / 挖孔下方，垂直位置 0–80%（可用高度比例）可调，避免盖住时钟、电量</td>
+</tr>
+<tr>
+<td>内容</td>
+<td>bot 图标、标题、动作、计时、清单分段进度；与通知共用 <code>Notifier.botBitmap</code> / <code>statusColor</code></td>
+</tr>
+<tr>
+<td>预览</td>
+<td>设置页用同一个 <code>CapsuleView</code> 在模拟屏幕上实时渲染，不需要悬浮窗权限</td>
+</tr>
+<tr>
+<td>可见性</td>
+<td>仅在 working / done 时显示；应用前台、锁屏、息屏隐藏；IDLE 立即收起</td>
+</tr>
+<tr>
+<td>生命周期</td>
+<td>由 <code>IslandService</code> 创建/销毁；状态和动画帧与通知同源，不额外起定时器</td>
+</tr>
+</tbody>
+</table>
+<p><strong>两个开关</strong>（应用首页）：</p>
+<ol>
+<li><strong>系统流体云 / 灵动岛</strong>：关掉后 <code>Notifier.build()</code> 不再写 <code>android.requestPromotedOngoing</code>，
+   也不调用 <code>setRequestPromotedOngoing(true)</code>；通知仍在，只是不请求上岛。</li>
+<li><strong>悬浮胶囊</strong>：关掉后 <code>IslandService</code> 不再显示 overlay。第一次使用时按
+   <code>canPostPromotedNotifications()</code> 给默认值：不能上岛的设备默认开，能上岛的默认关。</li>
+</ol>
+<p>两个开关独立，两个都关就只剩普通通知。有岛设备同时开两个会重复显示，建议只开一个。</p>
+<p><strong>样式设置与预览</strong>：字号、高度、垂直位置、不透明度四个滑块存在 <code>Prefs</code> 里；
+设置页的模拟屏幕用同一个 <code>CapsuleView</code> 即时重画，拖动滑块就能看到大小和位置变化，
+不需要先开悬浮窗权限。松手后才写偏好并通知服务重画，避免每拖一像素都发一次 <code>am</code>。</p>
+<p><strong>抽搐的根因</strong>：旧版独立 driver（0.4.2–0.4.6）和 0.5.14 的进程内模块同时运行时，
+旧 driver 重连 <code>/api/events</code> 不带 <code>Last-Event-ID</code>，网关续不上就整轮重放，
+状态会在毫秒级来回跳。0.5.14 应只保留进程内模块；仓库里的独立 driver 也补了
+<code>Last-Event-ID</code> 续传和 150ms 去抖。另外 ColorOS 冻结会丢掉 <code>apply()</code> 的异步落盘，
+保活偏好改为 <code>commit()</code> 同步写，服务创建时不再重写 <code>keepalive.conf</code>。</p>
+<p><strong>和参考项目的关系</strong>：窗口分层、可见性策略和“视觉窗口 + 独立触摸层”的思路参考了
+CurrentMusicX 的桌面岛（GPL-3.0）。本项目没有复制它的 Kotlin / Compose 代码，
+而是用 Java + Canvas 按工作岛的状态模型独立实现；触摸策略也从“可点击的触摸层”
+改成“完全穿透”，因为工作岛的胶囊只负责看，点通知即可打开应用。</p>
+<p><strong>限制</strong>：</p>
+<ul>
+<li>胶囊由本应用进程绘制。ColorOS 的 <code>do_freezer_trap</code> 会冻结后台应用，
+  动画可能停在最后一帧；下一条 <code>am start-foreground-service</code> 会唤醒进程继续画。</li>
+<li>它不是系统级图层：状态栏下拉、锁屏、分屏的层级由 WindowManager 决定，
+  个别 ROM 可能限制 <code>TYPE_APPLICATION_OVERLAY</code> 的显示区域。</li>
+<li>不接收触摸，所以不能拖动、点击；这是“不遮挡”的代价。</li>
+</ul>
 <hr>
 <h2 id="8">8. 接口与契约</h2>
 <h3 id="81-http">8.1 网关 HTTP</h3>
@@ -903,7 +1045,10 @@ SIGNS  !  ?  ≡  ×  ⧗  …  z
 <li><strong>强行停止</strong>：ccc odroid 被 force-stop 后，网关和 driver 都没了，岛上会停在最后一个状态；重开 cccodroid 恢复。</li>
 <li><strong>ColorOS 冻结</strong>：工作岛在后台会被冻，不能自己计时；本方案把计时放在 driver，但如果 driver 也被硬杀，收起可能延迟。</li>
 <li><strong>应用更新</strong>：ccc odroid 更新可能覆盖 <code>files/app/gw/work-island.mjs</code> 与 <code>server.mjs</code>，需要重新接入（原文件有备份）。</li>
-<li><strong>胶囊外观</strong>：由系统绘制，只能控制图标、标题、文本、进度；不能自定义成 OPPO UPK 那种完全自定义卡片。</li>
+<li><strong>系统岛外观</strong>：由系统绘制，只能控制图标、标题、文本、进度；不能自定义成 OPPO UPK 那种完全自定义卡片。
+   没有岛的设备改由应用绘制悬浮胶囊（半透明、触摸穿透），外观可控，但受应用进程存活和 WindowManager 层级限制。</li>
+<li><strong>悬浮胶囊不接收触摸</strong>：不能拖动、点击；点通知才能打开应用。这样它不会挡住下面任何操作。</li>
+<li><strong>两条路径可能重复</strong>：系统岛和悬浮胶囊同时开启时会各画一份；建议按设备只开一个。</li>
 <li><strong>exported 服务</strong>：见第 9 节，属于演示级安全。</li>
 <li><strong>单实例</strong>：driver 只跟踪一个“当前状态”；并行多轮时，文案可能跟随最后触发的事件，但收工判定仍以 <code>runs</code> 为准。</li>
 </ol>
@@ -915,6 +1060,7 @@ SIGNS  !  ?  ≡  ×  ⧗  …  z
 <li>把 driver 的路径/端口做成配置，支持开发端 8790 与 cccodroid 8791。</li>
 <li>增加可选的胶囊文案模板（例如显示会话标题、token 用量）。</li>
 <li>如果 OPPO 开放 UPK 资格，可做完全自定义的胶囊卡片。</li>
+<li>悬浮胶囊增加位置/尺寸设置，并在更多品牌和 ColorOS 版本上做悬浮窗权限、状态栏避让和触摸穿透的真机验证。</li>
 <li>把网关模块做成可安装组件（跟随 cccodroid 更新自动重放），减少手工接入。</li>
 </ul></article><article class="doc page-break"><div class="doc-title">二、开发与部署</div><h1 id="_1">工作岛 · 开发与部署</h1>
 <blockquote>
@@ -1049,10 +1195,11 @@ unzip -o platform-36.zip 'android-36/android.jar' \
   -d /data/user/0/cc.codroid/files/home/workspace/task-island/sdk36
 # 结果：.../sdk36/android-36/android.jar（约 27 MB）
 </code></pre>
-<p><code>build.sh</code> 默认使用 <code>../sdk36/android-36/android.jar</code>；如果你的目录不同，改脚本第一行的 <code>SDK=</code>。</p>
+<p><code>build.sh</code> 默认使用 <code>../sdk36/android-36/android.jar</code>；如果你的目录不同，用环境变量
+<code>ANDROID_JAR=/path/to/android-36/android.jar bash build.sh</code>，或改脚本里的 <code>SDK=</code>。</p>
 <h3 id="32">3.2 构建</h3>
-<pre><code class="language-bash">cd /data/user/0/cc.codroid/files/home/workspace/task-island/app
-bash build.sh
+<pre><code class="language-bash">cd /data/user/0/cc.codroid/files/home/workspace/工作胶囊/source/app
+ANDROID_JAR=/path/to/android-36/android.jar bash build.sh
 # 产物：build/base.apk（未签名）
 </code></pre>
 <p><code>build.sh</code> 做的事：</p>
@@ -1081,7 +1228,7 @@ apksigner sign --ks island.keystore \
 <ul>
 <li>交付包<strong>不包含私钥</strong>（<code>island.keystore</code> 留在本机工作区）。重新生成密钥会改变签名，已安装的旧版必须先卸载再装。</li>
 <li><code>resources.arsc</code> 由 aapt2 输出时已是未压缩且 4 字节对齐，实测可直接安装；如果换工具链后安装报 <code>resources.arsc ... not aligned</code>，再补 zipalign。</li>
-<li>APK 版本：<code>versionCode=5</code>、<code>versionName=1.4</code>。</li>
+<li>APK 版本：<code>versionCode=6</code>、<code>versionName=1.5</code>。</li>
 </ul>
 <h3 id="34">3.4 安装</h3>
 <p>共享目录 <code>/sdcard</code> 里的 APK 不能直接 <code>pm install</code>（SELinux 文件上下文问题），先经 shell 拷到 <code>/data/local/tmp</code>：</p>
@@ -1094,9 +1241,24 @@ priv 'pm grant com.dafeiyu.workisland android.permission.POST_NOTIFICATIONS'
 <p>首次打开「工作岛」，确认：</p>
 <ul>
 <li>通知：开</li>
-<li>实时更新：允许</li>
+<li>实时更新：允许（有流体云 / 灵动岛的设备）</li>
 <li>电池：不优化（点「后台保活设置」按提示开）</li>
+<li>显示方式：</li>
+<li><strong>系统流体云 / 灵动岛</strong>：需要系统允许实时更新</li>
+<li><strong>悬浮胶囊</strong>：打开开关后，点状态行授权「显示在其他应用上层」</li>
+<li>两个都关：只保留普通通知</li>
+<li>悬浮胶囊样式：</li>
+<li>「悬浮胶囊大小与位置」里有字号、高度、垂直位置、不透明度四个滑块</li>
+<li>上方模拟屏幕用同一个 <code>CapsuleView</code> 实时预览；不需要悬浮窗权限</li>
+<li>松手后保存并让服务重画，拖动过程中只更新预览</li>
+<li>0.4.7+ 的宿主只用进程内订阅模块（<code>gw/work-island.mjs</code>），
+  <strong>不要再启动 0.4.x 的独立 driver / watchdog</strong>；应用的「保活」开关保持关闭。
+  如果从 0.4.x 升级，先把 <code>Android/media/com.dafeiyu.workisland/keepalive.conf</code> 写成 <code>0</code>，
+  停掉旧的 <code>driver.mjs</code> / <code>watchdog.mjs</code>，否则两边同时推状态会出现毫秒级「抽搐」。</li>
 </ul>
+<p>测试悬浮胶囊时可以显式授权（正式使用建议走应用内授权页）：</p>
+<pre><code class="language-bash">priv 'appops set com.dafeiyu.workisland SYSTEM_ALERT_WINDOW allow'
+</code></pre>
 <hr>
 <h2 id="4">4. 网关接入</h2>
 <h3 id="41">4.1 放入模块</h3>
@@ -1252,7 +1414,15 @@ curl -s -N -H &quot;X-CC-Token: $TOKEN&quot; http://127.0.0.1:8791/api/term/&lt;
 <tbody>
 <tr>
 <td>岛不出现</td>
-<td><code>dumpsys notification</code> 是否有 <code>PROMOTED_ONGOING</code>；<code>canPostPromotedNotifications()</code> 是否 true；系统设置是否允许实时更新</td>
+<td><code>dumpsys notification</code> 是否有 <code>PROMOTED_ONGOING</code>；<code>canPostPromotedNotifications()</code> 是否 true；系统设置是否允许实时更新；没有该开关的设备改开「悬浮胶囊」</td>
+</tr>
+<tr>
+<td>悬浮胶囊不出现</td>
+<td>「悬浮胶囊」开关是否开；<code>Settings.canDrawOverlays()</code> 是否为 true；应用是否在前台（前台会主动隐藏）；当前是否在 working / done 状态</td>
+</tr>
+<tr>
+<td>悬浮胶囊挡操作</td>
+<td>1.5 使用 <code>FLAG_NOT_TOUCHABLE</code>，不应拦截触摸；若仍挡，检查是否装到了旧版</td>
 </tr>
 <tr>
 <td>一直「正在干活」</td>
@@ -1294,7 +1464,7 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <li>取 <code>android.jar</code>（第 3.1 节）。</li>
 <li><code>bash build.sh</code> + <code>apksigner</code>（第 3.2–3.3 节）。</li>
 <li><code>pm install</code> + 通知授权（第 3.4 节）。</li>
-<li>打开「工作岛」，确认三行状态。</li>
+<li>打开「工作岛」，确认通知 / 实时更新 / 电池状态，并按设备打开「系统岛」或「悬浮胶囊」开关。</li>
 <li>放入 <code>gw/work-island.mjs</code>，改 <code>server.mjs</code> 两行（第 4.2 节）。</li>
 <li>重启 cccodroid，看网关日志 <code>[work-island] driver 已启动</code>。</li>
 <li>在 cccodroid 里发一条消息，观察岛上状态。</li>
@@ -1485,6 +1655,72 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <td><code>!</code> <code>?</code> <code>≡</code> 切换时 bot 尺寸恒定，不贴边裁切</td>
 <td><strong>通过</strong>：图标固定为标识预留位置，94% 内容框</td>
 </tr>
+<tr>
+<td>T23</td>
+<td>1.5 构建链</td>
+<td>aapt2 / javac / d8 / apksigner 全过</td>
+<td><strong>通过</strong>（2026-11-02，<code>versionCode=6</code> / <code>versionName=1.5</code>）</td>
+</tr>
+<tr>
+<td>T24</td>
+<td>悬浮胶囊初版出现</td>
+<td>无岛路径能在真机上画出来</td>
+<td><strong>通过</strong>（1.5 初版，长条 320dp；收到「太长、挡视野」反馈）</td>
+</tr>
+<tr>
+<td>T25</td>
+<td>悬浮胶囊可调版</td>
+<td>字号 / 高度 / 垂直位置可调，半透明，状态/计时/清单正确</td>
+<td>预览<strong>真机目视通过</strong>；实际悬浮窗待复测</td>
+</tr>
+<tr>
+<td>T26</td>
+<td>触摸穿透</td>
+<td>点按、滑动全部落到下面应用</td>
+<td><strong>待真机复测</strong>（窗口已加 <code>FLAG_NOT_TOUCHABLE</code>）</td>
+</tr>
+<tr>
+<td>T27</td>
+<td>两个开关独立保存</td>
+<td>系统岛 / 悬浮胶囊各自开关，重启后保持</td>
+<td><strong>待真机复测</strong></td>
+</tr>
+<tr>
+<td>T28</td>
+<td>系统岛开关关闭</td>
+<td>通知不再带 <code>PROMOTED_ONGOING</code>，系统岛不出现</td>
+<td><strong>待真机复测</strong>（代码已去掉 promoted extra 与反射调用）</td>
+</tr>
+<tr>
+<td>T29</td>
+<td>悬浮胶囊可见性</td>
+<td>应用前台、锁屏、息屏隐藏；IDLE 收起</td>
+<td><strong>待真机复测</strong></td>
+</tr>
+<tr>
+<td>T30</td>
+<td>两个开关都关</td>
+<td>只留普通通知，不画胶囊</td>
+<td><strong>待真机复测</strong></td>
+</tr>
+<tr>
+<td>T31</td>
+<td>悬浮胶囊样式可调</td>
+<td>字号 9–16sp、高度 32–64dp、垂直位置 0–80%、不透明度 35–80%</td>
+<td><strong>预览通过</strong>；滑块应用到实际悬浮窗待复测</td>
+</tr>
+<tr>
+<td>T32</td>
+<td>设置页实时预览</td>
+<td>模拟屏幕上用同一个 <code>CapsuleView</code> 即时显示样式变化，不需要悬浮窗权限</td>
+<td><strong>通过</strong>：真机截图显示小胶囊 + 标题/动作/计时/清单 2/4</td>
+</tr>
+<tr>
+<td>T33</td>
+<td>旧 driver 抽搐</td>
+<td>0.4.x 独立 driver 与 0.5.14 进程内模块并存时状态毫秒级来回跳</td>
+<td><strong>通过</strong>：<code>keepalive.conf=0</code>，旧 driver 已停；仅 watchdog 空转；新包 <code>commit()</code> 同步写保活</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1673,6 +1909,12 @@ gateway: 9842 / 32734
 <td>图标按「身体 + 标识」一起缩放，<code>!</code>/<code>?</code>/<code>≡</code> 出现时身体被迫缩小</td>
 <td>永远预留标识位置；身体比例恒定，切换只换表情不换尺寸</td>
 </tr>
+<tr>
+<td>12</td>
+<td>胶囊状态毫秒级来回跳（抽搐）</td>
+<td>0.4.x 独立 driver 与 0.5.14 进程内模块同时运行；旧 driver 重连不带 <code>Last-Event-ID</code>，网关整轮重放</td>
+<td>停掉旧 driver、保活写 0；driver 加 <code>Last-Event-ID</code> 续传和 150ms 去抖；服务去重不再计 <code>step</code>；保活偏好改 <code>commit()</code> 同步落盘，服务不再重写 <code>keepalive.conf</code></td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1683,11 +1925,14 @@ gateway: 9842 / 32734
 <li><strong>长时间 Doze</strong>：只测了屏幕打开、后台 8 秒；未做 30 分钟以上的 Doze 测试。</li>
 <li><strong>并行多轮文案</strong>：岛上的短句可能跟随最后触发的事件；收工判定仍以 <code>runs</code> 为准。</li>
 <li><strong>exported 服务伪造</strong>：同机应用可以发 START/DONE，属于演示级安全，生产化需加签名权限。</li>
-<li><strong>自定义胶囊外观</strong>：未做 OPPO UPK 卡片，胶囊由系统绘制。</li>
+<li><strong>系统岛外观</strong>：未做 OPPO UPK 卡片，系统岛由系统绘制。</li>
+<li><strong>悬浮胶囊全机型</strong>：只在 OnePlus PJA110 上见过初版；最终短版的视觉、穿透、权限和状态栏避让待复测；其他品牌未验证。</li>
+<li><strong>悬浮胶囊进程依赖</strong>：ColorOS 冻结后台应用时动画会停在最后一帧，下一条 <code>am</code> 才唤醒；不是系统级常驻图层。</li>
 </ul>
 <hr>
 <h2 id="7">7. 结论</h2>
-<p>在 ColorOS 16 / Android 16 上，工作岛能够稳定显示 Claude 的真实工作状态，并在任务结束后自动收起。核心的三个非显然问题（推广、冻结、收工判定）均已定位并有对应实现。剩余限制主要来自系统规则（force-stop、Doze、OEM 自启动），已在文档中明确。</p></article><article class="doc page-break"><div class="doc-title">四、提交说明</div><h1 id="_1">工作岛 · 提交说明</h1>
+<p>在 ColorOS 16 / Android 16 上，工作岛能够稳定显示 Claude 的真实工作状态，并在任务结束后自动收起。核心的三个非显然问题（推广、冻结、收工判定）均已定位并有对应实现。剩余限制主要来自系统规则（force-stop、Doze、OEM 自启动），已在文档中明确。</p>
+<p>1.5 新增的悬浮胶囊解决“没有流体云 / 灵动岛”的设备：代码已通过完整构建，初版已在真机出现；可调大小 / 高度 / 位置 / 不透明度 + 应用内实时预览的版本已编译，待覆盖安装后补真机复测记录。旧 driver 导致的状态抽搐已定位并清理。</p></article><article class="doc page-break"><div class="doc-title">四、提交说明</div><h1 id="_1">工作岛 · 提交说明</h1>
 <blockquote>
 <p><strong>测试状态：Pre-release / Alpha</strong>
 仅在 <strong>OnePlus PJA110 · ColorOS 16.0.3 · Android 16（SDK 36）· cccodroid 0.4.2</strong> 上测试成功。
@@ -1709,12 +1954,12 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.4，363,241 字节，SHA-256 <code>b7296f91…1530</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.5，375,529 字节，SHA-256 <code>25623db6…ef50</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
 <td><code>source/app/</code></td>
-<td>AndroidManifest、12 个 Java 类（含 BotState/BotSpecs/BotForm/BotPainter/BotView）、res、<code>build.sh</code></td>
+<td>AndroidManifest、15 个 Java 类（含 BotState/BotSpecs/BotForm/BotPainter/BotView/IslandOverlay/CapsuleView/CapsuleStyle）、res、<code>build.sh</code></td>
 </tr>
 <tr>
 <td>驱动</td>
@@ -1749,7 +1994,7 @@ gateway: 9842 / 32734
 <tr>
 <td>测试报告</td>
 <td><code>docs/03-测试报告.md</code></td>
-<td>22 个用例、关键日志、11 个问题修复记录</td>
+<td>33 个用例、关键日志、12 个问题修复记录</td>
 </tr>
 <tr>
 <td>截图</td>
@@ -1764,13 +2009,15 @@ gateway: 9842 / 32734
 <li>安装 <code>apk/WorkIsland.apk</code>。</li>
 <li>打开「工作岛」，确认界面显示：
    - 通知：开
-   - 实时更新：允许
-   - 电池：不优化</li>
+   - 实时更新：允许（有流体云 / 灵动岛的设备）
+   - 电池：不优化
+   - 显示方式：有岛设备开「系统流体云 / 灵动岛」；无岛设备开「悬浮胶囊」并授权悬浮窗
+   - 大小与位置：在「悬浮胶囊大小与位置」里拖字号、高度、垂直位置、不透明度；上方预览实时变化</li>
 <li>在 cccodroid 里发一条消息，观察状态栏：
-   - 干活时：黑色胶囊，鱼图标 +「正在干活」，下面跟着「用 执行命令…」等；
-   - 结束时：「任务完成」+ 用时；
-   - 8 秒后：胶囊消失，通知栏保留「工作岛 · 在后台等下一轮」。</li>
-<li>对照 <code>screenshots/</code> 中的四张状态图。</li>
+   - 有岛：干活时系统胶囊显示动作，结束时「任务完成」+ 用时，8 秒后收起；
+   - 无岛：同样内容出现在半透明、触摸穿透的悬浮胶囊里，离开应用即可看到；
+   - 结束后通知栏保留「工作岛 · 在后台等下一轮」。</li>
+<li>对照 <code>screenshots/</code> 中的四张状态图；悬浮胶囊的可调版与预览已编译，真机复测记录待补。</li>
 </ol>
 <blockquote>
 <p>如果 cccodroid 是全新环境，需要先按 <code>docs/02-开发与部署.md</code> 第 4 节接入网关模块，并重启一次 cccodroid。</p>
@@ -1783,6 +2030,8 @@ gateway: 9842 / 32734
 <li><strong>对抗 OEM 冻结</strong>：实测 ColorOS 会在后台把应用冻住（<code>do_freezer_trap</code>），所以定时器与事件流不放在应用里，放在活得比单轮任务更久的网关 driver 里。</li>
 <li><strong>收工判定四道关</strong>：看 <code>runs</code> 不看 <code>run</code>；<code>run_end</code> 后 2.5 秒复查；完成前 3 秒宽限；新轮次取消完成。解决了“还在干活就报完成”。</li>
 <li><strong>视觉统一</strong>：深色 <code>#1F1E1D</code>、陶土色 <code>#D97757</code>、鱼形图标，与 cccodroid 一致。</li>
+<li><strong>无岛兜底</strong>：应用自己画一条半透明、触摸穿透、按内容伸缩的悬浮胶囊；系统岛和悬浮胶囊各有一个开关，按设备选择。</li>
+<li><strong>可调与预览</strong>：字号 / 高度 / 垂直位置 / 不透明度四个滑块；设置页用同一个 <code>CapsuleView</code> 在模拟屏幕上实时预览，不需要先开悬浮窗权限。</li>
 <li><strong>可回退</strong>：对宿主的改动只有两行 + 一个新模块，原文件有备份；应用可独立卸载。</li>
 </ol>
 <hr>
@@ -1792,7 +2041,9 @@ gateway: 9842 / 32734
 <li>ColorOS 的自启动、最近任务锁定需要用户手动开启；adb 白名单只能覆盖一部分。</li>
 <li>cccodroid 升级可能覆盖网关文件，需要重新接入（原文件已备份）。</li>
 <li>工作岛的 Service 是 exported 的，同机应用可以伪造显示状态；生产化需加签名级权限。</li>
-<li>胶囊外观由系统绘制，未使用 OPPO UPK 自定义卡片。</li>
+<li>系统岛外观由系统绘制，未使用 OPPO UPK 自定义卡片。</li>
+<li>悬浮胶囊由本应用进程绘制，不接收触摸；ColorOS 冻结后台应用时动画会停在最后一帧，下一条状态更新唤醒。</li>
+<li>悬浮胶囊的最终短版还没完成全机型复测；目前只在 OnePlus PJA110 上见过初版。</li>
 </ul>
 <hr>
 <h2 id="6">6. 变更记录</h2>
@@ -1864,6 +2115,31 @@ gateway: 9842 / 32734
 <td>2026-10-27</td>
 <td>1.4</td>
 <td>保活开关（<code>keepalive.conf</code>）+ 脱离网关进程树的看门狗 + driver 的 Shizuku 兜底；集成 Shizuku API 13.1.5，应用内可申请授权</td>
+</tr>
+<tr>
+<td>2026-11-02</td>
+<td>1.5</td>
+<td>无岛兜底：<code>IslandOverlay</code> 用 <code>TYPE_APPLICATION_OVERLAY</code> 画半透明胶囊，按内容伸缩（112–230dp），<code>FLAG_NOT_TOUCHABLE</code> 触摸穿透；状态/计时/清单与通知同源</td>
+</tr>
+<tr>
+<td>2026-11-02</td>
+<td>1.5</td>
+<td>两个独立开关：系统流体云 / 灵动岛（控制 promoted 推广）与悬浮胶囊（控制 overlay）；悬浮胶囊首次默认按 <code>canPostPromotedNotifications()</code> 决定；设置变更即时重发通知/重画</td>
+</tr>
+<tr>
+<td>2026-11-02</td>
+<td>1.5</td>
+<td>悬浮胶囊改为状态栏/挖孔下方 4dp、应用前台/锁屏/息屏隐藏；缩短为内容宽度，解决「太长挡视野」</td>
+</tr>
+<tr>
+<td>2026-11-02</td>
+<td>1.5</td>
+<td>字号 9–16sp、高度 32–64dp、垂直位置 0–80%、不透明度 35–80% 可调；设置页模拟屏幕用同一个 <code>CapsuleView</code> 实时预览</td>
+</tr>
+<tr>
+<td>2026-11-02</td>
+<td>1.5</td>
+<td>修「抽搐」：停掉 0.4.x 遗留的独立 driver/watchdog；独立 driver 补 <code>Last-Event-ID</code> 续传和 150ms 去抖；服务去重不再计 <code>step</code>；保活偏好改 <code>commit()</code> 同步落盘、服务不再重写 <code>keepalive.conf</code>、升级后强制关一次</td>
 </tr>
 </tbody>
 </table>
@@ -2176,6 +2452,48 @@ gateway: 9842 / 32734
    - 图标按 look/anim 做 LRU 缓存；身体比例恒定（永远给标识留位置），
      所以 <code>!</code> <code>?</code> <code>≡</code> 出现时 bot 不会突然缩小、贴边被裁。</li>
 </ol>
+<h3 id="312-15-2026-11-02">3.12 1.5 悬浮胶囊：从长条到短胶囊（2026-11-02）</h3>
+<p><strong>起点</strong>：很多 Android 16 设备没有流体云 / 灵动岛。参考
+<a href="https://github.com/bileizhen/CurrentMusicX">CurrentMusicX</a> 的桌面岛实现，
+确认它用 <code>TYPE_APPLICATION_OVERLAY</code> + 独立触摸层 + 可见性策略画胶囊。
+该项目是 GPL-3.0，所以只借鉴架构，不复制 Kotlin / Compose 代码；
+工作岛用 Java + Canvas 重写（<code>IslandOverlay</code>）。</p>
+<p><strong>第一版</strong>：固定 320dp 宽、52dp 高，放在状态栏下方，深色不透明底。
+真机出现后收到反馈：<strong>太长、挡视野</strong>，希望参考原设计做成<strong>半透明、触摸可穿透</strong>；
+并且系统岛与悬浮胶囊<strong>各给一个开关</strong>。</p>
+<p><strong>第二版</strong>：</p>
+<ul>
+<li>宽度按内容测量，夹在 112–230dp；窗口固定 260dp，胶囊居中，宽度用 180ms 动画过渡</li>
+<li>背景半透明（alpha 约 78% → 62%），白字保持不透明</li>
+<li>窗口加 <code>FLAG_NOT_TOUCHABLE</code>，点击/滑动全部穿透；胶囊只负责看，点通知打开应用</li>
+<li>两个 <code>Switch</code>：系统流体云 / 灵动岛（控制 promoted 推广）与悬浮胶囊（控制 overlay）</li>
+<li>悬浮胶囊首次默认值按 <code>canPostPromotedNotifications()</code> 决定：不能上岛默认开，能上岛默认关</li>
+<li>设置变更通过 <code>ACTION_REFRESH</code> 让服务立即重发通知、重画胶囊</li>
+</ul>
+<p><strong>第三版（当前，回应「实在太大了」）</strong>：</p>
+<ul>
+<li>字号 9–16sp、高度 32–64dp、垂直位置 0–80%、不透明度 35–80%，四个滑块可调</li>
+<li>高度太小时自动压字号（<code>effectiveTextSp</code>），避免两行字被裁</li>
+<li>设置页加「悬浮胶囊大小与位置」：模拟屏幕上用同一个 <code>CapsuleView</code> 实时预览，
+  不需要先开悬浮窗权限；松手后才保存并 <code>ACTION_REFRESH</code></li>
+<li>样式模型拆成 <code>CapsuleStyle</code>，绘制拆成 <code>CapsuleView</code>，悬浮窗和预览共用一份代码</li>
+</ul>
+<p><strong>同时修「抽搐」</strong>：真机日志显示状态在毫秒级来回跳。根因是设备上同时跑着
+0.4.x 遗留的独立 driver 和 0.5.14 的进程内订阅模块；旧 driver 重连 <code>/api/events</code>
+不带 <code>Last-Event-ID</code>，网关续不上就整轮重放。处理：</p>
+<ul>
+<li>关闭 0.4.x 的保活开关（<code>keepalive.conf=0</code>），停掉旧 <code>driver.mjs</code> / <code>watchdog.mjs</code></li>
+<li><code>source/driver/driver.mjs</code> 补 <code>Last-Event-ID</code> 续传；更新在 150ms 内合并，只发最后一条</li>
+<li><code>IslandService</code> 的去重键不再包含未展示的 <code>step</code></li>
+<li>追加：保活偏好改 <code>commit()</code> 同步落盘（ColorOS 冻结会丢 <code>apply()</code> 的异步写），
+  <code>IslandService</code> 不再重写 <code>keepalive.conf</code>，升级后强制关一次</li>
+</ul>
+<p><strong>构建</strong>：<code>aapt2 2.20-android-16 / javac 21 / d8 9.2.4 / apksigner 0.9</code> 全过，
+<code>versionCode=6</code>、<code>versionName=1.5</code>，APK 375,529 字节。</p>
+<p><strong>复测状态</strong>：初版已在 OnePlus PJA110 上出现；第三版已覆盖安装（2026-11-02 22:36），
+设置页实时预览真机目视通过（小胶囊 + 标题/动作/计时/清单 2/4 + 分段进度）。
+四个滑块应用到实际悬浮窗、半透明和触摸穿透仍待补测。
+抽搐的旧 driver 已停：<code>keepalive.conf=0</code>，只剩 watchdog 空转。</p>
 <hr>
 <h2 id="4">4. 尚未验证 / 已知限制</h2>
 <ul>
@@ -2185,7 +2503,9 @@ gateway: 9842 / 32734
 <li><strong>设置页复选框</strong>：<code>set-workisland</code> 的 API 开关已测，WebView 内的点击未单独走一遍。</li>
 <li><strong>强行停止（force-stop）</strong>：网关来不及发 IDLE，岛上会停在最后状态；重开 cccodroid 恢复。</li>
 <li><strong>工作岛通知服务是 exported 的</strong>：同机应用可以伪造显示状态（只影响显示）。</li>
-<li><strong>胶囊外观</strong>由系统绘制，未使用 OPPO UPK 自定义卡片。</li>
+<li><strong>系统岛外观</strong>由系统绘制，未使用 OPPO UPK 自定义卡片。</li>
+<li><strong>悬浮胶囊最终短版</strong>：已编译、未完成真机复测；全机型适配待验证。</li>
+<li><strong>悬浮胶囊进程依赖</strong>：应用被 ColorOS 冻结时动画停在最后一帧，下一条状态更新唤醒。</li>
 </ul>
 <hr>
 <h2 id="5">5. 过程链接</h2>
@@ -2532,6 +2852,25 @@ gateway: 9842 / 32734
   这就是之前「应用被杀后起不来」的一半原因；现在收到 null intent 直接 <code>stopSelf</code>。</li>
 <li>从素材采样出的配色场如果是 1×1 色块，取 <code>(30,30)</code> 会越界崩溃；现在按实际宽高取。</li>
 </ul>
+<h3 id="17-15">1.7 无岛设备的悬浮胶囊（1.5）</h3>
+<p>没有流体云 / 灵动岛的设备，应用会画一条自己的胶囊。它和通知吃同一份状态，
+所以标题、动作、清单进度和 bot 完全一致，不需要额外的 driver 逻辑。</p>
+<ul>
+<li><strong>两个开关</strong>：应用首页的「系统流体云 / 灵动岛」和「悬浮胶囊」各自独立。
+  两个都关就只留普通通知。</li>
+<li><strong>默认值</strong>：悬浮胶囊第一次使用时按 <code>canPostPromotedNotifications()</code> 决定——
+  系统不能上岛就默认开，能上岛就默认关（避免重复）。</li>
+<li><strong>外观</strong>：半透明深色胶囊；左边 bot，中间标题 + 动作，右边计时 + 状态点，底部清单分段。</li>
+<li><strong>大小可调</strong>：字号 9–16sp、高度 32–64dp、垂直位置 0–80%、不透明度 35–80%；
+  设置页用同一个 <code>CapsuleView</code> 在模拟屏幕上实时预览，不需要先开悬浮窗权限。</li>
+<li><strong>触摸穿透</strong>：窗口带 <code>FLAG_NOT_TOUCHABLE</code>，点击、滑动全部落到下面的应用；
+  胶囊只负责看，打开应用请点通知。</li>
+<li><strong>显示时机</strong>：working / done 时显示；应用在前台、锁屏、息屏时隐藏；IDLE 收起。</li>
+<li><strong>冻结限制</strong>：胶囊由本应用进程绘制。ColorOS 冻结后台应用时，动画会停在最后一帧；
+  下一条 <code>am start-foreground-service</code> 会唤醒进程继续画。它不是系统级常驻图层。</li>
+<li><strong>不要和旧 driver 同时跑</strong>：0.5.14 用进程内订阅；0.4.x 的独立 driver/watchdog 若还在跑，
+  会在重连时整轮重放事件，导致状态毫秒级抽搐。保活开关在 0.5.14 上保持关闭。</li>
+</ul>
 <hr>
 <h2 id="_3">二、后台保活与自动恢复</h2>
 <h3 id="21">2.1 发生了什么</h3>
@@ -2715,6 +3054,12 @@ gateway: 9842 / 32734
 <td>取决于厂商实现</td>
 <td>未验证</td>
 </tr>
+<tr>
+<td><strong>没有岛 / 系统不推广的设备</strong></td>
+<td><strong>应用自己画的悬浮胶囊</strong></td>
+<td>1.5 新增，OnePlus 初版实测出现</td>
+<td>通用兜底；全机型待验证</td>
+</tr>
 </tbody>
 </table>
 <h2 id="72-android-16-live-updates">7.2 我们用的路线：标准 Android 16 Live Updates</h2>
@@ -2723,6 +3068,8 @@ gateway: 9842 / 32734
 <li>Google 在 I/O 2025 明确说 Live Updates 会下放给 Samsung、OnePlus、vivo、Xiaomi；具体到机型和系统版本由厂商决定。</li>
 <li>代码位置：<code>Notifier.build()</code>；应用不依赖任何厂商 SDK，也没有私有字段。</li>
 <li>系统不接时退回普通通知：功能不丢，只是不上岛。</li>
+<li>1.5 起，应用首页的「系统流体云 / 灵动岛」开关可以直接关掉推广请求；
+  没有岛的设备改开「悬浮胶囊」。</li>
 </ul>
 <h2 id="73">7.3 厂商私有通道：字段能写，渲染要白名单</h2>
 <h3 id="_1">小米（焦点通知 / 超级岛）</h3>
@@ -2749,11 +3096,65 @@ gateway: 9842 / 32734
 <h2 id="75">7.5 我们的策略</h2>
 <ol>
 <li>主线只走标准 Live Updates，失败退回普通通知；</li>
+<li>没有流体云 / 灵动岛的设备，用应用自己画的悬浮胶囊兜底（不依赖厂商白名单）；</li>
+<li>系统岛和悬浮胶囊各有一个开关，用户按设备决定开哪个；</li>
 <li>不为没有真机验证的设备写厂商私有代码；</li>
 <li>代码里预留 <code>IslandAdapter</code> 扩展位，将来拿到权限或真机再加；</li>
 <li>文档只写验证过的结论，未验证的标「未验证」，不画饼。</li>
 </ol>
-<h2 id="76">7.6 参考</h2>
+<h2 id="76">7.6 无岛兜底：悬浮胶囊</h2>
+<p>这是 1.5 新增的第三条路：不申请厂商白名单，也不要求系统实现 Live Updates。
+应用用 <code>TYPE_APPLICATION_OVERLAY</code> 自己画一条胶囊，状态和通知同源。</p>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开启</td>
+<td>应用首页「悬浮胶囊」开关 + 「显示在其他应用上层」权限</td>
+</tr>
+<tr>
+<td>外观</td>
+<td>半透明深色胶囊，标题 + 动作 + 计时 + 清单分段</td>
+</tr>
+<tr>
+<td>大小</td>
+<td>字号 9–16sp、高度 32–64dp、垂直位置 0–80%、不透明度 35–80% 可调</td>
+</tr>
+<tr>
+<td>预览</td>
+<td>设置页模拟屏幕用同一个 <code>CapsuleView</code> 实时渲染，不需要悬浮窗权限</td>
+</tr>
+<tr>
+<td>触摸</td>
+<td><code>FLAG_NOT_TOUCHABLE</code>，完全穿透，不挡下面任何点击/滑动</td>
+</tr>
+<tr>
+<td>显示时机</td>
+<td>干活 / 完成时显示；应用前台、锁屏、息屏隐藏；IDLE 收起</td>
+</tr>
+<tr>
+<td>不显示时</td>
+<td>通知仍在；点通知打开应用</td>
+</tr>
+<tr>
+<td>系统岛重复</td>
+<td>两个开关都开时会重复；有岛设备建议只开系统岛</td>
+</tr>
+</tbody>
+</table>
+<p><strong>适合谁</strong>：vivo 国行、红魔 OS 11、以及任何“通知能发但不上岛”的 Android 16 设备。
+<strong>不适合谁</strong>：想要拖动、点击胶囊的设备——本版胶囊不接收触摸；这类需求需要额外的透明触摸层，
+会重新引入遮挡问题，暂不做。</p>
+<p><strong>限制</strong>：胶囊由本应用进程绘制。ColorOS 冻结后台应用时动画会停在最后一帧，
+下一条 <code>am start-foreground-service</code> 会唤醒进程继续画；它不是系统级常驻图层。
+另外，0.5.14 的宿主只用进程内订阅模块；如果 0.4.x 的独立 driver 还在跑，
+重连会整轮重放事件，状态会抽搐——先停掉旧 driver，并把保活开关关掉。</p>
+<h2 id="77">7.7 参考</h2>
 <ul>
 <li>vivo 原子通知接入指导：<a href="https://dev.vivo.com.cn/documentCenter/doc/894">https://dev.vivo.com.cn/documentCenter/doc/894</a></li>
 <li>vivo 原子通知技术规范：<a href="https://dev.vivo.com.cn/documentCenter/doc/896">https://dev.vivo.com.cn/documentCenter/doc/896</a></li>

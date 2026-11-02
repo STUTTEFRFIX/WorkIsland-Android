@@ -110,16 +110,18 @@ public final class Notifier {
                 .setUsesChronometer(!done)
                 .setContentIntent(pi)
                 .setStyle(style);
-        if (!shortText.isEmpty()) b.setShortCriticalText(shortText);
-
-        Bundle extras = new Bundle();
-        extras.putBoolean(EXTRA_PROMOTED, true);
-        // ColorOS 默认可能拿应用图标当小图标；关掉它，胶囊才会用我们画的 bot 位图。
-        extras.putBoolean("oplus_smallicon_use_app_icon", false);
-        b.addExtras(extras);
-        try {
-            Notification.Builder.class.getMethod("setRequestPromotedOngoing", boolean.class).invoke(b, true);
-        } catch (Throwable ignored) {}
+        // 系统岛开关关掉时只发普通通知：不请求 promoted，也不写 ColorOS 的小图标覆盖字段。
+        if (Prefs.systemIsland(c)) {
+            if (!shortText.isEmpty()) b.setShortCriticalText(shortText);
+            Bundle extras = new Bundle();
+            extras.putBoolean(EXTRA_PROMOTED, true);
+            // ColorOS 默认可能拿应用图标当小图标；关掉它，胶囊才会用我们画的 bot 位图。
+            extras.putBoolean("oplus_smallicon_use_app_icon", false);
+            b.addExtras(extras);
+            try {
+                Notification.Builder.class.getMethod("setRequestPromotedOngoing", boolean.class).invoke(b, true);
+            } catch (Throwable ignored) {}
+        }
 
         Notification n = b.build();
         Log.d("WorkIsland", "build title=" + title + " text=" + text + " state=" + st
@@ -156,12 +158,19 @@ public final class Notifier {
     }
 
     private static Icon smallIcon(Context c, String state, String face, int morph, int anim) {
+        return Icon.createWithBitmap(botBitmap(c, state, face, 160, morph, anim));
+    }
+
+    /**
+     * 通知和悬浮胶囊共用同一张 bot。程序化 bot 直接按请求尺寸画；
+     * 旧的简笔图标坐标是按 128px 写死的，固定 128 再交给调用方缩放。
+     */
+    static Bitmap botBitmap(Context c, String state, String face, int size, int morph, int anim) {
         String choice = Prefs.icon(c);
-        int size = 160;
         if (Prefs.soul(c)) {
             BotState.Look look = BotState.look(state);
-            return Icon.createWithBitmap(BotPainter.icon(c, specKey(choice), look,
-                    BotState.failed(state), size, morph, anim));
+            return BotPainter.icon(c, specKey(choice), look,
+                    BotState.failed(state), size, morph, anim);
         }
         int legacy = 128;
         Bitmap bmp = Bitmap.createBitmap(legacy, legacy, Bitmap.Config.ARGB_8888);
@@ -169,7 +178,7 @@ public final class Notifier {
         int body = bodyColor(choice);
         drawBody(canvas, choice, body, legacy);
         if (!"idle".equals(state)) drawEyes(canvas, state, legacy, body, face);
-        return Icon.createWithBitmap(bmp);
+        return bmp;
     }
 
     /** 应用里的图标名 → agent-hud 的 BotSpec 键。 */
@@ -351,7 +360,7 @@ public final class Notifier {
         return Icon.createWithResource(c, res);
     }
 
-    private static int statusColor(String state) {
+    static int statusColor(String state) {
         switch (state == null ? "" : state) {
             case "thinking": return 0xFF5B8DEF;
             case "reading": return 0xFF7C6CF0;
