@@ -30,19 +30,19 @@ def md(path: pathlib.Path) -> str:
 def main() -> None:
     cover = """
 <section class="cover">
-  <div class="kicker">ANDROID 16 · COLOROS 16 · LIVE UPDATES</div>
+  <div class="kicker">ANDROID 16 · COLOROS 16 · LIVE UPDATES · FALLBACK CAPSULE</div>
   <img class="logo" src="source/app/res/mipmap-xxxhdpi/ic_launcher.png" alt="工作岛图标">
   <h1>工作岛</h1>
-  <p class="sub">把 Claude 的工作状态，放到灵动岛上</p>
+  <p class="sub">把 Claude 的工作状态，放到灵动岛 / 悬浮胶囊上</p>
   <div class="rule"></div>
   <div class="meta">
     <div><span>宿主</span>cccodroid 0.4.2–0.4.10</div>
     <div><span>设备</span>OnePlus PJA110 · ColorOS 16.0.3</div>
-    <div><span>应用</span>com.dafeiyu.workisland 1.4</div>
-    <div><span>状态</span>测试阶段 · 仅 ColorOS 16 / Android 16 验证</div>
-    <div><span>日期</span>2026-10-26</div>
+    <div><span>应用</span>com.dafeiyu.workisland 1.5</div>
+    <div><span>状态</span>测试阶段 · ColorOS 16 系统岛已验；悬浮胶囊可调版待覆盖安装复测</div>
+    <div><span>日期</span>2026-11-02</div>
   </div>
-  <div class="hash">APK SHA-256<br>b7296f917ac3b990fce5162a9854cc72651568dca60d53dc62cdc8b79cf31530</div>
+  <div class="hash">APK SHA-256<br>25623db61a8f156e7b50a66649a55af63f11fd574f66a630c1a06e6e2270ef50</div>
 </section>
 """
 
@@ -56,19 +56,20 @@ def main() -> None:
     <tr><td>项目说明</td><td>一句话、交付物、快速开始、测试环境</td></tr>
     <tr><td>一、方案与设计</td><td>背景与问题、总体架构、状态机、事件文案、收工判定、关键技术、安全与限制</td></tr>
     <tr><td>二、开发与部署</td><td>目录落点、构建链、安装、网关接入、driver 部署、保活、调试、回滚</td></tr>
-    <tr><td>三、测试报告</td><td>18 个用例、关键日志、截图索引、6 个问题与修复</td></tr>
+    <tr><td>三、测试报告</td><td>33 个用例、关键日志、截图索引、12 个问题与修复</td></tr>
     <tr><td>四、提交说明</td><td>验收步骤、设计要点、已知限制、变更记录</td></tr>
     <tr><td>五、开发过程与真机测试</td><td>时间线、踩坑与修法、全部真机测试记录、过程链接</td></tr>
-    <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、后台保活与自动恢复</td></tr>
-    <tr><td>七、厂商适配</td><td>vivo / 小米 / 红魔 的上岛条件、私有通道、Shizuku 旁路与我们的策略</td></tr>
+    <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、悬浮胶囊可调与预览、后台保活</td></tr>
+    <tr><td>七、厂商适配</td><td>vivo / 小米 / 红魔 的上岛条件、私有通道、Shizuku 旁路与无岛兜底</td></tr>
   </table>
   <div class="toc-note">
-    <b>四个非显然结论</b>
+    <b>五个非显然结论</b>
     <ol>
       <li>ColorOS 16 的流体云直接接 Android 16 Live Updates，不需要 OPPO 私有白名单。</li>
       <li>ColorOS 会在后台冻结应用（连前台服务也冻），所以定时器必须放在网关 driver 里。</li>
       <li>收工要看 <code>runs</code> 而不是 <code>run</code>，并且要二次复查 + 3 秒宽限，否则会提前报完成。</li>
       <li>vivo 国行的原子岛是白名单制；小米/红米 HyperOS 3.0.300+ 理论上会自动包标准 Live Updates，但还没真机验证。</li>
+      <li>没有岛的设备用应用自绘悬浮胶囊兜底；<code>FLAG_NOT_TOUCHABLE</code> 还要把窗口 alpha 压到系统上限（通常 0.8）以内，触摸才真正穿透。</li>
     </ol>
   </div>
 </section>"""

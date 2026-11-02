@@ -1,7 +1,12 @@
 #!/bin/bash
 set -e
 cd "$(dirname "$0")"
-SDK="$(pwd)/../sdk36/android-36/android.jar"
+SDK="${ANDROID_JAR:-$(pwd)/../sdk36/android-36/android.jar}"
+if [ ! -f "$SDK" ]; then
+  echo "android.jar not found: $SDK" >&2
+  echo "Set ANDROID_JAR=/path/to/android-36/android.jar or see docs/02-开发与部署.md §3.1" >&2
+  exit 1
+fi
 OUT="build"
 rm -rf "$OUT" gen
 mkdir -p "$OUT" gen
