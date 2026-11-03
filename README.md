@@ -15,6 +15,7 @@
 - **无岛也能看**：悬浮胶囊半透明、按内容伸缩、触摸完全穿透，不挡下面任何操作
 - **大小可调**：字号、高度、垂直位置、不透明度都能拖；设置页里有实时预览
 - **两个开关**：系统岛、悬浮胶囊各自决定是否开启；两个都关就只留普通通知
+- **不杂乱**：设置页分成「状态 / 设置」两栏，卡片分组；状态栏、预览、开关、滑块各自归位
 - **四态 bot**：Wakes / Works / Asks / Done；14 种 look、7 个头顶标识（`! ? ≡ × ⧗ … z`）
 - **21 个模型**：每个 agent 有自己的形状、配色、眼睛，Claude 有手脚、DeepSeek 有肚子、Grok 有环、Cursor 缺一角、OpenClaw 有触须
 - **可关**：设置里的「程序化 bot」开关关掉就退回旧的简笔图标
@@ -31,7 +32,11 @@
 |---|---|---|---|
 | <img src="screenshots/09-bot-preview.png" width="210"> | <img src="screenshots/10-bot-states.png" width="210"> | <img src="screenshots/11-notification-bot.png" width="210"> | <img src="screenshots/13-island-thinking.png" width="210"> |
 
-更多截图见 `screenshots/`（含四态 bot、模型对照、岛上 `!` 标识、图标选择器），完整边界见 [`STATUS.md`](STATUS.md)，方案见 [`docs/01-方案与设计.md`](docs/01-方案与设计.md)。
+| 1.5 新设置页（状态 / 设置两栏） |
+|---|
+| <img src="screenshots/14-ui-settings.png" width="300"> |
+
+更多截图见 `screenshots/`（含四态 bot、模型对照、岛上 `!` 标识、图标选择器、1.5 新设置页），完整边界见 [`STATUS.md`](STATUS.md)，方案见 [`docs/01-方案与设计.md`](docs/01-方案与设计.md)。
 
 **下载**：[Release 页面](https://github.com/STUTTEFRFIX/WorkIsland-Android/releases) · 1.5 的 APK 与 PDF 也在本仓库 `apk/`、`pdf/` 里。
 
@@ -60,8 +65,8 @@
 APK 校验：
 
 ```
-SHA-256  25623db61a8f156e7b50a66649a55af63f11fd574f66a630c1a06e6e2270ef50
-大小     375,529 字节
+SHA-256  9e2c983dc6f33fa478ae49e8f7600ce5a3e9a6522b1529a8624c93b57c4c6ff8
+大小     379,625 字节
 ```
 
 ---
