@@ -42,7 +42,7 @@ def main() -> None:
     <div><span>状态</span>测试阶段 · ColorOS 16 系统岛已验；悬浮胶囊可调版待覆盖安装复测</div>
     <div><span>日期</span>2026-11-02</div>
   </div>
-  <div class="hash">APK SHA-256<br>25623db61a8f156e7b50a66649a55af63f11fd574f66a630c1a06e6e2270ef50</div>
+  <div class="hash">APK SHA-256<br>9e2c983dc6f33fa478ae49e8f7600ce5a3e9a6522b1529a8624c93b57c4c6ff8</div>
 </section>
 """
 
@@ -56,7 +56,7 @@ def main() -> None:
     <tr><td>项目说明</td><td>一句话、交付物、快速开始、测试环境</td></tr>
     <tr><td>一、方案与设计</td><td>背景与问题、总体架构、状态机、事件文案、收工判定、关键技术、安全与限制</td></tr>
     <tr><td>二、开发与部署</td><td>目录落点、构建链、安装、网关接入、driver 部署、保活、调试、回滚</td></tr>
-    <tr><td>三、测试报告</td><td>33 个用例、关键日志、截图索引、12 个问题与修复</td></tr>
+    <tr><td>三、测试报告</td><td>34 个用例、关键日志、截图索引、12 个问题与修复</td></tr>
     <tr><td>四、提交说明</td><td>验收步骤、设计要点、已知限制、变更记录</td></tr>
     <tr><td>五、开发过程与真机测试</td><td>时间线、踩坑与修法、全部真机测试记录、过程链接</td></tr>
     <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、悬浮胶囊可调与预览、后台保活</td></tr>

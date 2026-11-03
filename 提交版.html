@@ -82,7 +82,7 @@
     <div><span>状态</span>测试阶段 · ColorOS 16 系统岛已验；悬浮胶囊可调版待覆盖安装复测</div>
     <div><span>日期</span>2026-11-02</div>
   </div>
-  <div class="hash">APK SHA-256<br>25623db61a8f156e7b50a66649a55af63f11fd574f66a630c1a06e6e2270ef50</div>
+  <div class="hash">APK SHA-256<br>9e2c983dc6f33fa478ae49e8f7600ce5a3e9a6522b1529a8624c93b57c4c6ff8</div>
 </section>
 
 <section class="toc">
@@ -94,7 +94,7 @@
     <tr><td>项目说明</td><td>一句话、交付物、快速开始、测试环境</td></tr>
     <tr><td>一、方案与设计</td><td>背景与问题、总体架构、状态机、事件文案、收工判定、关键技术、安全与限制</td></tr>
     <tr><td>二、开发与部署</td><td>目录落点、构建链、安装、网关接入、driver 部署、保活、调试、回滚</td></tr>
-    <tr><td>三、测试报告</td><td>33 个用例、关键日志、截图索引、12 个问题与修复</td></tr>
+    <tr><td>三、测试报告</td><td>34 个用例、关键日志、截图索引、12 个问题与修复</td></tr>
     <tr><td>四、提交说明</td><td>验收步骤、设计要点、已知限制、变更记录</td></tr>
     <tr><td>五、开发过程与真机测试</td><td>时间线、踩坑与修法、全部真机测试记录、过程链接</td></tr>
     <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、悬浮胶囊可调与预览、后台保活</td></tr>
@@ -201,6 +201,7 @@
 <li><strong>无岛也能看</strong>：悬浮胶囊半透明、按内容伸缩、触摸完全穿透，不挡下面任何操作</li>
 <li><strong>大小可调</strong>：字号、高度、垂直位置、不透明度都能拖；设置页里有实时预览</li>
 <li><strong>两个开关</strong>：系统岛、悬浮胶囊各自决定是否开启；两个都关就只留普通通知</li>
+<li><strong>不杂乱</strong>：设置页分成「状态 / 设置」两栏，卡片分组；状态栏、预览、开关、滑块各自归位</li>
 <li><strong>四态 bot</strong>：Wakes / Works / Asks / Done；14 种 look、7 个头顶标识（<code>! ? ≡ × ⧗ … z</code>）</li>
 <li><strong>21 个模型</strong>：每个 agent 有自己的形状、配色、眼睛，Claude 有手脚、DeepSeek 有肚子、Grok 有环、Cursor 缺一角、OpenClaw 有触须</li>
 <li><strong>可关</strong>：设置里的「程序化 bot」开关关掉就退回旧的简笔图标</li>
@@ -242,7 +243,19 @@
 </tr>
 </tbody>
 </table>
-<p>更多截图见 <code>screenshots/</code>（含四态 bot、模型对照、岛上 <code>!</code> 标识、图标选择器），完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
+<table>
+<thead>
+<tr>
+<th>1.5 新设置页（状态 / 设置两栏）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img src="screenshots/14-ui-settings.png" width="300"></td>
+</tr>
+</tbody>
+</table>
+<p>更多截图见 <code>screenshots/</code>（含四态 bot、模型对照、岛上 <code>!</code> 标识、图标选择器、1.5 新设置页），完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
 <p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases">Release 页面</a> · 1.5 的 APK 与 PDF 也在本仓库 <code>apk/</code>、<code>pdf/</code> 里。</p>
 <hr>
 <h2 id="_1">交付物</h2>
@@ -317,8 +330,8 @@
 </tbody>
 </table>
 <p>APK 校验：</p>
-<pre><code>SHA-256  25623db61a8f156e7b50a66649a55af63f11fd574f66a630c1a06e6e2270ef50
-大小     375,529 字节
+<pre><code>SHA-256  9e2c983dc6f33fa478ae49e8f7600ce5a3e9a6522b1529a8624c93b57c4c6ff8
+大小     379,625 字节
 </code></pre>
 <hr>
 <h2 id="_2">快速开始</h2>
@@ -1721,6 +1734,12 @@ priv 'pm uninstall com.dafeiyu.workisland'
 <td>0.4.x 独立 driver 与 0.5.14 进程内模块并存时状态毫秒级来回跳</td>
 <td><strong>通过</strong>：<code>keepalive.conf=0</code>，旧 driver 已停；仅 watchdog 空转；新包 <code>commit()</code> 同步写保活</td>
 </tr>
+<tr>
+<td>T34</td>
+<td>设置页重排</td>
+<td>状态 / 设置两栏；卡片分组；状态栏避让；48dp 触控；预览与滑块</td>
+<td><strong>通过</strong>：真机目视（<code>screenshots/14-ui-settings.png</code>）</td>
+</tr>
 </tbody>
 </table>
 <hr>
@@ -1828,6 +1847,10 @@ gateway: 9842 / 32734
 <tr>
 <td><code>screenshots/13-island-thinking.png</code></td>
 <td>思考三帧：胶囊「思考中 1/4」，省略号亮点在动</td>
+</tr>
+<tr>
+<td><code>screenshots/14-ui-settings.png</code></td>
+<td>1.5 新设置页：状态 / 设置两栏、卡片分组、胶囊预览与四个滑块</td>
 </tr>
 </tbody>
 </table>
@@ -1954,7 +1977,7 @@ gateway: 9842 / 32734
 <tr>
 <td>可安装包</td>
 <td><code>apk/WorkIsland.apk</code></td>
-<td><code>com.dafeiyu.workisland</code> 1.5，375,529 字节，SHA-256 <code>25623db6…ef50</code></td>
+<td><code>com.dafeiyu.workisland</code> 1.5，379,625 字节，SHA-256 <code>9e2c983d…cff8</code></td>
 </tr>
 <tr>
 <td>应用源码</td>
@@ -1994,7 +2017,7 @@ gateway: 9842 / 32734
 <tr>
 <td>测试报告</td>
 <td><code>docs/03-测试报告.md</code></td>
-<td>33 个用例、关键日志、12 个问题修复记录</td>
+<td>34 个用例、关键日志、12 个问题修复记录</td>
 </tr>
 <tr>
 <td>截图</td>
@@ -2140,6 +2163,11 @@ gateway: 9842 / 32734
 <td>2026-11-02</td>
 <td>1.5</td>
 <td>修「抽搐」：停掉 0.4.x 遗留的独立 driver/watchdog；独立 driver 补 <code>Last-Event-ID</code> 续传和 150ms 去抖；服务去重不再计 <code>step</code>；保活偏好改 <code>commit()</code> 同步落盘、服务不再重写 <code>keepalive.conf</code>、升级后强制关一次</td>
+</tr>
+<tr>
+<td>2026-11-03</td>
+<td>1.5</td>
+<td>设置页去杂乱：状态 / 设置两栏；卡片分组（显示方式、胶囊样式、外观、保活、高级与测试）；12dp 卡片、48dp 触控、陶土主色、状态栏安全区；胶囊预览与滑块同卡</td>
 </tr>
 </tbody>
 </table>
@@ -2489,7 +2517,7 @@ gateway: 9842 / 32734
   <code>IslandService</code> 不再重写 <code>keepalive.conf</code>，升级后强制关一次</li>
 </ul>
 <p><strong>构建</strong>：<code>aapt2 2.20-android-16 / javac 21 / d8 9.2.4 / apksigner 0.9</code> 全过，
-<code>versionCode=6</code>、<code>versionName=1.5</code>，APK 375,529 字节。</p>
+<code>versionCode=6</code>、<code>versionName=1.5</code>，APK 379,625 字节。</p>
 <p><strong>复测状态</strong>：初版已在 OnePlus PJA110 上出现；第三版已覆盖安装（2026-11-02 22:36），
 设置页实时预览真机目视通过（小胶囊 + 标题/动作/计时/清单 2/4 + 分段进度）。
 四个滑块应用到实际悬浮窗、半透明和触摸穿透仍待补测。
