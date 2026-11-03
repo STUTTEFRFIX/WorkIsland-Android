@@ -36,7 +36,7 @@
 |---|
 | <img src="screenshots/14-ui-settings.png" width="300"> |
 
-更多截图见 `screenshots/`（含四态 bot、模型对照、岛上 `!` 标识、图标选择器、1.5 新设置页），完整边界见 [`STATUS.md`](STATUS.md)，方案见 [`docs/01-方案与设计.md`](docs/01-方案与设计.md)。
+更多截图见 `screenshots/`（含四态 bot、模型对照、岛上 `!` 标识、图标选择器、1.5 新设置页），完整边界见 [`STATUS.md`](STATUS.md)，方案见 [`docs/01-方案与设计.md`](docs/01-方案与设计.md)，UI 规则见 [`docs/08-UI与设计规范.md`](docs/08-UI与设计规范.md)。
 
 **下载**：[Release 页面](https://github.com/STUTTEFRFIX/WorkIsland-Android/releases) · 1.5 的 APK 与 PDF 也在本仓库 `apk/`、`pdf/` 里。
 

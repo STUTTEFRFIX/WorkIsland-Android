@@ -99,6 +99,7 @@
     <tr><td>五、开发过程与真机测试</td><td>时间线、踩坑与修法、全部真机测试记录、过程链接</td></tr>
     <tr><td>六、状态与保活</td><td>标题跟随动作、四态 bot 与标识、清单进度、悬浮胶囊可调与预览、后台保活</td></tr>
     <tr><td>七、厂商适配</td><td>vivo / 小米 / 红魔 的上岛条件、私有通道、Shizuku 旁路与无岛兜底</td></tr>
+    <tr><td>八、UI 与设计规范</td><td>状态 / 设置两栏、卡片分组、设计令牌、组件模式与去杂乱清单</td></tr>
   </table>
   <div class="toc-note">
     <b>五个非显然结论</b>
@@ -255,7 +256,7 @@
 </tr>
 </tbody>
 </table>
-<p>更多截图见 <code>screenshots/</code>（含四态 bot、模型对照、岛上 <code>!</code> 标识、图标选择器、1.5 新设置页），完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>。</p>
+<p>更多截图见 <code>screenshots/</code>（含四态 bot、模型对照、岛上 <code>!</code> 标识、图标选择器、1.5 新设置页），完整边界见 <a href="STATUS.md"><code>STATUS.md</code></a>，方案见 <a href="docs/01-方案与设计.md"><code>docs/01-方案与设计.md</code></a>，UI 规则见 <a href="docs/08-UI与设计规范.md"><code>docs/08-UI与设计规范.md</code></a>。</p>
 <p><strong>下载</strong>：<a href="https://github.com/STUTTEFRFIX/WorkIsland-Android/releases">Release 页面</a> · 1.5 的 APK 与 PDF 也在本仓库 <code>apk/</code>、<code>pdf/</code> 里。</p>
 <hr>
 <h2 id="_1">交付物</h2>
@@ -2020,9 +2021,14 @@ gateway: 9842 / 32734
 <td>34 个用例、关键日志、12 个问题修复记录</td>
 </tr>
 <tr>
+<td>UI 规范</td>
+<td><code>docs/08-UI与设计规范.md</code></td>
+<td>状态/设置两栏、卡片分组、设计令牌、组件模式、去杂乱清单</td>
+</tr>
+<tr>
 <td>截图</td>
 <td><code>screenshots/</code></td>
-<td>工作态、完成态、收起、后台存活、应用界面、四态 bot、标识</td>
+<td>工作态、完成态、收起、后台存活、应用界面、四态 bot、标识、1.5 新设置页</td>
 </tr>
 </tbody>
 </table>
@@ -3193,6 +3199,202 @@ gateway: 9842 / 32734
 <li>Android Authority：Live Updates 将登陆 Samsung / OnePlus / vivo / Xiaomi：<a href="https://www.androidauthority.com/android-16-live-updates-supported-devices-list-3560227/">https://www.androidauthority.com/android-16-live-updates-supported-devices-list-3560227/</a></li>
 <li>HyperBridge 0.5.0（HyperOS 3.0.3xx+ 原生 Live Updates）：<a href="https://github.com/D4vidDf/HyperBridge/releases/tag/v0.5.0">https://github.com/D4vidDf/HyperBridge/releases/tag/v0.5.0</a></li>
 <li>RedMagic OS 12（Android 17）推送时间表：<a href="https://www.gsmarena.com/redmagic_reveals_when_its_phones_are_getting_redmagic_os_12_based_on_android_17-news-75194.php">https://www.gsmarena.com/redmagic_reveals_when_its_phones_are_getting_redmagic_os_12_based_on_android_17-news-75194.php</a></li>
+</ul></article><article class="doc page-break"><div class="doc-title">八、UI 与设计规范</div><h1 id="ui">UI 与设计规范</h1>
+<blockquote>
+<p>1.5 · 2026-11-03 · 适用 WorkIsland 设置页 / 胶囊预览 / 状态卡</p>
+<p>设计来源：<code>/storage/emulated/0/DeepSeek agent/01-设计规范-Design-Specs/设计体系总纲-Design-Charter.md</code>
+本机 skill：<code>~/.claude/skills/workisland-ui/</code>（<code>SKILL.md</code> + <code>references/</code> 里的总纲、MD3 规范与 tokens）</p>
+</blockquote>
+<hr>
+<h2 id="1">1. 目标</h2>
+<p>1.5 之前的设置页是一整页长列表：状态、340dp bot 舞台、开关、滑块、说明、测试按钮全堆在一起，
+首屏控件多、层级不清。这次重排的目标只有两个：</p>
+<ol>
+<li><strong>首屏只回答一个问题</strong>：现在是什么状态、胶囊长什么样、怎么开始测试。</li>
+<li><strong>设置项按用途分组</strong>：显示方式、胶囊样式、外观、保活、高级与测试；高级/测试默认收起。</li>
+</ol>
+<p>视觉上遵循 MD3 深色 + 陶土主色，但只保留一套圆角、一套间距、一个 primary。</p>
+<hr>
+<h2 id="2">2. 信息架构</h2>
+<table>
+<thead>
+<tr>
+<th>页面</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>状态</strong></td>
+<td>胶囊预览、通知 / 实时更新 / 电池状态、显示方式摘要、「开始一个测试任务」</td>
+</tr>
+<tr>
+<td><strong>设置</strong></td>
+<td>显示方式、胶囊样式、外观、保活、高级与测试、页脚</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>顶部是 26sp 标题 + 14sp 副标题 + 版本 pill，下面是 56dp 的「状态 / 设置」分段标签。</li>
+<li>状态页不放开关键设置；设置页不重复状态页的大预览。</li>
+<li>「高级与测试」默认折叠：状态 look 预览、更新 / 完成 / 清除通知。</li>
+<li>页脚只写版本、许可和图标归属，不再堆长段说明。</li>
+</ul>
+<hr>
+<h2 id="3">3. 设计令牌</h2>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>背景</td>
+<td><code>#121110</code></td>
+</tr>
+<tr>
+<td>卡片</td>
+<td><code>#1C1A18</code>，1dp <code>#2A2625</code> 描边</td>
+</tr>
+<tr>
+<td>次级面</td>
+<td><code>#26231F</code>（分段控件、spinner 胶囊）</td>
+</tr>
+<tr>
+<td>主色</td>
+<td>陶土 <code>#D97757</code>，on-primary <code>#1A0F0B</code></td>
+</tr>
+<tr>
+<td>主色软底</td>
+<td><code>#3A2A22</code>（选中 tab / 分段）</td>
+</tr>
+<tr>
+<td>文字</td>
+<td><code>#F3EFE9</code>；弱化 <code>#B6AEA3</code>；说明 <code>#8A837A</code></td>
+</tr>
+<tr>
+<td>状态色</td>
+<td>成功 <code>#78C58A</code>、错误 <code>#E5484D</code>、警告 <code>#E6A23C</code>，只用于小圆点/数值</td>
+</tr>
+<tr>
+<td>卡片圆角</td>
+<td>12dp</td>
+</tr>
+<tr>
+<td>按钮 / tab / 分段</td>
+<td>胶囊（高度一半）；对话框 28dp</td>
+</tr>
+<tr>
+<td>间距</td>
+<td>4 / 8 / 12 / 16 / 24；卡片内 16dp，卡片间 16dp</td>
+</tr>
+<tr>
+<td>触控</td>
+<td>≥48dp；行高 48dp；tab 48dp；分段 48dp</td>
+</tr>
+<tr>
+<td>字号</td>
+<td>标题 26sp / 卡片标题 16sp / 行标题 15sp / 标签 14sp / 说明 12–13sp</td>
+</tr>
+<tr>
+<td>行高</td>
+<td>CJK 1.4–1.6</td>
+</tr>
+<tr>
+<td>动效</td>
+<td>只动 transform / opacity；UI &lt;300ms；按压 120ms；高频开关/滑块不加入场动画</td>
+</tr>
+</tbody>
+</table>
+<p><strong>禁用</strong>：纯黑 <code>#000000</code>、纯白 <code>#FFFFFF</code>、紫蓝渐变、霓虹辉光、堆叠玻璃、漂浮 blob、
+假 dashboard、三列假 KPI、三等分卡片、嵌套卡片、emoji、渐变文字、产品界面 eyebrow。</p>
+<hr>
+<h2 id="4">4. 组件模式</h2>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>规则</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>card()</code></td>
+<td>卡片标题 16sp + 13sp 摘要；内容行直接放卡片，不再套一层卡</td>
+</tr>
+<tr>
+<td><code>switchRow()</code></td>
+<td>左标题/摘要、右 Switch；Switch 用陶土 thumb + 深棕 track</td>
+</tr>
+<tr>
+<td><code>valueRow()</code></td>
+<td>左标题/摘要、右值 + <code>›</code>；整行可点，48dp</td>
+</tr>
+<tr>
+<td><code>divider()</code></td>
+<td>1dp <code>#2A2625</code>，只在行之间</td>
+</tr>
+<tr>
+<td><code>animSegmented()</code></td>
+<td>3 段（关闭 / 标准 / 流畅），选中用主色软底，48dp</td>
+</tr>
+<tr>
+<td><code>spinnerRow()</code></td>
+<td>48dp 胶囊底 + Spinner + <code>▾</code>；Spinner 自己也可点</td>
+</tr>
+<tr>
+<td><code>addCapsuleSlider()</code></td>
+<td>标题左、值右，下面 48dp SeekBar；陶土进度条</td>
+</tr>
+<tr>
+<td><code>primaryButton()</code></td>
+<td>陶土实底、深色字、胶囊、48dp；每屏最多一个</td>
+</tr>
+<tr>
+<td><code>tonalButton()</code></td>
+<td>次级面、描边、白字；用于测试/设置动作</td>
+</tr>
+<tr>
+<td><code>textButton()</code></td>
+<td>主色文字，48dp；用于「恢复默认」</td>
+</tr>
+<tr>
+<td><code>CapsuleView</code></td>
+<td>悬浮窗和设置页预览共用；字号/高度/位置/透明度由 <code>CapsuleStyle</code> 控制</td>
+</tr>
+</tbody>
+</table>
+<p><strong>预览</strong>：状态页和胶囊样式卡各有一个 <code>CapsuleView</code>，都走 <code>updatePreview()</code>；
+预览的 mock 屏幕用暖灰渐变（<code>#2A2622 → #151311</code>），不是紫蓝渐变。</p>
+<p><strong>状态栏安全区</strong>：targetSdk 36 强制 edge-to-edge，<code>setDecorFitsSystemWindows</code> 不能依赖；
+<code>applyWindowInsets()</code> 给根视图加 <code>systemBars() | displayCutout()</code> 的 padding。</p>
+<hr>
+<h2 id="5">5. 这次去掉了什么</h2>
+<ul>
+<li>340dp bot 舞台 → 128dp 外观预览；look 切换移入折叠的「高级与测试」。</li>
+<li>6 个测试按钮 → 状态页只留「开始一个测试任务」，其余收进折叠区。</li>
+<li>长段说明 → 一行说明 + 卡片摘要。</li>
+<li>重复的「显示方式」文字 → 状态页一行摘要 + 设置页开关。</li>
+<li>单独的动画 Spinner / 模式 Spinner → 3 段分段控件 + 两个独立 Switch。</li>
+<li>居中的大标题/长备注 → 左对齐标题、卡片层级。</li>
+</ul>
+<hr>
+<h2 id="6">6. 维护约定</h2>
+<ol>
+<li>新控件先决定它属于「状态」还是「设置」，再放进对应卡片；不要往首屏继续堆。</li>
+<li>不嵌套卡片，不做三等分卡片，不用 emoji 当图标。</li>
+<li>一个页面只保留一个 primary 实底按钮；其他动作用 tonal / text。</li>
+<li>所有可点元素 ≥48dp；所有说明文字 ≥12sp；CJK 行高 ≥1.4。</li>
+<li>新增颜色、圆角、间距前先查第 3 节；改令牌时同步更新本文件、<code>screenshots/14-ui-settings.png</code> 和 <code>workisland-ui</code> skill。</li>
+<li>设计总纲 / MD3 规范是外部工作区资料；本机 skill 已复制到
+   <code>~/.claude/skills/workisland-ui/references/</code>，仓库里保留本文件作为落地摘要。</li>
+</ol>
+<hr>
+<h2 id="7">7. 截图</h2>
+<ul>
+<li><code>screenshots/14-ui-settings.png</code>：1.5 新设置页（状态 / 设置两栏、卡片分组、胶囊预览与四个滑块）</li>
 </ul></article>
 <section class="gallery page-break"><h2>界面截图</h2><div class="grid"><figure><img src="screenshots/01-working.png" alt="工作态：鱼图标 +「正在干活」"><figcaption>工作态：鱼图标 +「正在干活」</figcaption></figure><figure><img src="screenshots/02-done.png" alt="完成态：「任务完成」+ 用时"><figcaption>完成态：「任务完成」+ 用时</figcaption></figure><figure><img src="screenshots/03-idle.png" alt="8 秒后：岛上收起"><figcaption>8 秒后：岛上收起</figcaption></figure><figure><img src="screenshots/04-background.png" alt="后台：两个应用都退到桌面，岛仍在"><figcaption>后台：两个应用都退到桌面，岛仍在</figcaption></figure><figure><img src="screenshots/05-app.png" alt="应用界面：通知开 / 实时更新允许 / 电池不优化"><figcaption>应用界面：通知开 / 实时更新允许 / 电池不优化</figcaption></figure><figure><img src="screenshots/06-final.png" alt="聊天界面 + 胶囊"><figcaption>聊天界面 + 胶囊</figcaption></figure><figure><img src="screenshots/09-bot-preview.png" alt="四态 bot：应用内预览（干活 · 执行命令）"><figcaption>四态 bot：应用内预览（干活 · 执行命令）</figcaption></figure><figure><img src="screenshots/10-bot-states.png" alt="21 个模型 + 14 个 look 的对照表"><figcaption>21 个模型 + 14 个 look 的对照表</figcaption></figure><figure><img src="screenshots/11-notification-bot.png" alt="通知面板：bot 大图标 + 头顶 !"><figcaption>通知面板：bot 大图标 + 头顶 !</figcaption></figure><figure><img src="screenshots/12-island-ask.png" alt="岛上「等你确认」+ !"><figcaption>岛上「等你确认」+ !</figcaption></figure><figure><img src="screenshots/13-island-thinking.png" alt="思考三帧：胶囊「思考中 1/4」，省略号亮点在动"><figcaption>思考三帧：胶囊「思考中 1/4」，省略号亮点在动</figcaption></figure></div></section>
 </body>
